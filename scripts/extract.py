@@ -12,8 +12,10 @@ EPUB extraction tries methods in order:
   2. zipfile + html.parser — stdlib fallback (no extra deps)
 
 Outputs:
-  /tmp/book_skill_work/full_text.txt  — full extracted text
-  /tmp/book_skill_work/metadata.json  — stats and metadata
+  <tempdir>/book_skill_work/full_text.txt  — full extracted text
+  <tempdir>/book_skill_work/metadata.json  — stats and metadata
+
+Set BOOK_SKILL_WORKDIR to override the output directory.
 """
 
 import html
@@ -24,10 +26,16 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
-OUTPUT_DIR = Path("/tmp/book_skill_work")
+OUTPUT_DIR = Path(
+    os.environ.get(
+        "BOOK_SKILL_WORKDIR",
+        str(Path(tempfile.gettempdir()) / "book_skill_work"),
+    )
+)
 OUTPUT_TEXT = OUTPUT_DIR / "full_text.txt"
 OUTPUT_META = OUTPUT_DIR / "metadata.json"
 
