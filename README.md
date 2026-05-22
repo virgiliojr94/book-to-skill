@@ -1,11 +1,12 @@
 <h1 align="center">📚 book-to-skill</h1>
 
 <p align="center">
-  <strong>Turn any technical book or document into a Claude Code skill — ready to study, reference, and use while you work.</strong>
+  <strong>Turn any technical book or document into a Codex, Amp, or Claude Code skill — ready to study, reference, and use while you work.</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
+  <img src="https://img.shields.io/badge/Codex-Skill-black?style=for-the-badge" alt="Codex Skill">
   <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Formats supported">
   <img src="https://img.shields.io/badge/effort-high-orange?style=for-the-badge" alt="Effort: high">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
@@ -32,15 +33,15 @@ The usual workarounds don't help:
 - 🧠 "I'll ask Claude about this book" → it either hallucinates or says it doesn't have the content
 - 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again
 
-**book-to-skill solves this by turning the book into a structured skill Claude loads on demand.**
+**book-to-skill solves this by turning the book into a structured skill your coding agent loads on demand.**
 
-Once installed, you just type `/your-book-slug replication` and Claude reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
+Once installed, you ask about the generated skill by slug or topic and your agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
 
 ---
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or `.epub`) creates a full skill at `~/.claude/skills/<slug>/`:
+Running `/book-to-skill your-book.pdf` (or `.epub`) creates a full skill in the active agent's skill directory, such as `~/.codex/skills/<slug>/` for Codex or `~/.claude/skills/<slug>/` for Claude Code:
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -75,7 +76,7 @@ Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, As
 /book-to-skill /tmp/ddd-evans.pdf domain-driven-design
 ```
 
-After the skill is created, use it like any other Claude Code skill:
+After the skill is created, use it like any other agent skill. In slash-command environments:
 
 ```bash
 /designing-data-intensive-apps                  # load core mental models
@@ -83,6 +84,8 @@ After the skill is created, use it like any other Claude Code skill:
 /designing-data-intensive-apps ch05             # dive into chapter 5
 /designing-data-intensive-apps "what chapters do you have?"
 ```
+
+In Codex, ask naturally, for example: `Use the designing-data-intensive-apps skill to explain replication tradeoffs`.
 
 ---
 
@@ -139,7 +142,7 @@ scripts/extract.py --mode <technical|text>
      └── /tmp/book_skill_work/metadata.json
                │
                ▼
-          Claude analyzes structure
+          Your agent analyzes structure
           (title, author, chapters, ToC)
                │
                ▼
@@ -149,7 +152,7 @@ scripts/extract.py --mode <technical|text>
           Generates master SKILL.md with core mental models
                │
                ▼
-          ~/.claude/skills/<slug>/  ✅ written
+          ~/.codex/skills/<slug>/ or ~/.claude/skills/<slug>/  ✅ written
           /tmp/book_skill_work/     🗑️  cleaned up
 ```
 
@@ -215,6 +218,26 @@ book-to-skill is built for a different job: you want to go deep on one book and 
 ---
 
 ## 📥 Install
+
+### Codex
+
+Install into `${CODEX_HOME:-~/.codex}/skills`:
+
+```bash
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/book-to-skill/scripts"
+
+curl -o "${CODEX_HOME:-$HOME/.codex}/skills/book-to-skill/SKILL.md" \
+  https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/SKILL.md
+
+curl -o "${CODEX_HOME:-$HOME/.codex}/skills/book-to-skill/scripts/extract.py" \
+  https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/scripts/extract.py
+
+chmod +x "${CODEX_HOME:-$HOME/.codex}/skills/book-to-skill/scripts/extract.py"
+```
+
+Restart Codex after installing new skills.
+
+### Claude Code
 
 Copy this into your Claude Code session:
 
