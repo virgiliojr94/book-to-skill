@@ -1,7 +1,7 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Amp or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
-compatibility: "Amp skill directories (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills) and Claude Code skill directories (~/.claude/skills)."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Codex, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+compatibility: "Codex skill directories ($CODEX_HOME/skills or ~/.codex/skills), Amp skill directories (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills), and Claude Code skill directories (~/.claude/skills)."
 allowed-tools:
   - shell_command
   - Read
@@ -17,7 +17,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Codex, Amp, Claude Code, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -57,12 +57,13 @@ Three paths available. Route based on what the user asks:
 
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
-1. Amp project-local skills: `.agents/skills/`
-2. Amp global skills: `~/.config/agents/skills/`
-3. Amp legacy global skills: `~/.config/amp/skills/`
-4. Claude Code skills: `~/.claude/skills/`
+1. Codex global skills: `$CODEX_HOME/skills/` or `~/.codex/skills/`
+2. Amp project-local skills: `.agents/skills/`
+3. Amp global skills: `~/.config/agents/skills/`
+4. Amp legacy global skills: `~/.config/amp/skills/`
+5. Claude Code skills: `~/.claude/skills/`
 
-Generated skills should default to `~/.config/agents/skills/` for Amp unless the user asks for project-local or Claude Code output.
+Generated skills should default to the current agent's global skill directory. In Codex, use `${CODEX_HOME:-$HOME/.codex}/skills` unless the user asks for project-local, Amp, or Claude Code output.
 
 ---
 
@@ -121,6 +122,7 @@ Run the extraction script, passing the book type:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
+  "${CODEX_HOME:-$HOME/.codex}/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py" \
@@ -290,6 +292,7 @@ Otherwise, propose two options and let the user choose:
 Default to author-concept format if the book has a strong methodological identity.
 
 Choose the destination skill root:
+- **Codex default**: `${CODEX_HOME:-$HOME/.codex}/skills`
 - **Amp default**: `~/.config/agents/skills`
 - **Amp project-local**: `.agents/skills` when the user explicitly wants the generated book skill scoped to the current workspace
 - **Amp legacy**: `~/.config/amp/skills` if that is the user's existing global skill location
