@@ -374,23 +374,21 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
     return None
 
 
-def extract_with_pypdf2(pdf_path: str) -> str | None:
-    try:
+def extract_with_pypdf2(pdf_path: str) -> str | None:  
+try:
         import PyPDF2
         text_parts = []
         with open(pdf_path, "rb") as f:
             reader = PyPDF2.PdfReader(f)
             for page in reader.pages:
                 try:
+                    # Estrae il testo gestendo correttamente le pagine
                     text_parts.append(page.extract_text() or "")
                 except Exception:
                     text_parts.append("")
         return "\n".join(text_parts)
-    except ImportError:
-        return None
     except Exception:
         return None
-
 
 def extract_with_pdfminer(pdf_path: str) -> str | None:
     try:
