@@ -1,225 +1,74 @@
-<h1 align="center">📚 book-to-skill for Codex</h1>
+<h1 align="center">book-to-skill for Codex</h1>
 
 <p align="center">
-  <strong>Turn any technical book or document into a Codex skill — ready to study, reference, and use while you work.</strong>
+  <strong>把技术书、文档和电子书转换成可复用的 Codex Skill。</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Codex-Skill-black?style=for-the-badge" alt="Codex Skill">
   <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Supported formats: PDF, EPUB, DOCX, Markdown, HTML, RTF, MOBI">
-  <img src="https://img.shields.io/badge/Codex%20effort-high-orange?style=for-the-badge" alt="Codex effort: high">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
 <p align="center">
-  <a href="#-why">Why</a> ·
-  <a href="#-what-it-generates">What it generates</a> ·
-  <a href="#-usage">Usage</a> ·
-  <a href="#-requirements">Requirements</a> ·
-  <a href="#-how-it-works">How it works</a> ·
-  <a href="#-faq">FAQ</a> ·
-  <a href="#-install">Install</a>
+  <a href="#中文">中文</a> ·
+  <a href="#english">English</a>
 </p>
 
 ---
 
-## 🤔 Why
+<details open id="中文">
+<summary><strong>中文</strong></summary>
 
-You buy a great technical book. You read it once. Three months later you can't remember chapter 7 existed.
+## 这是什么
 
-The usual workarounds don't help:
-- 📄 "Let me just search the PDF" → you get a list of pages, not answers
-- 🧠 "I'll ask Codex about this book" → it either hallucinates or says it doesn't have the content
-- 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again
+`book-to-skill` 可以把一本 PDF、EPUB、DOCX、Markdown、HTML、RTF 或 MOBI/AZW/AZW3 文档转换成结构化的 Codex Skill。它不是简单生成读书笔记，而是从书里抽取框架、心智模型、原则、方法、反模式和章节索引，让 Codex 以后可以按需读取相关章节并基于原文内容回答。
 
-**book-to-skill solves this by turning the book into a structured skill Codex loads on demand.**
-
-Once installed, ask Codex in plain language: "Use the `your-book-slug` skill to explain replication." Codex reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
-
----
-
-## 📦 What it generates
-
-Running the `book-to-skill` skill on `your-book.pdf` (or `.epub`) creates a full Codex skill at `~/.codex/skills/<slug>/`:
-
-| File | Purpose | Size |
-|------|---------|------|
-| `SKILL.md` | Core mental models + chapter index | ~4,000 tokens |
-| `chapters/ch01-*.md` … | One file per chapter, loaded on-demand | ~1,000 tokens each |
-| `glossary.md` | Every key term, alphabetically sorted with chapter refs | ~1,500 tokens |
-| `patterns.md` | All techniques, algorithms, and design patterns | ~2,000 tokens |
-| `cheatsheet.md` | Decision tables and quick-reference rules | ~1,000 tokens |
-
-**Chapter files are loaded on-demand** — they don't count against the skill budget until you ask about that topic.
-
----
-
-## 🚀 Usage
-
-Ask Codex to use the skill in natural language.
-
-Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, AsciiDoc, HTML, RTF, MOBI/AZW/AZW3.
-
-**Examples:**
+生成后的 skill 默认放在：
 
 ```text
-Use the book-to-skill skill to convert ~/Downloads/designing-data-intensive-applications.pdf into a Codex skill.
-
-Use the book-to-skill skill to convert ~/books/clean-code.epub into a Codex skill named clean-code.
-
-Use the book-to-skill skill to convert /tmp/ddd-evans.pdf into a Codex skill named domain-driven-design.
+~/.codex/skills/<skill-name>/
 ```
 
-After the skill is created, use it like any other Codex skill:
+## 为什么需要它
+
+你读过一本很好的技术书，几个月后却想不起第 7 章讲了什么。常见办法都不太理想：
+
+- 搜 PDF：得到的是页面列表，不是可执行的答案。
+- 直接问模型：模型可能不知道这本书，或者把训练数据里的二手印象说成事实。
+- 自己做笔记：最后往往变成一份很长、很少再打开的文档。
+
+`book-to-skill` 的做法是先把书编译成 skill。之后你可以用自然语言问 Codex，例如：
 
 ```text
-Use the designing-data-intensive-apps skill to load the book's core mental models.
 Use the designing-data-intensive-apps skill to explain replication.
-Use the designing-data-intensive-apps skill to dive into chapter 5.
-Use the designing-data-intensive-apps skill to list the available chapters.
 ```
 
-Claude Code and Amp can use the same generated skill files through their compatible skill workflows. If you already have a `/book-to-skill` slash command wired up there, it can remain as a compatibility path; Codex usage is plain natural language by default.
+Codex 会根据 skill 里的主题索引读取对应章节，而不是每次把整本书塞进上下文。
 
----
+## 会生成什么
 
-## 🔧 Requirements
+运行后会创建一个完整 skill：
 
-The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. In a Codex session, dependency installation should happen only after Codex asks for your approval and you confirm the command. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.
+| 文件 | 作用 | 典型大小 |
+|------|------|----------|
+| `SKILL.md` | 核心心智模型、章节索引、主题索引 | 约 4,000 tokens |
+| `chapters/ch01-*.md` 等 | 每章一个文件，按需读取 | 每章约 1,000 tokens |
+| `glossary.md` | 关键术语表，按字母排序并标注章节 | 约 1,500 tokens |
+| `patterns.md` | 技术、算法、设计模式和方法 | 约 2,000 tokens |
+| `cheatsheet.md` | 决策表、对照表和快速参考 | 约 1,000 tokens |
 
-**PDF — choose by book type:**
+章节文件是按需加载的；只有当你问到相关主题或章节时，Codex 才需要读取它们。
 
-| Book type | Tool | Install | Speed |
-|-----------|------|---------|-------|
-| Text-heavy (prose, few tables) | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ instant |
-| Text-heavy fallback | `PyPDF2` | `pip3 install PyPDF2` | ⚡ instant |
-| Text-heavy fallback | `pdfminer.six` | `pip3 install pdfminer.six` | ⚡ instant |
-| **Technical (code, tables, formulas)** | **`docling`** | `pip3 install docling` | ~1.5s/page |
+## 安装
 
-> Before extraction begins, the skill asks you whether the book is **technical** or **text-heavy** and picks the right tool automatically. Docling preserves markdown tables and code blocks; pdftotext is faster for prose-only books.
-
-**EPUB:**
-
-| Tool | Install | Quality |
-|------|---------|---------|
-| `ebooklib` + `beautifulsoup4` | `pip3 install ebooklib beautifulsoup4` | ⭐⭐⭐ Best |
-| stdlib `zipfile` | built-in — no install needed | ⭐⭐ Always available |
-
-**Other formats:**
-
-| Format | Tool | Install |
-|--------|------|---------|
-| DOCX | `python-docx` (fallback: stdlib ZIP/XML) | `pip3 install python-docx` |
-| HTML | `beautifulsoup4` (fallback: stdlib `html.parser`) | `pip3 install beautifulsoup4` |
-| RTF | `striprtf` (fallback: regex) | `pip3 install striprtf` |
-| MOBI / AZW / AZW3 | Calibre `ebook-convert` (external app, not pip) | https://calibre-ebook.com/download |
-| TXT / Markdown / reStructuredText / AsciiDoc | built-in | — |
-
----
-
-## ⚙️ How it works
-
-```
-PDF or EPUB
-     │
-     ▼
-Step 1.5 — "Technical or text-heavy book?"
-     │
-     ├── technical → Docling  (tables + code blocks as markdown, ~1.5s/page)
-     └── text      → pdftotext → PyPDF2 → pdfminer  (instant)
-     │
-     ▼
-scripts/extract.py --mode <technical|text>
-  EPUB → ebooklib → stdlib zipfile
-     │
-     ├── /tmp/book_skill_work/full_text.txt
-     └── /tmp/book_skill_work/metadata.json
-               │
-               ▼
-          Codex analyzes structure
-          (title, author, chapters, ToC)
-               │
-               ▼
-          Generates per-chapter summaries  (800–1,200 tokens each)
-          technical → includes Code Examples + Reference Tables sections
-          Generates glossary, patterns, cheatsheet
-          Generates master SKILL.md with core mental models
-               │
-               ▼
-          ~/.codex/skills/<slug>/  ✅ written
-          /tmp/book_skill_work/     🗑️  cleaned up
-```
-
-**Extraction benchmark** (103-page technical book, CPU only):
-
-| Method | Time | Tokens | Tables | Code blocks |
-|--------|------|--------|--------|-------------|
-| pdftotext | 0.1s | 27K | 0 | 0 |
-| Docling | 164s | 27K (+1.2%) | 48 | 36 |
-
-<details>
-<summary>Design principles (click to expand)</summary>
-
-1. **Density over completeness** — a 1,000-token summary beats a 10,000-token excerpt
-2. **Practitioner voice** — "Use X when Y", not "The book explains X"
-3. **Front-loaded SKILL.md** — compaction keeps the first ~5,000 tokens; the most important content comes first
-4. **On-demand chapters** — the topic index tells Codex which file to read; chapters load only when needed
-5. **Never raw text** — always synthesize, summarize, extract signal from the source
-
-</details>
-
----
-
-## ❓ FAQ
-
-**"Can't I just dump the PDF/EPUB into a Codex conversation?"**
-
-You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load. The rest stays on disk until you need it.
-
-More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Codex isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.
-
----
-
-**"Isn't this just RAG?"**
-
-RAG works at query time: chunk the book → embed everything → find similar vectors → inject into prompt. It's optimized for "find me the part that talks about X."
-
-book-to-skill works at compile time: one deep analysis run extracts the author's actual frameworks, names them, describes when to use each, captures the anti-patterns. The output is structure the author spent years building — not a similarity search over their sentences.
-
-RAG answers: *"here are chunks close to your query."*  
-A skill answers: *"here are the 12 frameworks this author built, ready to reason with."*
-
-For searching across 50+ books, RAG wins. For going deep on one book and using its frameworks while you work, a skill wins.
-
----
-
-**"Popular books are already in model training data. Why bother?"**
-
-For widely-known books (Clean Code, DDIA, Pragmatic Programmer), Codex may have general knowledge — but it's compressed, averaged across the entire internet's discussion of the book, and may hallucinate specific quotes or chapter locations.
-
-book-to-skill works from your actual copy. Every framework name, every anti-pattern list, every chapter number is grounded in the text you provided. No training data drift, no hallucinated chapter titles.
-
-It also shines for books Codex doesn't know at all: niche technical references, internal company documentation, recent publications, translated works.
-
----
-
-**"NotebookLM handles multiple books better."**
-
-Absolutely true — if your workflow is "I have 80 books and I want to search across all of them," NotebookLM is the right tool.
-
-book-to-skill is built for a different job: you want to go deep on one book and have its frameworks embedded in your coding or writing workflow, not in a separate browser tab. It's less "library search" and more "the author is sitting next to you while you work."
-
----
-
-## 📥 Install
-
-Ask Codex to install the skill from this fork:
+让 Codex 从这个 fork 安装：
 
 ```text
 Install the book-to-skill skill from https://raw.githubusercontent.com/JasonHe/book-to-skill/master/SKILL.md
 ```
 
-Or manually:
+也可以手动安装：
 
 ```bash
 mkdir -p ~/.codex/skills/book-to-skill/scripts
@@ -231,33 +80,254 @@ curl -L -o ~/.codex/skills/book-to-skill/scripts/extract.py \
   https://raw.githubusercontent.com/JasonHe/book-to-skill/master/scripts/extract.py
 ```
 
-Then in any Codex session:
+如果你想直接测试当前适配分支，可以把 URL 中的 `master` 换成 `codex/codex-skill-adapter`。
+
+## 使用方式
+
+在 Codex 里用自然语言调用：
 
 ```text
-Use the book-to-skill skill to convert ~/path/to/your-book.pdf into a Codex skill named my-book.
+Use the book-to-skill skill to convert ~/Downloads/designing-data-intensive-applications.pdf into a Codex skill.
 
-Use the book-to-skill skill to convert ~/path/to/your-book.epub into a Codex skill.
+Use the book-to-skill skill to convert ~/books/clean-code.epub into a Codex skill named clean-code.
+
+Use the book-to-skill skill to convert /tmp/ddd-evans.pdf into a Codex skill named domain-driven-design.
 ```
 
-For Claude Code or Amp, keep using their compatible skill installation location and invocation style. The generated `SKILL.md`, `chapters/`, `glossary.md`, `patterns.md`, and `cheatsheet.md` files are portable.
+生成后可以这样使用书本 skill：
+
+```text
+Use the designing-data-intensive-apps skill to load the book's core mental models.
+Use the designing-data-intensive-apps skill to explain replication.
+Use the designing-data-intensive-apps skill to dive into chapter 5.
+Use the designing-data-intensive-apps skill to list the available chapters.
+```
+
+Claude Code 和 Amp 也可以通过各自兼容的 skill 目录使用这些生成文件；Codex 默认使用自然语言，不依赖 slash command。
+
+## 支持格式和依赖
+
+纯文本、Markdown、reStructuredText 和 AsciiDoc 不需要额外依赖。其他格式会按可用工具依次尝试：
+
+| 格式 | 首选工具 | 备用方案 |
+|------|----------|----------|
+| PDF 文本型 | `pdftotext` | `PyPDF2`、`pdfminer.six` |
+| PDF 技术型 | `docling` | PDF 文本抽取链 |
+| EPUB | `ebooklib` + `beautifulsoup4` | 标准库 ZIP/HTML 解析 |
+| DOCX | `python-docx` | 标准库 ZIP/XML 解析 |
+| HTML | `beautifulsoup4` | 标准库 HTML parser |
+| RTF | `striprtf` | 基础正则清理 |
+| MOBI/AZW/AZW3 | Calibre `ebook-convert` | 无 |
+
+Codex 适配版默认不会自动安装缺失依赖；只有在用户明确同意时才应执行安装命令。
+
+## 工作流程
+
+```text
+PDF / EPUB / DOCX / 文本文档
+        |
+        v
+选择 technical 或 text 抽取模式
+        |
+        v
+scripts/extract.py
+        |
+        +-- full_text.txt
+        +-- metadata.json
+        |
+        v
+Codex 分析标题、作者、目录和章节结构
+        |
+        v
+生成章节摘要、术语表、模式表、速查表和主 SKILL.md
+        |
+        v
+~/.codex/skills/<skill-name>/
+```
+
+对于超过约 50K tokens 的书，skill 会建议用 `grep`、`sed`、章节偏移等方式按需读取，不一次性把整本书放进上下文。
+
+## 本 fork 修改了什么
+
+这个 fork 基于原项目做了 Codex 适配，主要修改包括：
+
+- 把 README 和 `SKILL.md` 的默认目标从 Claude Code/Amp 调整为 Codex。
+- 默认安装和生成路径改为 `~/.codex/skills`。
+- 使用方式改为 Codex 自然语言触发，同时保留 Claude Code/Amp 兼容说明。
+- `scripts/extract.py` 改为 `argparse` 参数解析。
+- 新增 `--output-dir`，同时保留 `BOOK_SKILL_WORKDIR`。
+- 缺失依赖默认不自动安装，减少意外修改本机环境的风险。
+- 增加基于 Python 标准库 `unittest` 的轻量测试，不依赖 pytest。
+- 保持 Python 3.9 兼容。
+- README 改为中文优先的中英双语文档。
+
+## 致谢
+
+感谢原作者 [virgiliojr94](https://github.com/virgiliojr94) 创建并开源了 [book-to-skill](https://github.com/virgiliojr94/book-to-skill)。这个 fork 的核心思路、文档抽取流程和 skill 生成结构都来自原项目；本仓库主要是在此基础上做 Codex 使用体验、路径、安全默认值和文档层面的适配。
+
+## 许可证
+
+MIT。请保留原项目版权和许可证声明。
+
+</details>
 
 ---
 
-## 📁 Repository structure
+<details id="english">
+<summary><strong>English</strong></summary>
 
-```
-book-to-skill/
-├── SKILL.md              # Codex skill definition + step-by-step instructions
-├── scripts/
-│   └── extract.py        # PDF + EPUB extraction (pdftotext / PyPDF2 / pdfminer / ebooklib / zipfile)
-└── README.md             # This file
+## What This Is
+
+`book-to-skill` turns a PDF, EPUB, DOCX, Markdown, HTML, RTF, or MOBI/AZW/AZW3 document into a structured Codex skill. It does not just write book notes. It extracts frameworks, mental models, principles, techniques, anti-patterns, chapter indexes, and topic indexes so Codex can later load the relevant chapter on demand and answer from the actual source.
+
+Generated skills default to:
+
+```text
+~/.codex/skills/<skill-name>/
 ```
 
----
+## Why
+
+You read a great technical book, then three months later you cannot remember where chapter 7 covered that crucial idea. The usual workarounds are weak:
+
+- Searching the PDF gives page hits, not applied answers.
+- Asking a model directly can produce hallucinated or second-hand knowledge.
+- Personal notes often become long documents you rarely reopen.
+
+`book-to-skill` compiles the book into a skill first. Then you can ask Codex in natural language:
+
+```text
+Use the designing-data-intensive-apps skill to explain replication.
+```
+
+Codex reads the right chapter through the skill's topic index instead of loading the entire book into every conversation.
+
+## What It Generates
+
+Running the converter creates a complete skill:
+
+| File | Purpose | Typical size |
+|------|---------|--------------|
+| `SKILL.md` | Core mental models, chapter index, topic index | ~4,000 tokens |
+| `chapters/ch01-*.md` ... | One file per chapter, loaded on demand | ~1,000 tokens each |
+| `glossary.md` | Key terms, alphabetized with chapter references | ~1,500 tokens |
+| `patterns.md` | Techniques, algorithms, design patterns, methods | ~2,000 tokens |
+| `cheatsheet.md` | Decision tables, comparison matrices, quick reference | ~1,000 tokens |
+
+Chapter files are loaded on demand; Codex only reads them when the user asks about related topics or chapters.
+
+## Install
+
+Ask Codex to install from this fork:
+
+```text
+Install the book-to-skill skill from https://raw.githubusercontent.com/JasonHe/book-to-skill/master/SKILL.md
+```
+
+Or install manually:
+
+```bash
+mkdir -p ~/.codex/skills/book-to-skill/scripts
+
+curl -L -o ~/.codex/skills/book-to-skill/SKILL.md \
+  https://raw.githubusercontent.com/JasonHe/book-to-skill/master/SKILL.md
+
+curl -L -o ~/.codex/skills/book-to-skill/scripts/extract.py \
+  https://raw.githubusercontent.com/JasonHe/book-to-skill/master/scripts/extract.py
+```
+
+To test the current adapter branch directly, replace `master` with `codex/codex-skill-adapter` in the raw URLs.
+
+## Usage
+
+Use natural language in Codex:
+
+```text
+Use the book-to-skill skill to convert ~/Downloads/designing-data-intensive-applications.pdf into a Codex skill.
+
+Use the book-to-skill skill to convert ~/books/clean-code.epub into a Codex skill named clean-code.
+
+Use the book-to-skill skill to convert /tmp/ddd-evans.pdf into a Codex skill named domain-driven-design.
+```
+
+After generating a book skill, use it like this:
+
+```text
+Use the designing-data-intensive-apps skill to load the book's core mental models.
+Use the designing-data-intensive-apps skill to explain replication.
+Use the designing-data-intensive-apps skill to dive into chapter 5.
+Use the designing-data-intensive-apps skill to list the available chapters.
+```
+
+Claude Code and Amp can still use the generated files through their compatible skill directories. Codex usage is natural-language-first and does not rely on slash commands.
+
+## Formats and Dependencies
+
+Plain text, Markdown, reStructuredText, and AsciiDoc need no extra dependencies. Other formats try the best available extractor first:
+
+| Format | Preferred tool | Fallback |
+|--------|----------------|----------|
+| Text-heavy PDF | `pdftotext` | `PyPDF2`, `pdfminer.six` |
+| Technical PDF | `docling` | PDF text extraction chain |
+| EPUB | `ebooklib` + `beautifulsoup4` | stdlib ZIP/HTML parser |
+| DOCX | `python-docx` | stdlib ZIP/XML parser |
+| HTML | `beautifulsoup4` | stdlib HTML parser |
+| RTF | `striprtf` | basic regex cleanup |
+| MOBI/AZW/AZW3 | Calibre `ebook-convert` | none |
+
+This Codex adapter does not auto-install missing dependencies by default. Dependency installation should only happen after the user explicitly approves it.
+
+## How It Works
+
+```text
+PDF / EPUB / DOCX / text document
+        |
+        v
+Choose technical or text extraction mode
+        |
+        v
+scripts/extract.py
+        |
+        +-- full_text.txt
+        +-- metadata.json
+        |
+        v
+Codex analyzes title, author, ToC, and chapter structure
+        |
+        v
+Generate chapter summaries, glossary, patterns, cheatsheet, and master SKILL.md
+        |
+        v
+~/.codex/skills/<skill-name>/
+```
+
+For books over roughly 50K tokens, the skill encourages targeted access with `grep`, `sed`, and chapter offsets instead of loading the entire book into context.
+
+## What Changed in This Fork
+
+This fork adapts the original project for Codex:
+
+- README and `SKILL.md` now default to Codex instead of Claude Code/Amp.
+- Default install and generation path is `~/.codex/skills`.
+- Usage is natural-language-first for Codex, while keeping Claude Code/Amp compatibility notes.
+- `scripts/extract.py` now uses `argparse`.
+- Added `--output-dir` while preserving `BOOK_SKILL_WORKDIR`.
+- Missing dependencies are not auto-installed by default.
+- Added lightweight standard-library `unittest` coverage without requiring pytest.
+- Kept Python 3.9 compatibility.
+- Reworked README into a Chinese-first bilingual document.
+
+## Acknowledgements
+
+Thanks to [virgiliojr94](https://github.com/virgiliojr94) for creating and open-sourcing [book-to-skill](https://github.com/virgiliojr94/book-to-skill). The core idea, extraction workflow, and generated skill structure come from the original project. This fork focuses on adapting the experience, paths, safer defaults, and documentation for Codex.
 
 ## License
 
-MIT
+MIT. Please keep the original copyright and license notice.
+
+</details>
+
+---
 
 ## Star History
 
