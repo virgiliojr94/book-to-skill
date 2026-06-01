@@ -1,13 +1,13 @@
-<h1 align="center">📚 book-to-skill</h1>
+<h1 align="center">📚 book-to-skill for Codex</h1>
 
 <p align="center">
-  <strong>Turn any technical book or document into a Claude Code skill — ready to study, reference, and use while you work.</strong>
+  <strong>Turn any technical book or document into a Codex skill — ready to study, reference, and use while you work.</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
-  <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Formats supported">
-  <img src="https://img.shields.io/badge/effort-high-orange?style=for-the-badge" alt="Effort: high">
+  <img src="https://img.shields.io/badge/Codex-Skill-black?style=for-the-badge" alt="Codex Skill">
+  <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Supported formats: PDF, EPUB, DOCX, Markdown, HTML, RTF, MOBI">
+  <img src="https://img.shields.io/badge/Codex%20effort-high-orange?style=for-the-badge" alt="Codex effort: high">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
 
@@ -29,18 +29,18 @@ You buy a great technical book. You read it once. Three months later you can't r
 
 The usual workarounds don't help:
 - 📄 "Let me just search the PDF" → you get a list of pages, not answers
-- 🧠 "I'll ask Claude about this book" → it either hallucinates or says it doesn't have the content
+- 🧠 "I'll ask Codex about this book" → it either hallucinates or says it doesn't have the content
 - 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again
 
-**book-to-skill solves this by turning the book into a structured skill Claude loads on demand.**
+**book-to-skill solves this by turning the book into a structured skill Codex loads on demand.**
 
-Once installed, you just type `/your-book-slug replication` and Claude reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
+Once installed, ask Codex in plain language: "Use the `your-book-slug` skill to explain replication." Codex reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
 
 ---
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or `.epub`) creates a full skill at `~/.claude/skills/<slug>/`:
+Running the `book-to-skill` skill on `your-book.pdf` (or `.epub`) creates a full Codex skill at `~/.codex/skills/<slug>/`:
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -56,39 +56,36 @@ Running `/book-to-skill your-book.pdf` (or `.epub`) creates a full skill at `~/.
 
 ## 🚀 Usage
 
-```
-/book-to-skill <path-to-document> [skill-name-slug]
-```
+Ask Codex to use the skill in natural language.
 
 Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, AsciiDoc, HTML, RTF, MOBI/AZW/AZW3.
 
 **Examples:**
 
-```bash
-# PDF — derive skill name from filename
-/book-to-skill ~/Downloads/designing-data-intensive-applications.pdf
+```text
+Use the book-to-skill skill to convert ~/Downloads/designing-data-intensive-applications.pdf into a Codex skill.
 
-# EPUB — specify a custom slug
-/book-to-skill ~/books/clean-code.epub clean-code
+Use the book-to-skill skill to convert ~/books/clean-code.epub into a Codex skill named clean-code.
 
-# Full path with explicit name
-/book-to-skill /tmp/ddd-evans.pdf domain-driven-design
+Use the book-to-skill skill to convert /tmp/ddd-evans.pdf into a Codex skill named domain-driven-design.
 ```
 
-After the skill is created, use it like any other Claude Code skill:
+After the skill is created, use it like any other Codex skill:
 
-```bash
-/designing-data-intensive-apps                  # load core mental models
-/designing-data-intensive-apps replication      # find and explain a topic
-/designing-data-intensive-apps ch05             # dive into chapter 5
-/designing-data-intensive-apps "what chapters do you have?"
+```text
+Use the designing-data-intensive-apps skill to load the book's core mental models.
+Use the designing-data-intensive-apps skill to explain replication.
+Use the designing-data-intensive-apps skill to dive into chapter 5.
+Use the designing-data-intensive-apps skill to list the available chapters.
 ```
+
+Claude Code and Amp can use the same generated skill files through their compatible skill workflows. If you already have a `/book-to-skill` slash command wired up there, it can remain as a compatibility path; Codex usage is plain natural language by default.
 
 ---
 
 ## 🔧 Requirements
 
-The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.
+The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. In a Codex session, dependency installation should happen only after Codex asks for your approval and you confirm the command. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.
 
 **PDF — choose by book type:**
 
@@ -139,7 +136,7 @@ scripts/extract.py --mode <technical|text>
      └── /tmp/book_skill_work/metadata.json
                │
                ▼
-          Claude analyzes structure
+          Codex analyzes structure
           (title, author, chapters, ToC)
                │
                ▼
@@ -149,7 +146,7 @@ scripts/extract.py --mode <technical|text>
           Generates master SKILL.md with core mental models
                │
                ▼
-          ~/.claude/skills/<slug>/  ✅ written
+          ~/.codex/skills/<slug>/  ✅ written
           /tmp/book_skill_work/     🗑️  cleaned up
 ```
 
@@ -166,7 +163,7 @@ scripts/extract.py --mode <technical|text>
 1. **Density over completeness** — a 1,000-token summary beats a 10,000-token excerpt
 2. **Practitioner voice** — "Use X when Y", not "The book explains X"
 3. **Front-loaded SKILL.md** — compaction keeps the first ~5,000 tokens; the most important content comes first
-4. **On-demand chapters** — the topic index tells Claude which file to read; chapters load only when needed
+4. **On-demand chapters** — the topic index tells Codex which file to read; chapters load only when needed
 5. **Never raw text** — always synthesize, summarize, extract signal from the source
 
 </details>
@@ -175,11 +172,11 @@ scripts/extract.py --mode <technical|text>
 
 ## ❓ FAQ
 
-**"Can't I just dump the PDF/EPUB into my Claude project context?"**
+**"Can't I just dump the PDF/EPUB into a Codex conversation?"**
 
 You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load. The rest stays on disk until you need it.
 
-More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Claude isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.
+More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Codex isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.
 
 ---
 
@@ -196,13 +193,13 @@ For searching across 50+ books, RAG wins. For going deep on one book and using i
 
 ---
 
-**"Popular books are already in Claude's training data. Why bother?"**
+**"Popular books are already in model training data. Why bother?"**
 
-For widely-known books (Clean Code, DDIA, Pragmatic Programmer), Claude has general knowledge — but it's compressed, averaged across the entire internet's discussion of the book, and may hallucinate specific quotes or chapter locations.
+For widely-known books (Clean Code, DDIA, Pragmatic Programmer), Codex may have general knowledge — but it's compressed, averaged across the entire internet's discussion of the book, and may hallucinate specific quotes or chapter locations.
 
 book-to-skill works from your actual copy. Every framework name, every anti-pattern list, every chapter number is grounded in the text you provided. No training data drift, no hallucinated chapter titles.
 
-It also shines for books Claude doesn't know at all: niche technical references, internal company documentation, recent publications, translated works.
+It also shines for books Codex doesn't know at all: niche technical references, internal company documentation, recent publications, translated works.
 
 ---
 
@@ -216,31 +213,33 @@ book-to-skill is built for a different job: you want to go deep on one book and 
 
 ## 📥 Install
 
-Copy this into your Claude Code session:
+Ask Codex to install the skill from this fork:
 
-```
-Install book-to-skill: https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/SKILL.md
+```text
+Install the book-to-skill skill from https://raw.githubusercontent.com/JasonHe/book-to-skill/master/SKILL.md
 ```
 
 Or manually:
 
 ```bash
-mkdir -p ~/.claude/skills/book-to-skill/scripts
+mkdir -p ~/.codex/skills/book-to-skill/scripts
 
-curl -o ~/.claude/skills/book-to-skill/SKILL.md \
-  https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/SKILL.md
+curl -L -o ~/.codex/skills/book-to-skill/SKILL.md \
+  https://raw.githubusercontent.com/JasonHe/book-to-skill/master/SKILL.md
 
-curl -o ~/.claude/skills/book-to-skill/scripts/extract.py \
-  https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/scripts/extract.py
+curl -L -o ~/.codex/skills/book-to-skill/scripts/extract.py \
+  https://raw.githubusercontent.com/JasonHe/book-to-skill/master/scripts/extract.py
 ```
 
-Then in any Claude Code session:
+Then in any Codex session:
 
-```bash
-/book-to-skill ~/path/to/your-book.pdf
-# or
-/book-to-skill ~/path/to/your-book.epub
+```text
+Use the book-to-skill skill to convert ~/path/to/your-book.pdf into a Codex skill named my-book.
+
+Use the book-to-skill skill to convert ~/path/to/your-book.epub into a Codex skill.
 ```
+
+For Claude Code or Amp, keep using their compatible skill installation location and invocation style. The generated `SKILL.md`, `chapters/`, `glossary.md`, `patterns.md`, and `cheatsheet.md` files are portable.
 
 ---
 
@@ -248,7 +247,7 @@ Then in any Claude Code session:
 
 ```
 book-to-skill/
-├── SKILL.md              # Skill definition + step-by-step instructions
+├── SKILL.md              # Codex skill definition + step-by-step instructions
 ├── scripts/
 │   └── extract.py        # PDF + EPUB extraction (pdftotext / PyPDF2 / pdfminer / ebooklib / zipfile)
 └── README.md             # This file
@@ -262,10 +261,10 @@ MIT
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=virgiliojr94%2Fbook-to-skill&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=JasonHe%2Fbook-to-skill&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=JasonHe/book-to-skill&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=JasonHe/book-to-skill&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=JasonHe/book-to-skill&type=date&legend=top-left" />
  </picture>
 </a>

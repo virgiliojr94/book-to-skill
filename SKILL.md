@@ -1,14 +1,7 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Amp or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
-compatibility: "Amp skill directories (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills) and Claude Code skill directories (~/.claude/skills)."
-allowed-tools:
-  - shell_command
-  - Read
-  - Write
-  - Glob
-  - Grep
-argument-hint: <path-to-document> [skill-name-slug]
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured Codex skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user naturally asks to turn a book or document into a reusable skill, study a document through Codex, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+compatibility: "Codex skill directories (~/.codex/skills) by default, with compatible Amp skill directories (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills) and Claude Code skill directories (~/.claude/skills) when explicitly requested."
 ---
 
 # Book-to-Skill Converter
@@ -17,7 +10,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Codex can leverage repeatedly, while preserving compatibility with Amp, Claude Code, or another compatible agent when requested.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -57,19 +50,20 @@ Three paths available. Route based on what the user asks:
 
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
-1. Amp project-local skills: `.agents/skills/`
-2. Amp global skills: `~/.config/agents/skills/`
-3. Amp legacy global skills: `~/.config/amp/skills/`
-4. Claude Code skills: `~/.claude/skills/`
+1. Codex skills: `~/.codex/skills/`
+2. Amp project-local skills: `.agents/skills/`
+3. Amp global skills: `~/.config/agents/skills/`
+4. Amp legacy global skills: `~/.config/amp/skills/`
+5. Claude Code skills: `~/.claude/skills/`
 
-Generated skills should default to `~/.config/agents/skills/` for Amp unless the user asks for project-local or Claude Code output.
+Generated book skills should default to `~/.codex/skills/<skill_name>/`. Write Amp or Claude Code compatible output only when the user explicitly asks for those targets.
 
 ---
 
 ## Step 0 — Out-of-scope check
 
-If the argument is NOT a path to a supported document file, stop and respond:
-> "book-to-skill requires a supported document path. Usage: `book-to-skill /path/to/book.pdf [skill-name]`, `book-to-skill /path/to/book.epub [skill-name]`, or another supported format such as `.docx`, `.md`, `.txt`, `.html`, `.rtf`, `.mobi`, or `.azw3`."
+If the request does NOT include a path to a supported document file, stop and respond:
+> "book-to-skill requires a supported document path. Ask me to convert `/path/to/book.pdf [skill-name]`, `/path/to/book.epub [skill-name]`, or another supported format such as `.docx`, `.md`, `.txt`, `.html`, `.rtf`, `.mobi`, or `.azw3`."
 
 Throughout the workflow, treat the first argument as `BOOK_PATH` and the optional second argument as `SKILL_NAME`.
 
@@ -121,6 +115,7 @@ Run the extraction script, passing the book type:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
+  "$HOME/.codex/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py" \
@@ -142,14 +137,14 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
 fi
 
-"$PYTHON_BIN" "$SCRIPT_PATH" "$BOOK_PATH" --mode <BOOK_TYPE> --install-missing ask
+"$PYTHON_BIN" "$SCRIPT_PATH" "$BOOK_PATH" --mode <BOOK_TYPE> --install-missing no
 ```
 
-Before extraction, the script checks optional Python packages needed for the detected format. If a better extractor is missing, it prompts the user with the available fallback, for example:
+Before extraction, the script checks optional Python packages needed for the detected format. Default to `--install-missing no` so the workflow uses available fallbacks without installing dependencies. If the user explicitly agrees to install missing dependencies, rerun with `--install-missing ask` or `--install-missing yes`. In interactive install mode, if a better extractor is missing, it prompts the user with the available fallback, for example:
 
 > "DOCX extraction uses python-docx if installed, otherwise a stdlib ZIP/XML parser. Missing package(s) detected. Do you want to install? y=install, n=fallback"
 
-Use `--install-missing yes` to install missing Python packages without prompting, `--install-missing no` or `--no-install-missing` to always use fallbacks, or `BOOK_SKILL_INSTALL_MISSING=yes|no|ask` to set the behavior by environment variable. Non-interactive sessions default to fallback unless install mode is explicitly `yes`.
+Use `--install-missing yes` to install missing Python packages without prompting after explicit user approval, `--install-missing no` or `--no-install-missing` to always use fallbacks, or `BOOK_SKILL_INSTALL_MISSING=yes|no|ask` to set the behavior by environment variable. Non-interactive sessions default to fallback unless install mode is explicitly `yes`.
 
 - PDF `--mode technical` → uses Docling (layout-aware, preserves tables and code blocks as markdown)
 - PDF `--mode text` → uses pdftotext → PyPDF2 → pdfminer fallback chain (fast, plain text)
@@ -181,9 +176,8 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
    Output (skill files generated):  ~<N>K tokens
    Total:                           ~<N>K tokens
 
-   Reference prices (as of 2025):
-   Claude Sonnet 4.5 → ~$<X> USD
-   Claude Haiku 4.5  → ~$<X> USD
+   Reference prices:
+   Use the active Codex model's current pricing or session usage UI when available.
 
    ⏱  Estimated time: ~<N> minutes
 
@@ -196,7 +190,7 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
 **How to estimate:**
 - Input tokens ≈ `estimated_tokens` from metadata × 1.3 (prompts overhead per chapter pass)
 - Output tokens ≈ chapters × 1,000 + 4,000 (SKILL.md) + 4,500 (glossary + patterns + cheatsheet)
-- Price: Sonnet input=$3/MTok output=$15/MTok — Haiku input=$0.80/MTok output=$4/MTok
+- Price: use current Codex model pricing or session usage reporting when available; if pricing is not available, present token estimates without a dollar estimate.
 
 Wait for the user to confirm before proceeding. If they say "analyze only", switch to Mode 2.
 
@@ -290,9 +284,10 @@ Otherwise, propose two options and let the user choose:
 Default to author-concept format if the book has a strong methodological identity.
 
 Choose the destination skill root:
-- **Amp default**: `~/.config/agents/skills`
+- **Codex default**: `~/.codex/skills`
 - **Amp project-local**: `.agents/skills` when the user explicitly wants the generated book skill scoped to the current workspace
-- **Amp legacy**: `~/.config/amp/skills` if that is the user's existing global skill location
+- **Amp global**: `~/.config/agents/skills` if the user explicitly asks for Amp global output
+- **Amp legacy**: `~/.config/amp/skills` if the user explicitly asks for that existing global skill location
 - **Claude Code**: `~/.claude/skills` if the user explicitly asks for Claude Code output
 
 Set `SKILLS_HOME` to the selected root and check that `$SKILLS_HOME/<skill_name>/` does NOT already exist.
@@ -401,23 +396,19 @@ Create `$SKILLS_HOME/<skill_name>/SKILL.md`:
 ---
 name: <skill_name>
 description: "Knowledge base from \"<Full Title>\" by <Author(s)>. Use when applying <author>'s frameworks for <key topics, 3–6 terms>, studying the book, or referencing its concepts."
-allowed-tools:
-  - Read
-  - Grep
-argument-hint: [topic, framework name, or chapter number]
 ---
 
 # <Full Title>
 **Author**: <Author(s)> | **Pages**: ~<N> | **Chapters**: <N> | **Generated**: <YYYY-MM-DD>
 
-## How to Use This Skill
+## How Codex Uses This Skill
 
-- **Without arguments** — load core frameworks for reference
-- **With a topic** — ask about `replication`, `pricing`, or another indexed topic; I find and read the relevant chapter
-- **With chapter** — ask for `ch05`; I load that specific chapter
-- **Browse** — ask "what chapters do you have?" to see the full index
+- When the user asks about this book, its topics, frameworks, or chapters, first consult the Core Frameworks below.
+- If the question names a topic such as `replication`, `pricing`, or another indexed term, find and read the relevant chapter file before answering.
+- If the question names a chapter such as `ch05`, load that specific chapter.
+- If the user asks what is available, show the chapter and topic indexes.
 
-When you ask about a topic not covered in Core Frameworks below, I will read
+When the user asks about a topic not covered in Core Frameworks below, read
 the relevant chapter file before answering.
 
 ---
@@ -502,9 +493,9 @@ Files generated:
 💡 Tip: check your agent's session cost/usage command to see actual token usage.
 
 Usage:
-  Ask for <skill_name>                  → load core frameworks
-  Ask <skill_name> about <topic>        → find and explain a topic
-  Ask <skill_name> for ch<N>            → dive into a specific chapter
+  Ask about <skill_name>                → load core frameworks
+  Ask about <topic> from <skill_name>   → find and explain a topic
+  Ask for ch<N> from <skill_name>       → dive into a specific chapter
 ```
 
 ---

@@ -25,6 +25,9 @@ Outputs:
 Set BOOK_SKILL_WORKDIR to override the output directory.
 """
 
+from __future__ import annotations
+
+import argparse
 import html
 import html.parser
 import importlib.util
@@ -37,15 +40,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-
-OUTPUT_DIR = Path(
-    os.environ.get(
-        "BOOK_SKILL_WORKDIR",
-        str(Path(tempfile.gettempdir()) / "book_skill_work"),
-    )
-)
-OUTPUT_TEXT = OUTPUT_DIR / "full_text.txt"
-OUTPUT_META = OUTPUT_DIR / "metadata.json"
+from typing import List, Optional, Tuple
 
 WORDS_PER_TOKEN = 0.75  # approximate
 
@@ -82,7 +77,7 @@ def python_module_available(module_name: str) -> bool:
     return importlib.util.find_spec(module_name) is not None
 
 
-def missing_python_packages(module_names: list[str]) -> list[str]:
+def missing_python_packages(module_names: List[str]) -> List[str]:
     missing = []
     for module_name in module_names:
         if not python_module_available(module_name):
@@ -90,7 +85,7 @@ def missing_python_packages(module_names: list[str]) -> list[str]:
     return missing
 
 
-def install_python_packages(packages: list[str]) -> bool:
+def install_python_packages(packages: List[str]) -> bool:
     if not packages:
         return True
 
@@ -109,16 +104,12 @@ def install_python_packages(packages: list[str]) -> bool:
     return result.returncode == 0
 
 
-def normalize_install_mode(argv: list[str]) -> str:
-    mode = os.environ.get("BOOK_SKILL_INSTALL_MISSING", "ask").lower()
-    if "--no-install-missing" in argv:
+def normalize_install_mode(mode: Optional[str], no_install_missing: bool = False) -> str:
+    if no_install_missing:
         return "no"
-    if "--install-missing" in argv:
-        idx = argv.index("--install-missing")
-        if idx + 1 < len(argv) and not argv[idx + 1].startswith("--"):
-            mode = argv[idx + 1].lower()
-        else:
-            mode = "yes"
+    if mode is None:
+        mode = os.environ.get("BOOK_SKILL_INSTALL_MISSING", "no")
+    mode = mode.lower()
     if mode in {"1", "true", "y", "yes", "install"}:
         return "yes"
     if mode in {"0", "false", "n", "no", "fallback", "skip"}:
@@ -126,11 +117,64 @@ def normalize_install_mode(argv: list[str]) -> str:
     return "ask"
 
 
+def default_output_dir() -> Path:
+    return Path(
+        os.environ.get(
+            "BOOK_SKILL_WORKDIR",
+            str(Path(tempfile.gettempdir()) / "book_skill_work"),
+        )
+    )
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Extract text from a document file for book-to-skill processing.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("path", help="Path to the source document")
+    parser.add_argument(
+        "--mode",
+        choices=("technical", "text"),
+        default="text",
+        help="Extraction mode for PDFs",
+    )
+    parser.add_argument(
+        "--install-missing",
+        choices=("ask", "yes", "no"),
+        nargs="?",
+        const="yes",
+        default=None,
+        help="Install missing optional Python dependencies",
+    )
+    parser.add_argument(
+        "--no-install-missing",
+        action="store_true",
+        help="Do not install missing optional Python dependencies",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Directory for full_text.txt and metadata.json",
+    )
+    return parser
+
+
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    args = build_arg_parser().parse_args(argv)
+    args.install_mode = normalize_install_mode(
+        args.install_missing,
+        no_install_missing=args.no_install_missing,
+    )
+    args.output_dir = args.output_dir or default_output_dir()
+    return args
+
+
 def offer_dependency_install(
     *,
     feature: str,
-    module_names: list[str],
-    fallback: str | None,
+    module_names: List[str],
+    fallback: Optional[str],
     install_mode: str,
 ) -> None:
     packages = missing_python_packages(module_names)
@@ -223,7 +267,7 @@ def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> N
         )
 
 
-def read_text_file(path: str) -> str | None:
+def read_text_file(path: str) -> Optional[str]:
     for encoding in ("utf-8-sig", "utf-8", "cp1252", "latin-1"):
         try:
             return Path(path).read_text(encoding=encoding)
@@ -247,14 +291,14 @@ def extract_html_content(raw_html: str) -> str:
         return parser.get_text()
 
 
-def extract_html_file(path: str) -> str | None:
+def extract_html_file(path: str) -> Optional[str]:
     raw = read_text_file(path)
     if raw is None:
         return None
     return extract_html_content(raw)
 
 
-def extract_docx_with_python_docx(docx_path: str) -> str | None:
+def extract_docx_with_python_docx(docx_path: str) -> Optional[str]:
     try:
         import docx
         document = docx.Document(docx_path)
@@ -271,7 +315,7 @@ def extract_docx_with_python_docx(docx_path: str) -> str | None:
         return None
 
 
-def extract_docx_with_zipfile(docx_path: str) -> str | None:
+def extract_docx_with_zipfile(docx_path: str) -> Optional[str]:
     try:
         import xml.etree.ElementTree as ET
 
@@ -279,7 +323,7 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
             xml_bytes = zf.read("word/document.xml")
         root = ET.fromstring(xml_bytes)
         namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
-        parts: list[str] = []
+        parts: List[str] = []
         for paragraph in root.iter(f"{namespace}p"):
             texts = [node.text for node in paragraph.iter(f"{namespace}t") if node.text]
             if texts:
@@ -289,7 +333,7 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
         return None
 
 
-def extract_docx(docx_path: str) -> tuple[str, str]:
+def extract_docx(docx_path: str) -> Tuple[str, str]:
     print("Trying python-docx...", end=" ", flush=True)
     text = extract_docx_with_python_docx(docx_path)
     if text and text.strip():
@@ -322,7 +366,7 @@ def strip_rtf_fallback(raw: str) -> str:
     return html.unescape(raw)
 
 
-def extract_rtf(rtf_path: str) -> tuple[str, str]:
+def extract_rtf(rtf_path: str) -> Tuple[str, str]:
     raw = read_text_file(rtf_path)
     if raw is None:
         print("ERROR: Could not read RTF file", file=sys.stderr)
@@ -341,10 +385,10 @@ def extract_rtf(rtf_path: str) -> tuple[str, str]:
     return strip_rtf_fallback(raw), "rtf-regex"
 
 
-def extract_with_ebook_convert(input_path: str) -> str | None:
+def extract_with_ebook_convert(input_path: str, output_dir: Path) -> Optional[str]:
     if not shutil.which("ebook-convert"):
         return None
-    output_path = OUTPUT_DIR / "ebook-convert-output.txt"
+    output_path = output_dir / "ebook-convert-output.txt"
     try:
         result = subprocess.run(
             ["ebook-convert", input_path, str(output_path)],
@@ -359,7 +403,7 @@ def extract_with_ebook_convert(input_path: str) -> str | None:
     return None
 
 
-def extract_with_pdftotext(pdf_path: str) -> str | None:
+def extract_with_pdftotext(pdf_path: str) -> Optional[str]:
     if not shutil.which("pdftotext"):
         return None
     try:
@@ -374,7 +418,7 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
     return None
 
 
-def extract_with_pypdf2(pdf_path: str) -> str | None:
+def extract_with_pypdf2(pdf_path: str) -> Optional[str]:
     try:
         import PyPDF2
         text_parts = []
@@ -392,7 +436,7 @@ def extract_with_pypdf2(pdf_path: str) -> str | None:
         return None
 
 
-def extract_with_pdfminer(pdf_path: str) -> str | None:
+def extract_with_pdfminer(pdf_path: str) -> Optional[str]:
     try:
         from pdfminer.high_level import extract_text
         return extract_text(pdf_path)
@@ -402,7 +446,7 @@ def extract_with_pdfminer(pdf_path: str) -> str | None:
         return None
 
 
-def extract_with_ebooklib(epub_path: str) -> str | None:
+def extract_with_ebooklib(epub_path: str) -> Optional[str]:
     try:
         import ebooklib
         from ebooklib import epub
@@ -427,9 +471,9 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
 
     def __init__(self):
         super().__init__()
-        self._parts: list[str] = []
+        self._parts: List[str] = []
         self._skip_depth = 0
-        self._current_skip: str | None = None
+        self._current_skip: Optional[str] = None
 
     def handle_starttag(self, tag, attrs):
         if tag in self.SKIP_TAGS:
@@ -449,13 +493,13 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
         return html.unescape("".join(self._parts))
 
 
-def extract_with_zipfile(epub_path: str) -> str | None:
+def extract_with_zipfile(epub_path: str) -> Optional[str]:
     """stdlib-only EPUB extractor: unzip → parse HTML files."""
     try:
         with zipfile.ZipFile(epub_path) as zf:
             names = zf.namelist()
             # Read OPF spine to get reading order, fall back to sorted xhtml files
-            spine_order: list[str] = []
+            spine_order: List[str] = []
             opf_files = [n for n in names if n.endswith(".opf")]
             if opf_files:
                 opf_text = zf.read(opf_files[0]).decode("utf-8", errors="replace")
@@ -481,7 +525,7 @@ def extract_with_zipfile(epub_path: str) -> str | None:
         return None
 
 
-def extract_epub(epub_path: str) -> tuple[str, str]:
+def extract_epub(epub_path: str) -> Tuple[str, str]:
     """Return (text, method) for an EPUB file."""
     print("Trying ebooklib + BeautifulSoup4...", end=" ", flush=True)
     text = extract_with_ebooklib(epub_path)
@@ -568,7 +612,7 @@ def detect_structure(text: str) -> dict:
     }
 
 
-def extract_with_docling(pdf_path: str) -> str | None:
+def extract_with_docling(pdf_path: str) -> Optional[str]:
     """Layout-aware extraction using Docling. Best for technical books with tables and code."""
     try:
         from docling.document_converter import DocumentConverter
@@ -593,23 +637,14 @@ def extract_with_docling(pdf_path: str) -> str | None:
         return None
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document> [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
-        print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
-        sys.exit(1)
-
-    input_path = sys.argv[1]
-    install_mode = normalize_install_mode(sys.argv)
-
-    # Parse --mode flag
-    extraction_mode = "text"
-    if "--mode" in sys.argv:
-        idx = sys.argv.index("--mode")
-        if idx + 1 < len(sys.argv):
-            extraction_mode = sys.argv[idx + 1].lower()
-    if extraction_mode not in ("technical", "text"):
-        extraction_mode = "text"
+def main(argv: Optional[List[str]] = None) -> None:
+    args = parse_args(argv)
+    input_path = args.path
+    output_dir = args.output_dir
+    output_text = output_dir / "full_text.txt"
+    output_meta = output_dir / "metadata.json"
+    install_mode = args.install_mode
+    extraction_mode = args.mode
 
     if not os.path.exists(input_path):
         print(f"ERROR: File not found: {input_path}", file=sys.stderr)
@@ -655,7 +690,7 @@ def main():
             )
             sys.exit(1)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     prepare_dependencies(ext, extraction_mode, install_mode)
 
     if ext in CALIBRE_EBOOK_EXTENSIONS and not shutil.which("ebook-convert"):
@@ -749,7 +784,7 @@ def main():
         pages_label = "sections"
     elif ext in CALIBRE_EBOOK_EXTENSIONS:
         print(f"Extracting ebook with Calibre: {input_path}")
-        text = extract_with_ebook_convert(input_path)
+        text = extract_with_ebook_convert(input_path, output_dir)
         if text is None or not text.strip():
             print(
                 f"ERROR: Could not extract text from {ext}. Install Calibre and ensure ebook-convert is on PATH.",
@@ -767,7 +802,7 @@ def main():
         sys.exit(1)
 
     # Write full text
-    OUTPUT_TEXT.write_text(text, encoding="utf-8")
+    output_text.write_text(text, encoding="utf-8")
 
     tokens = estimate_tokens(text)
     structure = detect_structure(text)
@@ -785,11 +820,11 @@ def main():
         "words": len(text.split()),
         "estimated_tokens": tokens,
         "estimated_tokens_human": f"~{tokens // 1000}K",
-        "output_text": str(OUTPUT_TEXT),
+        "output_text": str(output_text),
         **structure,
     }
 
-    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+    output_meta.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
 
     page_label = {
         "spine_items": "Spine items",
@@ -810,8 +845,8 @@ def main():
             "   WARN    : No table of contents detected — chapter mapping in Step 3 "
             "will rely on heading scan only, which may miss or duplicate sections."
         )
-    print(f"\n   Text -> {OUTPUT_TEXT}")
-    print(f"   Meta -> {OUTPUT_META}")
+    print(f"\n   Text -> {output_text}")
+    print(f"   Meta -> {output_meta}")
 
 
 if __name__ == "__main__":
