@@ -115,6 +115,57 @@ def _make_unsupported_file(path: Path) -> Path:
     return path
 
 
+def _make_oebps_epub(path: Path) -> Path:
+    """Create an EPUB with OPF inside OEBPS/ (like LibreOffice/Calibre output).
+
+    This is the layout that triggers the OPF-relative href bug:
+    the OPF lists ``href="sections/ch1.xhtml"`` but the actual zip entry
+    is ``OEBPS/sections/ch1.xhtml``.
+    """
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("mimetype", "application/epub+zip")
+        zf.writestr(
+            "META-INF/container.xml",
+            textwrap.dedent("""\
+                <?xml version="1.0"?>
+                <container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"
+                           version="1.0">
+                  <rootfiles>
+                    <rootfile full-path="OEBPS/content.opf"
+                              media-type="application/oebps-package+xml"/>
+                  </rootfiles>
+                </container>
+            """),
+        )
+        zf.writestr(
+            "OEBPS/content.opf",
+            textwrap.dedent("""\
+                <?xml version="1.0"?>
+                <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+                  <metadata/>
+                  <manifest>
+                    <item id="ch1" href="sections/ch1.xhtml" media-type="application/xhtml+xml"/>
+                    <item id="ch2" href="sections/ch2.xhtml" media-type="application/xhtml+xml"/>
+                  </manifest>
+                  <spine>
+                    <itemref idref="ch1"/>
+                    <itemref idref="ch2"/>
+                  </spine>
+                </package>
+            """),
+        )
+        zf.writestr(
+            "OEBPS/sections/ch1.xhtml",
+            "<html><body><p>Chapter one from OEBPS.</p></body></html>",
+        )
+        zf.writestr(
+            "OEBPS/sections/ch2.xhtml",
+            "<html><body><p>Chapter two from OEBPS.</p></body></html>",
+        )
+    return path
+
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  FIX #1 — EPUB extraction no longer does tuple-unpack
 # ═══════════════════════════════════════════════════════════════════════════
@@ -158,6 +209,65 @@ class TestEpubExtractionFix:
                 pytest.fail(f"Tuple-unpack regression! Got: {exc}")
 
         assert result["text"]  # some text was extracted
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  BUG #11 — EPUB OPF-relative href resolution
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestEpubOpfRelativePaths:
+    """Verify that EPUBs with OPF in a subdirectory (OEBPS/) are extracted."""
+
+    def test_zipfile_fallback_resolves_oebps_paths(self, tmp_path):
+        """The core bug: hrefs in OPF are relative to OPF dir, not archive root."""
+        from extractor.parsers.epub import extract_with_zipfile
+
+        epub_path = _make_oebps_epub(tmp_path / "oebps.epub")
+        text = extract_with_zipfile(str(epub_path))
+
+        assert text is not None, "extract_with_zipfile returned None for OEBPS EPUB"
+        assert "Chapter one from OEBPS" in text
+        assert "Chapter two from OEBPS" in text
+
+    def test_full_extraction_with_oebps_epub(self, tmp_path):
+        """End-to-end: extract_single_file should succeed with OEBPS layout."""
+        epub_path = _make_oebps_epub(tmp_path / "test_oebps.epub")
+
+        with mock.patch("extractor.utils.prepare_dependencies"):
+            result = extract_single_file(epub_path, "text", "no")
+
+        assert result["format"] == "epub"
+        assert result["extraction_method"] in ("ebooklib", "zipfile")
+        assert "Chapter one from OEBPS" in result["text"]
+        assert "Chapter two from OEBPS" in result["text"]
+
+    def test_container_xml_locates_opf(self, tmp_path):
+        """_find_opf_path should prefer META-INF/container.xml over globbing."""
+        from extractor.parsers.epub import _find_opf_path
+
+        epub_path = _make_oebps_epub(tmp_path / "container.epub")
+        with zipfile.ZipFile(epub_path) as zf:
+            opf_path = _find_opf_path(zf)
+
+        assert opf_path == "OEBPS/content.opf"
+
+    def test_count_chapters_with_oebps(self, tmp_path):
+        """count_epub_chapters should work with OPF in subdirectory."""
+        from extractor.parsers.epub import count_epub_chapters
+
+        epub_path = _make_oebps_epub(tmp_path / "chapters.epub")
+        count = count_epub_chapters(str(epub_path))
+        assert count == 2
+
+    def test_root_level_opf_still_works(self, tmp_path):
+        """Regression check: root-level OPF (no subdirectory) should still work."""
+        from extractor.parsers.epub import extract_with_zipfile
+
+        epub_path = _make_minimal_epub(tmp_path / "root_opf.epub")
+        text = extract_with_zipfile(str(epub_path))
+
+        assert text is not None
+        assert "EPUB chapter one content" in text
 
 
 # ═══════════════════════════════════════════════════════════════════════════
