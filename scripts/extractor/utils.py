@@ -152,6 +152,7 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
             seen.add(resolved_path)
             unique_paths.append(resolved_path)
 
+    unique_paths.sort(key=lambda x: str(x).lower())
     return unique_paths
 
 
