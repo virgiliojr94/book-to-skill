@@ -62,28 +62,15 @@ jobs:
           grep -q "Backpressure" "$BOOK_SKILL_WORKDIR/full_text.txt"
 
   validate-skill:
-    name: validate SKILL.md frontmatter
+    name: validate SKILL.md (Claude Code rules)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check SKILL.md frontmatter has required keys
-        run: |
-          python3 - <<'PY'
-          import sys, pathlib
-          text = pathlib.Path("SKILL.md").read_text(encoding="utf-8")
-          if not text.startswith("---"):
-              sys.exit("SKILL.md: missing YAML frontmatter (--- block)")
-          end = text.find("\n---", 3)
-          if end == -1:
-              sys.exit("SKILL.md: unterminated frontmatter block")
-          fm = text[3:end]
-          required = ["name:", "description:"]
-          missing = [k for k in required
-                     if not any(ln.strip().startswith(k) for ln in fm.splitlines())]
-          if missing:
-              sys.exit("SKILL.md frontmatter missing required keys: " + ", ".join(missing))
-          print("SKILL.md frontmatter OK")
-          PY
+      - name: Audit SKILL.md against Claude Code skill rules
+        # Fails on Claude-breaking issues (missing name/description, oversized
+        # description, a tool restriction that omits Bash while the skill shells
+        # out). Cross-agent metadata Claude ignores is reported as WARN only.
+        run: python3 tools/validate_skill.py SKILL.md
