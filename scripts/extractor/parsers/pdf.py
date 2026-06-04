@@ -1,7 +1,5 @@
 import shutil
 import subprocess
-import sys
-from extractor.parsers.calibre import extract_with_ebook_convert
 
 
 def extract_with_pdftotext(pdf_path: str) -> str | None:

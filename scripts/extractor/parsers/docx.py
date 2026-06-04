@@ -1,6 +1,4 @@
-import sys
 import zipfile
-from extractor.config import supported_formats_message
 from extractor.exceptions import ExtractionError
 
 

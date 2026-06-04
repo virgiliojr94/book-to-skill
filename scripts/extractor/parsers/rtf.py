@@ -1,6 +1,5 @@
 import html
 import re
-import sys
 from extractor.parsers.text import read_text_file
 from extractor.exceptions import ExtractionError
 

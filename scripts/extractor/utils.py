@@ -56,7 +56,7 @@ def detect_structure(text: str) -> dict:
         r"^\s*(chapter\s+\d+|CHAPTER\s+\d+|ch\.\s*\d+|\d+\.\s+[A-Z])",
         re.IGNORECASE
     )
-    chapters_found = [l.strip() for l in lines if chapter_pattern.match(l)]
+    chapters_found = [line.strip() for line in lines if chapter_pattern.match(line)]
 
     # Look for ToC indicators in the first ~30k chars
     toc_pattern = re.compile(

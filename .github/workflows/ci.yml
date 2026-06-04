@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install pytest
+        run: pip install pytest
+      - name: Run test suite
+        run: pytest tests/ -q
+
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Ruff check
+        # High-value gate: syntax errors (E9, e.g. IndentationError) + pyflakes
+        # (F: undefined names, unused imports). Style rules are intentionally
+        # not gated yet to avoid blocking on cosmetic churn.
+        run: ruff check --select E9,F --target-version py310 scripts/ tests/
+
+  smoke:
+    name: smoke (dependency-free extraction)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Extract a sample with no optional deps installed
+        run: |
+          set -euo pipefail
+          mkdir -p sample
+          printf '# Backpressure\n\nChapter 1\nBounded queues prevent overload.\n' > sample/note.md
+          export BOOK_SKILL_WORKDIR="$RUNNER_TEMP/work"
+          python3 scripts/extract.py sample/note.md --mode text --install-missing no
+          test -f "$BOOK_SKILL_WORKDIR/full_text.txt"
+          test -f "$BOOK_SKILL_WORKDIR/metadata.json"
+          grep -q "Backpressure" "$BOOK_SKILL_WORKDIR/full_text.txt"
+
+  validate-skill:
+    name: validate SKILL.md frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check SKILL.md frontmatter has required keys
+        run: |
+          python3 - <<'PY'
+          import sys, pathlib
+          text = pathlib.Path("SKILL.md").read_text(encoding="utf-8")
+          if not text.startswith("---"):
+              sys.exit("SKILL.md: missing YAML frontmatter (--- block)")
+          end = text.find("\n---", 3)
+          if end == -1:
+              sys.exit("SKILL.md: unterminated frontmatter block")
+          fm = text[3:end]
+          required = ["name:", "description:"]
+          missing = [k for k in required
+                     if not any(ln.strip().startswith(k) for ln in fm.splitlines())]
+          if missing:
+              sys.exit("SKILL.md frontmatter missing required keys: " + ", ".join(missing))
+          print("SKILL.md frontmatter OK")
+          PY
