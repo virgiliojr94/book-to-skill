@@ -62,12 +62,12 @@ Four paths available. Route based on what the user asks:
 
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
-1. Amp project-local skills: `.agents/skills/`
-2. Amp global skills: `~/.config/agents/skills/`
-3. Amp legacy global skills: `~/.config/amp/skills/`
-4. Claude Code skills: `~/.claude/skills/`
+1. Claude Code skills: `~/.claude/skills/`
+2. Amp project-local skills: `.agents/skills/`
+3. Amp global skills: `~/.config/agents/skills/`
+4. Amp legacy global skills: `~/.config/amp/skills/`
 
-Generated skills should default to `~/.config/agents/skills/` for Amp unless the user asks for project-local or Claude Code output.
+Generated skills should default to `~/.claude/skills/` for Claude Code unless the user asks for Amp project-local or Amp global output.
 
 ---
 
@@ -123,10 +123,10 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
+  "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.claude/skills/book-to-skill/scripts/extract.py"
+  "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
 do
   if [ -f "$candidate" ]; then
     SCRIPT_PATH="$candidate"
@@ -280,10 +280,10 @@ Otherwise, propose two options and let the user choose:
 Default to author-concept format if the book has a strong methodological identity.
 
 Choose the destination skill root:
-- **Amp default**: `~/.config/agents/skills`
+- **Claude Code default**: `~/.claude/skills`
+- **Amp global**: `~/.config/agents/skills` if that is the user's existing global skill location
 - **Amp project-local**: `.agents/skills` when the user explicitly wants the generated book skill scoped to the current workspace
 - **Amp legacy**: `~/.config/amp/skills` if that is the user's existing global skill location
-- **Claude Code**: `~/.claude/skills` if the user explicitly asks for Claude Code output
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:

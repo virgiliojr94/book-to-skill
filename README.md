@@ -126,7 +126,7 @@ The extractor tries tools in order per format and uses the first available. If n
 ## ⚙️ How it works
 
 ```
-PDF or EPUB
+One file · a folder · a glob · a list of paths
      │
      ▼
 Step 1.5 — "Technical or text-heavy book?"
@@ -135,15 +135,17 @@ Step 1.5 — "Technical or text-heavy book?"
      └── text      → pdftotext → PyPDF2 → pdfminer  (instant)
      │
      ▼
-scripts/extract.py --mode <technical|text>
-  EPUB → ebooklib → stdlib zipfile
+scripts/extract.py <paths…> --mode <technical|text>
+  per source: PDF → pdftotext/Docling · EPUB → ebooklib → stdlib zipfile · DOCX/HTML/RTF/…
+  (one bad source is skipped with a warning; the rest still process)
      │
-     ├── /tmp/book_skill_work/full_text.txt
-     └── /tmp/book_skill_work/metadata.json
+     ├── /tmp/book_skill_work/full_text.txt   (all sources merged, with source markers)
+     └── /tmp/book_skill_work/metadata.json   (aggregated stats + per-source array)
                │
                ▼
           Claude analyzes structure
-          (title, author, chapters, ToC)
+          (title, author, chapters, ToC — spanning all sources)
+          ── or, if targeting an existing skill: folds new content in (Mode 4)
                │
                ▼
           Generates per-chapter summaries  (800–1,200 tokens each)
@@ -250,10 +252,13 @@ book-to-skill/
 │   ├── extract.py        # Thin entrypoint wrapper
 │   └── extractor/        # Modular extraction package
 │       ├── __init__.py
-│       ├── config.py
+│       ├── config.py     # Extensions, paths, dependency constants
 │       ├── dependencies.py
-│       ├── utils.py
-│       └── parsers/      # Format-specific parser components (pdf, epub, docx, etc.)
+│       ├── exceptions.py # ExtractionError (per-source failures, batch-safe)
+│       ├── utils.py      # CLI parsing, multi-source resolution, runner
+│       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
+├── tests/
+│   └── test_extractor.py # Test suite (multi-source, batch resilience, EPUB, parsers)
 └── README.md             # This file
 ```
 
