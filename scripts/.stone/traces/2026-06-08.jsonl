@@ -1,0 +1,4 @@
+{"ts":"2026-06-08T14:53:26.770Z","session_id":"default","event":"hook_run","hook":"post-bash","duration_ms":3,"ok":true,"failed":false}
+{"ts":"2026-06-08T14:53:36.407Z","session_id":"default","event":"hook_run","hook":"pre-bash","duration_ms":3,"ok":true,"failed":false}
+{"ts":"2026-06-08T14:54:48.174Z","session_id":"default","event":"hook_run","hook":"post-bash","duration_ms":4,"ok":true,"failed":false}
+{"ts":"2026-06-08T14:54:56.009Z","session_id":"default","event":"hook_run","hook":"pre-bash","duration_ms":5,"ok":true,"failed":false}

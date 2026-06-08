@@ -95,6 +95,8 @@ After the skill is created, use it like any other Claude Code skill:
 
 The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.
 
+> **Check your setup in one command:** `python3 scripts/extract.py --check` prints which extractors are installed for every format and the exact command to install anything missing — no file needed.
+
 **PDF — choose by book type:**
 
 | Book type | Tool | Install | Speed |

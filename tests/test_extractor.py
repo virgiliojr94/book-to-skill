@@ -629,3 +629,52 @@ class TestResolveInputFiles:
         names = [p.name for p in result]
         assert "readme.txt" in names
         assert "photo.jpg" not in names
+
+
+class TestDependencyCheck:
+    """Tests for the --check preflight (run_dependency_check)."""
+
+    def test_all_present_reports_ready(self, capsys):
+        from extractor.dependencies import run_dependency_check
+
+        with mock.patch("extractor.dependencies.python_module_available", return_value=True), \
+             mock.patch("extractor.dependencies.shutil.which", return_value="/usr/bin/tool"):
+            code = run_dependency_check()
+
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "All optional dependencies are installed" in out
+        assert "✗" not in out
+
+    def test_all_missing_lists_install_commands(self, capsys):
+        from extractor.dependencies import run_dependency_check
+
+        with mock.patch("extractor.dependencies.python_module_available", return_value=False), \
+             mock.patch("extractor.dependencies.shutil.which", return_value=None):
+            code = run_dependency_check()
+
+        out = capsys.readouterr().out
+        assert code == 0
+        # consolidated pip command lists the missing python packages
+        assert "pip install" in out
+        assert "docling" in out and "striprtf" in out
+        # MOBI has no fallback → flagged as required
+        assert "MISSING — required, no fallback" in out
+        # Calibre hint is surfaced as a system dependency
+        assert "calibre-ebook.com" in out
+
+    def test_pdftotext_alone_satisfies_pdf_text(self, capsys):
+        """pdftotext present (system) should mark PDF text-heavy ready even with no python PDF libs."""
+        from extractor.dependencies import run_dependency_check
+
+        def which(cmd):
+            return "/usr/bin/pdftotext" if cmd == "pdftotext" else None
+
+        with mock.patch("extractor.dependencies.python_module_available", return_value=False), \
+             mock.patch("extractor.dependencies.shutil.which", side_effect=which):
+            run_dependency_check()
+
+        out = capsys.readouterr().out
+        # the PDF (text-heavy) group line should be followed by a "ready" status
+        pdf_block = out.split("PDF (text-heavy)", 1)[1].split("PDF (technical", 1)[0]
+        assert "ready" in pdf_block

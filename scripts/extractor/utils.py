@@ -23,6 +23,7 @@ from extractor.config import (
 from extractor.dependencies import (
     normalize_install_mode,
     prepare_dependencies,
+    run_dependency_check,
 )
 from extractor.parsers.text import read_text_file
 from extractor.parsers.html import extract_html_file
@@ -334,8 +335,12 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
 
 
 def main():
+    if "--check" in sys.argv[1:]:
+        sys.exit(run_dependency_check())
+
     if len(sys.argv) < 2:
         print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
+        print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
         print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
         sys.exit(1)
         
