@@ -184,6 +184,22 @@ scripts/extract.py <paths…> --mode <technical|text>
 | pdftotext | 0.1s | 27K | 0 | 0 |
 | Docling | 164s | 27K (+1.2%) | 48 | 36 |
 
+**Real conversions** (measured: pages, extracted tokens, chapters auto-detected,
+estimated one-pass cost on Claude Sonnet 4.5 at \$3/\$15 per MTok):
+
+| Book | Format | Pages | Tokens | Chapters | ~Cost |
+|------|--------|------:|-------:|---------:|------:|
+| Think Python 2 | PDF | 244 | 119K | 19 | \$0.88 |
+| Working Backwards | PDF | 371 | 175K | 10 | \$0.96 |
+| Pro Git | PDF | 501 | 229K | — † | \$1.23 |
+| Moby-Dick | EPUB | — | 301K | — † | \$1.42 |
+
+† Chapter auto-detection needs explicit `Chapter N` / `Capítulo N` headings. Pro Git
+uses section titles and Moby-Dick uses chapter *titles* / roman numerals, so neither
+auto-segments — extraction and conversion still work, but you point at sections
+manually. A full skill costs roughly **\$1 per book**; far less than re-reading the
+PDF every session.
+
 <details>
 <summary>Design principles (click to expand)</summary>
 
@@ -212,28 +228,31 @@ no discovery loop, no compress-to-fit, and the full extracted source stays on di
 for verification.
 
 **Measured, not asserted.** Running [`tools/discovery_tax.py`](tools/discovery_tax.py)
-on two real books — to answer a single targeted question:
+on three real books — tokens entering context to answer a single targeted question
+(book-to-skill = resident core + one compiled chapter ≈ 5,000 tokens):
 
-| Strategy | *Working Backwards* (175K) | *AI Engineering* (256K) |
-|----------|---------------------------:|------------------------:|
-| Context-dump (resident, **re-billed every turn**) | 175,253 | 256,287 |
-| Discovery loop (ToC + chapter + backtrack) | 33,444 | 77,866 |
-| Discovery, best case (perfect ToC mapping) | 21,856 | 50,607 |
-| **book-to-skill** (core + one compiled chapter) | **~5,000** | **~5,000** |
-| **book-to-skill advantage vs dump / loop** | **35× / 6.7×** | **51× / 15.6×** |
+| Book (size) | Context-dump | Discovery loop | book-to-skill | vs dump / loop |
+|-------------|-------------:|---------------:|--------------:|:--------------:|
+| Think Python 2 (119K, small chapters) | 119,264 | 12,152 | ~5,000 | 24× / **2.4×** |
+| Working Backwards (175K, medium chapters) | 175,253 | 33,444 | ~5,000 | 35× / 6.7× |
+| AI Engineering (256K, large chapters) | 256,287 | 77,866 | ~5,000 | 51× / **15.6×** |
 
-The bigger and denser the book, the larger the gap. Reproduce the numbers on your
-own book:
+The advantage **scales with chapter size**: against a context-dump it's consistently
+24–51× (and that cost recurs *every turn*); against a one-time discovery loop it
+ranges from a modest 2.4× on a book of small chapters to 15.6× on one of large
+chapters. Reproduce on your own book:
 
 ```bash
 python3 tools/discovery_tax.py --full-text /tmp/book_skill_work/full_text.txt --target-chapter 5
 ```
 
-> **Honest caveat:** the discovery figures are a one-time cost and a *model* using
-> the book's real ToC/chapter sizes — a well-tuned agent lands nearer the best case.
-> The context-dump cost, by contrast, recurs on **every** turn. book-to-skill wins
-> when you return to the knowledge repeatedly; for a single one-off read, a plain
-> PDF agent is fine.
+> **Honest caveats:** (1) the discovery figures are a one-time cost and a *model*
+> using the book's real ToC/chapter sizes — a well-tuned agent lands nearer the best
+> case; the context-dump cost, by contrast, recurs on **every** turn. (2) The tool
+> needs explicit `Chapter N` / `Capítulo N` headings to segment a book; titles-only
+> or roman-numeral books (and EPUBs extracted without `ebooklib`) won't segment
+> cleanly. book-to-skill wins when you return to the knowledge repeatedly; for a
+> single one-off read, a plain PDF agent is fine.
 
 ---
 
