@@ -44,10 +44,16 @@ class TestSplitChapters:
     def test_detects_three_chapters(self):
         segs = dt.split_chapters(SYNTHETIC_BOOK)
         chapters = segs[1:]
-        assert len(chapters) == 3
-        # tuple shape is (number, heading, body)
-        assert chapters[0][0] == 1
-        assert chapters[0][1].strip().startswith("Capítulo 1")
+        # ToC entries + body headings both segment now; count DISTINCT numbers.
+        assert {c[0] for c in chapters} == {1, 2, 3}
+
+    def test_best_chapter_picks_largest_body_over_toc_line(self):
+        # A ToC line and the real body share "Capítulo 2"; the body has more text.
+        text = ("Sumário\nCapítulo 2: Recrutamento\n"
+                "Capítulo 2\n" + ("conteudo real " * 50) + "\n")
+        chapters = dt.split_chapters(text)[1:]
+        heading, body_tok = dt.best_chapter(chapters, 2, dt.count_tokens)
+        assert body_tok > 20  # picked the real body, not the 1-line ToC entry
 
     def test_cross_reference_does_not_split(self):
         text = "Capítulo 1\nbody\nComo vimos no Capítulo 2, isso importa.\nmore body\n"

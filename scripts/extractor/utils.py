@@ -59,18 +59,57 @@ _EXPLICIT_CHAPTER = re.compile(
 # "Chapter 8 are relevant...") is prose / a cross-reference, not a heading.
 _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
 
+# Roman-numeral chapter heading: "I: Loomings", "II. The Carpet-Bag".
+# Requires a separator (":" or ".") and a Capitalized title after it, so a bare
+# "I" or "V." (a page divider / list marker) is not mistaken for a chapter.
+_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Ú\"“(]")
+_ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
+
+
+def _int_to_roman(n: int) -> str:
+    table = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"),
+             (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"),
+             (5, "V"), (4, "IV"), (1, "I")]
+    out = []
+    for val, sym in table:
+        while n >= val:
+            out.append(sym)
+            n -= val
+    return "".join(out)
+
+
+def _roman_to_int(s: str) -> int | None:
+    """Convert a Roman numeral to int, returning None if it isn't canonical."""
+    s = s.upper()
+    total = prev = 0
+    for ch in reversed(s):
+        v = _ROMAN_VALUES.get(ch)
+        if v is None:
+            return None
+        total += -v if v < prev else v
+        prev = max(prev, v)
+    if total == 0 or total > 200:
+        return None
+    # Reject non-canonical forms ("IIII", "VV") by round-tripping.
+    return total if _int_to_roman(total) == s else None
+
 
 def _chapter_number(line: str) -> int | None:
-    """Return the chapter number if the line is a genuine chapter heading."""
+    """Return the chapter number if the line is a genuine chapter heading.
+
+    Handles both Arabic ("Chapter 5", "Capítulo 5: ...") and Roman-numeral
+    ("I: Loomings", "II. The Carpet-Bag") heading styles.
+    """
     s = line.strip()
     if len(s) > 80:
         return None
     m = _EXPLICIT_CHAPTER.match(s)
-    if not m:
-        return None
-    if not _HEADING_TAIL.match(m.group("rest")):
-        return None
-    return int(m.group(1))
+    if m and _HEADING_TAIL.match(m.group("rest")):
+        return int(m.group(1))
+    rm = _ROMAN_HEAD.match(s)
+    if rm:
+        return _roman_to_int(rm.group(1))
+    return None
 
 
 def detect_structure(text: str) -> dict:

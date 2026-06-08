@@ -585,6 +585,18 @@ class TestDetectStructure:
         text = "Capítulo 1: Alicerces\n...\nCapítulo 1\nbody of chapter one\n"
         assert detect_structure(text)["chapters_detected"] == 1
 
+    def test_roman_numeral_chapters(self):
+        text = "I: Loomings\nbody\nII: The Carpet-Bag\nbody\nIII: The Spouter-Inn\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_roman_requires_title_after_separator(self):
+        # bare "V." (page divider) or "I" alone is not a chapter
+        assert detect_structure("V.\nI\nII\n")["chapters_detected"] == 0
+
+    def test_roman_rejects_non_canonical(self):
+        # "IIII"/"VV" are not valid roman numerals
+        assert detect_structure("IIII: Bad\nVV: Also bad\n")["chapters_detected"] == 0
+
     def test_scans_full_text_not_just_head(self):
         # A chapter heading far past the old 50k-char window must still be found.
         text = "Capítulo 1\n" + ("filler word " * 6000) + "\nCapítulo 2\n"

@@ -33,26 +33,14 @@ import re
 import sys
 from pathlib import Path
 
-# Robust chapter-heading detection, aligned with the extractor's detect_structure:
-# accept "Chapter N", "Capítulo N", "Chapter N. Title"; reject prose
-# cross-references ("Chapter 6 explores...") via a lowercase tail, and bound the
-# number to 1..99 so years ("2025.") are not chapters.
-_CHAPTER_HEAD = re.compile(r"^\s*(?:chapter|cap[ií]tulo|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$",
-                           re.IGNORECASE)
-_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
+# Reuse the extractor's hardened chapter detection instead of duplicating it, so
+# discovery_tax and the pipeline always agree on what a chapter is (Arabic +
+# Roman headings, prose/cross-reference rejection, list-item rejection).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+from extractor.utils import _chapter_number as chapter_number  # noqa: E402
+
 TOC_RE = re.compile(r"^\s*(?:sum[áa]rio|table of contents|contents|[íi]ndice)\s*$",
                     re.IGNORECASE | re.MULTILINE)
-
-
-def chapter_number(line: str) -> int | None:
-    """Return the chapter number if the line is a genuine chapter heading, else None."""
-    s = line.strip()
-    if len(s) > 80:
-        return None
-    m = _CHAPTER_HEAD.match(s)
-    if not m or not _HEADING_TAIL.match(m.group("rest")):
-        return None
-    return int(m.group(1))
 
 
 def count_tokens(text: str) -> int:
@@ -74,21 +62,28 @@ def token_method() -> str:
 
 
 def split_chapters(text: str) -> list[tuple[int | None, str, str]]:
-    """Return [(number, heading, body)]. Splits on genuine chapter headings.
+    """Return [(number, heading, body)], one segment per heading occurrence.
+
     The text before the first heading is the leading 'front matter / ToC'
-    segment (number=None). A new segment only starts on the FIRST occurrence of
-    each chapter number, so repeated cross-references to an already-seen chapter
-    don't fragment the body."""
+    segment (number=None). A chapter number may appear more than once — a ToC
+    entry and the real body share a heading format — so callers should pick the
+    LARGEST-body occurrence as the real chapter (see best_chapter)."""
     lines = text.splitlines()
     segments: list[tuple[int | None, str, list[str]]] = [(None, "__front__", [])]
-    seen: set[int] = set()
     for line in lines:
         num = chapter_number(line)
-        if num is not None and num not in seen:
-            seen.add(num)
+        if num is not None:
             segments.append((num, line.strip(), []))
         segments[-1][2].append(line)
     return [(n, h, "\n".join(b)) for n, h, b in segments]
+
+
+def best_chapter(chapters: list[tuple[int | None, str, str]], n: int,
+                 tok) -> tuple[str, int] | None:
+    """Return (heading, body_tokens) for chapter number `n`, choosing the
+    occurrence with the largest body — the real chapter, not a ToC line."""
+    cands = [(h, tok(b)) for num, h, b in chapters if num == n]
+    return max(cands, key=lambda x: x[1]) if cands else None
 
 
 def extract_toc(front_matter: str) -> str:
@@ -126,16 +121,19 @@ def main() -> int:
     toc = extract_toc(front)
     toc_tok = count_tokens(toc)
 
-    # Select the target by chapter NUMBER (robust to extra cross-ref segments);
-    # fall back to positional if that number isn't present.
+    # Distinct chapter numbers present (a number can recur: ToC entry + body).
+    distinct = sorted({num for num, _, _ in chapters if num is not None})
+
+    # Select the target by chapter NUMBER, taking the largest-body occurrence so
+    # a ToC line isn't mistaken for the chapter. Fall back to positional.
     n = args.target_chapter
-    idx = next((i for i, (num, _, _) in enumerate(chapters) if num == n), None)
-    if idx is None:
-        idx = max(0, min(n - 1, len(chapters) - 1))
-        n = chapters[idx][0] or n
-    target_raw = count_tokens(chapters[idx][2])
-    prior_raw = count_tokens(chapters[idx - 1][2]) if idx >= 1 else 0
-    target_heading = chapters[idx][1]
+    best = best_chapter(chapters, n, count_tokens)
+    if best is None:
+        n = distinct[min(n - 1, len(distinct) - 1)] if distinct else n
+        best = best_chapter(chapters, n, count_tokens)
+    target_heading, target_raw = best
+    prior = best_chapter(chapters, n - 1, count_tokens)
+    prior_raw = prior[1] if prior else 0
 
     # book-to-skill resident cost
     if args.skill_dir:
@@ -169,7 +167,7 @@ def main() -> int:
     print("Discovery Loop Tax — measured on a real book\n")
     print(f"  token method : {token_method()}")
     print(f"  source       : {Path(args.full_text).name}")
-    print(f"  chapters      : {len(chapters)} detected")
+    print(f"  chapters      : {len(distinct)} detected")
     print(f"  target        : chapter {n}  ({target_heading[:60]})")
     print(f"  book total    : {total:,} tokens\n")
 
