@@ -41,17 +41,29 @@ Capítulo 3
 
 
 class TestSplitChapters:
-    def test_detects_three_chapters_strict(self):
+    def test_detects_three_chapters(self):
         segs = dt.split_chapters(SYNTHETIC_BOOK)
         chapters = segs[1:]
         assert len(chapters) == 3
-        # Cross-references like "Capítulo 2, discutimos" must NOT split (strict ^...$).
-        assert chapters[0][0].strip() == "Capítulo 1"
+        # tuple shape is (number, heading, body)
+        assert chapters[0][0] == 1
+        assert chapters[0][1].strip().startswith("Capítulo 1")
 
     def test_cross_reference_does_not_split(self):
         text = "Capítulo 1\nbody\nComo vimos no Capítulo 2, isso importa.\nmore body\n"
         segs = dt.split_chapters(text)
-        assert len(segs[1:]) == 1  # only the real heading splits
+        # "Capítulo 2," is prose (comma tail) → must not split
+        assert len(segs[1:]) == 1
+
+    def test_chapter_with_title_splits(self):
+        text = "Chapter 1. Introduction to AI\nbody\nChapter 2. Foundations\nbody\n"
+        chapters = dt.split_chapters(text)[1:]
+        assert [c[0] for c in chapters] == [1, 2]
+
+    def test_repeated_cross_ref_does_not_refragment(self):
+        text = "Chapter 1\nbody\nas in Chapter 1, recall\nChapter 2\nbody\n"
+        chapters = dt.split_chapters(text)[1:]
+        assert [c[0] for c in chapters] == [1, 2]  # second "Chapter 1" ref ignored
 
 
 class TestTocExtraction:

@@ -33,9 +33,26 @@ import re
 import sys
 from pathlib import Path
 
-CHAPTER_RE = re.compile(r"^\s*(?:cap[ií]tulo|chapter)\s+\d+\s*$", re.IGNORECASE)
+# Robust chapter-heading detection, aligned with the extractor's detect_structure:
+# accept "Chapter N", "Capítulo N", "Chapter N. Title"; reject prose
+# cross-references ("Chapter 6 explores...") via a lowercase tail, and bound the
+# number to 1..99 so years ("2025.") are not chapters.
+_CHAPTER_HEAD = re.compile(r"^\s*(?:chapter|cap[ií]tulo|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$",
+                           re.IGNORECASE)
+_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
 TOC_RE = re.compile(r"^\s*(?:sum[áa]rio|table of contents|contents|[íi]ndice)\s*$",
                     re.IGNORECASE | re.MULTILINE)
+
+
+def chapter_number(line: str) -> int | None:
+    """Return the chapter number if the line is a genuine chapter heading, else None."""
+    s = line.strip()
+    if len(s) > 80:
+        return None
+    m = _CHAPTER_HEAD.match(s)
+    if not m or not _HEADING_TAIL.match(m.group("rest")):
+        return None
+    return int(m.group(1))
 
 
 def count_tokens(text: str) -> int:
@@ -56,17 +73,22 @@ def token_method() -> str:
         return "words/0.75 heuristic (tiktoken not installed)"
 
 
-def split_chapters(text: str) -> list[tuple[str, str]]:
-    """Return [(heading, body)] using the same chapter-heading shape the
-    extractor's detect_structure looks for. The text before the first heading
-    is returned as the leading 'front matter / ToC' segment."""
+def split_chapters(text: str) -> list[tuple[int | None, str, str]]:
+    """Return [(number, heading, body)]. Splits on genuine chapter headings.
+    The text before the first heading is the leading 'front matter / ToC'
+    segment (number=None). A new segment only starts on the FIRST occurrence of
+    each chapter number, so repeated cross-references to an already-seen chapter
+    don't fragment the body."""
     lines = text.splitlines()
-    segments: list[tuple[str, list[str]]] = [("__front__", [])]
+    segments: list[tuple[int | None, str, list[str]]] = [(None, "__front__", [])]
+    seen: set[int] = set()
     for line in lines:
-        if CHAPTER_RE.match(line):
-            segments.append((line.strip(), []))
-        segments[-1][1].append(line)
-    return [(h, "\n".join(b)) for h, b in segments]
+        num = chapter_number(line)
+        if num is not None and num not in seen:
+            seen.add(num)
+            segments.append((num, line.strip(), []))
+        segments[-1][2].append(line)
+    return [(n, h, "\n".join(b)) for n, h, b in segments]
 
 
 def extract_toc(front_matter: str) -> str:
@@ -93,19 +115,27 @@ def main() -> int:
     total = count_tokens(full_text)
 
     segs = split_chapters(full_text)
-    front = segs[0][1]
-    chapters = segs[1:]  # [(heading, body)]
+    front = segs[0][2]
+    chapters = segs[1:]  # [(number, heading, body)]
     if not chapters:
-        print("No chapters detected — cannot model discovery.", file=sys.stderr)
+        print("No chapters detected — cannot model discovery. The source may be a\n"
+              "technical PDF whose headings were flattened by text extraction; try\n"
+              "technical mode (Docling) so chapter structure is preserved.", file=sys.stderr)
         return 1
 
     toc = extract_toc(front)
     toc_tok = count_tokens(toc)
 
-    n = max(1, min(args.target_chapter, len(chapters)))
-    target_body = chapters[n - 1][1]
-    target_raw = count_tokens(target_body)
-    prior_raw = count_tokens(chapters[n - 2][1]) if n >= 2 else 0
+    # Select the target by chapter NUMBER (robust to extra cross-ref segments);
+    # fall back to positional if that number isn't present.
+    n = args.target_chapter
+    idx = next((i for i, (num, _, _) in enumerate(chapters) if num == n), None)
+    if idx is None:
+        idx = max(0, min(n - 1, len(chapters) - 1))
+        n = chapters[idx][0] or n
+    target_raw = count_tokens(chapters[idx][2])
+    prior_raw = count_tokens(chapters[idx - 1][2]) if idx >= 1 else 0
+    target_heading = chapters[idx][1]
 
     # book-to-skill resident cost
     if args.skill_dir:
@@ -140,7 +170,7 @@ def main() -> int:
     print(f"  token method : {token_method()}")
     print(f"  source       : {Path(args.full_text).name}")
     print(f"  chapters      : {len(chapters)} detected")
-    print(f"  target        : chapter {n}  ({chapters[n-1][0][:60]})")
+    print(f"  target        : chapter {n}  ({target_heading[:60]})")
     print(f"  book total    : {total:,} tokens\n")
 
     print("  Cost to answer ONE targeted question (tokens entering context):\n")

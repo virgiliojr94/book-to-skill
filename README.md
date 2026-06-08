@@ -212,18 +212,18 @@ no discovery loop, no compress-to-fit, and the full extracted source stays on di
 for verification.
 
 **Measured, not asserted.** Running [`tools/discovery_tax.py`](tools/discovery_tax.py)
-on a real 175K-token book (*Working Backwards*), to answer a single targeted
-question:
+on two real books — to answer a single targeted question:
 
-| Strategy | Tokens into context | vs book-to-skill |
-|----------|--------------------:|:----------------:|
-| Context-dump (resident, **re-billed every turn**) | 175,253 | **31.9×** |
-| Discovery loop (ToC + chapters fetched + backtrack) | ~35,000 | **6.4×** |
-| Discovery, best case (perfect ToC mapping) | ~23,400 | 4.3× |
-| **book-to-skill** (core + one compiled chapter) | **~5,500** | — |
+| Strategy | *Working Backwards* (175K) | *AI Engineering* (256K) |
+|----------|---------------------------:|------------------------:|
+| Context-dump (resident, **re-billed every turn**) | 175,253 | 256,287 |
+| Discovery loop (ToC + chapter + backtrack) | 33,444 | 77,866 |
+| Discovery, best case (perfect ToC mapping) | 21,856 | 50,607 |
+| **book-to-skill** (core + one compiled chapter) | **~5,000** | **~5,000** |
+| **book-to-skill advantage vs dump / loop** | **35× / 6.7×** | **51× / 15.6×** |
 
-The table-of-contents scan *alone* costs ~9,800 tokens — book-to-skill replaces that
-with a pre-built index. Reproduce the numbers on your own book:
+The bigger and denser the book, the larger the gap. Reproduce the numbers on your
+own book:
 
 ```bash
 python3 tools/discovery_tax.py --full-text /tmp/book_skill_work/full_text.txt --target-chapter 5
