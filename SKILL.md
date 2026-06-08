@@ -392,7 +392,20 @@ Create `$SKILLS_HOME/<skill_name>/chapters/ch<NN>-<slug>.md` using the structure
 ## Connects To
 - **Ch N**: <why this chapter relates>
 - **<Concept>**: <external concept or standard it connects with>
+
+<!-- provenance: <source-filename> · full_text.txt lines L<start>–L<end> (at generation) -->
 ```
+
+Add the **provenance comment** as the last line of every chapter file. It records
+which source and which line range of `full_text.txt` the summary was distilled
+from, so any claim can be traced back and fact-checked against the extracted text
+— directly answering the "degraded signal you can't verify" critique. You already
+have these offsets from the Step 2.6 grep/sed probing; record the range you read.
+
+> **Honest caveat:** the line range is valid *for the `full_text.txt` of this
+> generation*. If the book is re-extracted later (different tool/version), line
+> numbers shift. Provenance is an audit aid, not a permanent anchor — treat it as
+> "where this came from when generated", and re-derive on re-extraction.
 
 ---
 
@@ -607,3 +620,4 @@ Once the files are successfully written and merged, skip to **Step 10** to perfo
 6. **Chapter files are on-demand** — they don't count against skill budget until loaded
 7. **Never copy raw book text** — always synthesize, summarize, extract signal
 8. **Topic index is critical** — it's how the agent navigates to the right chapter file
+9. **Record provenance** — end each chapter with the source + `full_text.txt` line range it was distilled from, so any claim is traceable back to the text (valid for that generation's extraction)
