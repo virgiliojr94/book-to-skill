@@ -20,6 +20,7 @@
   <a href="#-usage">Usage</a> ·
   <a href="#-requirements">Requirements</a> ·
   <a href="#-how-it-works">How it works</a> ·
+  <a href="#-the-discovery-loop-tax">Discovery Loop Tax</a> ·
   <a href="#-faq">FAQ</a> ·
   <a href="#-install">Install</a>
 </p>
@@ -193,6 +194,46 @@ scripts/extract.py <paths…> --mode <technical|text>
 5. **Never raw text** — always synthesize, summarize, extract signal from the source
 
 </details>
+
+---
+
+## 🧾 The Discovery Loop Tax
+
+A PDF-reading agent doesn't just read — it *navigates*. Ask it one question and it
+fetches the table of contents, notices a term it can't define, pulls more pages,
+backtracks. Every one of those hops lands in the conversation history and gets
+**re-processed on every subsequent turn**. To stay inside its budget, a sub-agent
+is then forced to compress what it read at brutal ratios, handing the main agent a
+**degraded summary it can't fact-check** against the source.
+
+book-to-skill pays the navigation cost **once, at compile time**. At runtime the
+assistant loads a small resident core plus the one pre-compiled chapter it needs —
+no discovery loop, no compress-to-fit, and the full extracted source stays on disk
+for verification.
+
+**Measured, not asserted.** Running [`tools/discovery_tax.py`](tools/discovery_tax.py)
+on a real 175K-token book (*Working Backwards*), to answer a single targeted
+question:
+
+| Strategy | Tokens into context | vs book-to-skill |
+|----------|--------------------:|:----------------:|
+| Context-dump (resident, **re-billed every turn**) | 175,253 | **31.9×** |
+| Discovery loop (ToC + chapters fetched + backtrack) | ~35,000 | **6.4×** |
+| Discovery, best case (perfect ToC mapping) | ~23,400 | 4.3× |
+| **book-to-skill** (core + one compiled chapter) | **~5,500** | — |
+
+The table-of-contents scan *alone* costs ~9,800 tokens — book-to-skill replaces that
+with a pre-built index. Reproduce the numbers on your own book:
+
+```bash
+python3 tools/discovery_tax.py --full-text /tmp/book_skill_work/full_text.txt --target-chapter 5
+```
+
+> **Honest caveat:** the discovery figures are a one-time cost and a *model* using
+> the book's real ToC/chapter sizes — a well-tuned agent lands nearer the best case.
+> The context-dump cost, by contrast, recurs on **every** turn. book-to-skill wins
+> when you return to the knowledge repeatedly; for a single one-off read, a plain
+> PDF agent is fine.
 
 ---
 
