@@ -48,16 +48,49 @@ def estimate_tokens(text: str) -> int:
     return int(len(text.split()) / WORDS_PER_TOKEN)
 
 
-def detect_structure(text: str) -> dict:
-    """Detect chapter count and table of contents presence."""
-    lines = text[:50000].splitlines()
+# Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
+# Captures the number (bounded to 1..99 — drops years like "2025.") and whatever
+# follows it on the line, so we can reject prose.
+_EXPLICIT_CHAPTER = re.compile(
+    r"^\s*(?:chapter|cap[ií]tulo|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$", re.IGNORECASE
+)
+# A heading's number is followed by end-of-line, punctuation (". : - —"), or a
+# Capitalized title word. A lowercase continuation ("Chapter 6 explores...",
+# "Chapter 8 are relevant...") is prose / a cross-reference, not a heading.
+_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
 
-    # Look for chapter headings
-    chapter_pattern = re.compile(
-        r"^\s*(chapter\s+\d+|CHAPTER\s+\d+|ch\.\s*\d+|\d+\.\s+[A-Z])",
-        re.IGNORECASE
-    )
-    chapters_found = [line.strip() for line in lines if chapter_pattern.match(line)]
+
+def _chapter_number(line: str) -> int | None:
+    """Return the chapter number if the line is a genuine chapter heading."""
+    s = line.strip()
+    if len(s) > 80:
+        return None
+    m = _EXPLICIT_CHAPTER.match(s)
+    if not m:
+        return None
+    if not _HEADING_TAIL.match(m.group("rest")):
+        return None
+    return int(m.group(1))
+
+
+def detect_structure(text: str) -> dict:
+    """Detect chapter count and table of contents presence.
+
+    Scans the whole text (not just the head) and counts DISTINCT chapter numbers
+    from explicit "Chapter N"/"Capítulo N" headings, rejecting prose
+    cross-references and numbered list items. Counting distinct numbers means a
+    ToC entry and its body heading are not double-counted.
+    """
+    lines = text.splitlines()
+
+    headings = []
+    numbers = set()
+    for line in lines:
+        num = _chapter_number(line)
+        if num is not None:
+            numbers.add(num)
+            headings.append(line.strip())
+    chapters_detected = len(numbers)
 
     # Look for ToC indicators in the first ~30k chars
     toc_pattern = re.compile(
@@ -67,8 +100,8 @@ def detect_structure(text: str) -> dict:
     has_toc = bool(toc_pattern.search(text[:30000]))
 
     return {
-        "chapters_detected": len(chapters_found),
-        "chapter_headings_sample": chapters_found[:10],
+        "chapters_detected": chapters_detected,
+        "chapter_headings_sample": headings[:10],
         "has_toc": has_toc,
     }
 

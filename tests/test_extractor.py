@@ -552,6 +552,44 @@ class TestDetectStructure:
         result = detect_structure(text)
         assert result["has_toc"] is False
 
+    def test_numbered_list_items_are_not_chapters(self):
+        # The AI-Engineering failure: numbered list items were counted as chapters.
+        text = (
+            "1. Compared to characters, tokens allow the model to break words into\n"
+            "2. Because there are fewer unique tokens than unique words, this reduces\n"
+            "3. Tokens also help the model process unknown words, for instance a word\n"
+        )
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_inline_cross_references_are_not_chapters(self):
+        text = (
+            "Chapter 6 explores why context is important for a model to perform.\n"
+            "As discussed, Chapter 8 are relevant beyond finetuning in this case.\n"
+        )
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_years_are_not_chapters(self):
+        text = "2025. AI is often mentioned as a competitive advantage these days.\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_real_headings_with_titles_count(self):
+        text = "Chapter 1. Introduction to Building AI\nbody\nChapter 2. Understanding Models\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_portuguese_capitulo(self):
+        text = "Capítulo 1\nalgum texto\nCapítulo 2\nmais texto\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_distinct_numbering_dedups_toc_and_body(self):
+        # A ToC heading and the body heading for the same chapter count once.
+        text = "Capítulo 1: Alicerces\n...\nCapítulo 1\nbody of chapter one\n"
+        assert detect_structure(text)["chapters_detected"] == 1
+
+    def test_scans_full_text_not_just_head(self):
+        # A chapter heading far past the old 50k-char window must still be found.
+        text = "Capítulo 1\n" + ("filler word " * 6000) + "\nCapítulo 2\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
 
 class TestTextExtraction:
     """Tests for plain-text file extraction."""
