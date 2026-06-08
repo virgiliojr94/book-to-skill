@@ -16,6 +16,7 @@
 <p align="center">
   <a href="#-why">Why</a> ·
   <a href="#-what-it-generates">What it generates</a> ·
+  <a href="#-beyond-books">Beyond books</a> ·
   <a href="#-usage">Usage</a> ·
   <a href="#-requirements">Requirements</a> ·
   <a href="#-how-it-works">How it works</a> ·
@@ -53,6 +54,19 @@ Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) cre
 | `cheatsheet.md` | Decision tables and quick-reference rules | ~1,000 tokens |
 
 **Chapter files are loaded on-demand** — they don't count against the skill budget until you ask about that topic.
+
+---
+
+## 🏢 Beyond books
+
+The name says "book", but the input is any structured prose. The same extraction works on knowledge you own and re-read constantly:
+
+- **Internal documentation** — architecture decision records, runbooks, onboarding guides. Fold a whole `docs/` folder into one skill and ask it while you code.
+- **Brand & design systems** — voice guidelines, tone-of-voice docs, component principles. Turn a brand book into a skill your team queries instead of skimming a 60-page PDF.
+- **Research clusters** — a stack of papers plus your own notes, merged into a single unified skill and updated as new material lands (see [Update / fold-in](#-usage)).
+- **Specs & standards** — RFCs, API contracts, compliance docs you reference but never memorize.
+
+If you re-open a document often enough to wish you'd memorized it, it's a candidate.
 
 ---
 
@@ -184,9 +198,23 @@ scripts/extract.py <paths…> --mode <technical|text>
 
 **"Can't I just dump the PDF/EPUB into my Claude project context?"**
 
-You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load. The rest stays on disk until you need it.
+You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load — typically a SKILL.md core (~4K) plus the one chapter you asked about (~1K). The rest stays on disk until you need it.
+
+The economics are amortization, not size. Pasting the book pays the full token bill **on every turn of every session, forever**. book-to-skill pays the extraction cost **once** and every future conversation loads only the slice it needs. The bigger your context window, the more this matters — a large window makes the dump *possible*, not *cheap*.
 
 More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Claude isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.
+
+---
+
+**"Claude has a 1M-token context window now — can't I just keep the whole book loaded?"**
+
+A bigger window changes what *fits*, not what's *smart*. Three reasons it isn't a substitute:
+
+- **You pay per token, per call.** A 1M window doesn't make those tokens free — it makes a large, recurring bill possible. The skill loads kilobytes, not megabytes.
+- **Recall degrades with fill.** Models lose precision retrieving a specific fact buried in a near-full context ("lost in the middle"). A 1K curated chapter beats 200K of raw prose for answering one question.
+- **Window ≠ structure.** A full book in context is still raw text the model must re-parse every turn. The skill ships pre-extracted frameworks — reasoning, not retrieval.
+
+Use the big window for what it's good at: a one-off pass over material you'll never need again. Use a skill for knowledge you'll reach for repeatedly.
 
 ---
 
@@ -199,7 +227,12 @@ book-to-skill works at compile time: one deep analysis run extracts the author's
 RAG answers: *"here are chunks close to your query."*  
 A skill answers: *"here are the 12 frameworks this author built, ready to reason with."*
 
-For searching across 50+ books, RAG wins. For going deep on one book and using its frameworks while you work, a skill wins.
+Pick by shape of the job:
+
+- **Wide and shallow** — a library of dozens of books, "find the part that mentions X" → a RAG tool (e.g. CandleKeep) wins.
+- **Narrow and deep** — one book or a tight cluster of related sources, frameworks you apply while you work → book-to-skill wins.
+
+They're complementary, not competing: RAG indexes a shelf, book-to-skill masters a spine.
 
 ---
 
@@ -266,9 +299,22 @@ book-to-skill/
 
 ---
 
+## ⚖️ Copyright & fair use
+
+book-to-skill ships **no book content** — not a single page. It's a converter you point at files you already own.
+
+- **Processing is local.** Extraction and analysis run on your machine. Your files are never uploaded by this tool. (If your agent's model runs in the cloud, the text you feed it follows that provider's normal data terms — same as any prompt.)
+- **You use your own copy.** Bring a book you bought, docs your company owns, or papers you have the right to read.
+- **The output is your notes.** A generated skill is a structured, synthesized derivative — framework names, definitions, takeaways — not a reproduction of the text. The skill explicitly never copies raw passages (see Quality Rule #7). Treat it like handwritten study notes: yours, for personal use.
+- **Don't redistribute.** Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private. Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.
+
+When in doubt, follow the license or terms of the source document. This project is a tool; how you use it is on you.
+
+---
+
 ## License
 
-MIT
+MIT — applies to the converter (code + skill definition) in this repository, **not** to any book or document you process with it.
 
 ## Star History
 
