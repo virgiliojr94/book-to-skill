@@ -452,12 +452,13 @@ argument-hint: [topic, framework name, or chapter number]
 ## How to Use This Skill
 
 - **Without arguments** — load core frameworks for reference
-- **With a topic** — ask about `replication`, `pricing`, or another indexed topic; I find and read the relevant chapter
+- **With a topic** — ask about `replication`, `pricing`, or another indexed topic; I resolve it through `index.json` (one small read) to the exact chapter file, then read only that file
 - **With chapter** — ask for `ch05`; I load that specific chapter
 - **Browse** — ask "what chapters do you have?" to see the full index
 
-When you ask about a topic not covered in Core Frameworks below, I will read
-the relevant chapter file before answering.
+When you ask about a topic not covered in Core Frameworks below, I consult
+`index.json` to map the topic to its chapter file in a single hop — no scanning
+of the prose indexes — and read only that file before answering.
 
 ---
 
@@ -486,6 +487,7 @@ the relevant chapter file before answering.
 
 ## Supporting Files
 
+- [index.json](index.json) — machine-readable topic→chapter map for one-hop lookup
 - [glossary.md](glossary.md) — all key terms with definitions
 - [patterns.md](patterns.md) — all techniques and design patterns
 - [cheatsheet.md](cheatsheet.md) — quick reference tables and decision guides
@@ -498,6 +500,43 @@ This skill covers the book content only. For hands-on implementation in your cod
 combine with project-specific tools. For topics beyond this book, check related skills
 or ask the agent directly.
 ```
+
+---
+
+## Step 9.5 — Generate the machine-readable index (`index.json`)
+
+The Markdown Chapter/Topic indexes in `SKILL.md` are for humans. Also write a
+machine-readable `index.json` so the agent resolves a topic to its chapter file
+in **one small read** instead of scanning prose — this is what kills the
+table-of-contents "discovery" cost at query time.
+
+Create `$SKILLS_HOME/<skill_name>/index.json`:
+
+```json
+{
+  "skill": "<skill_name>",
+  "title": "<Full Title>",
+  "author": "<Author(s)>",
+  "generated": "<YYYY-MM-DD>",
+  "chapters": [
+    { "n": 1, "file": "chapters/ch01-<slug>.md", "title": "<Title>", "frameworks": ["<f1>", "<f2>"] }
+  ],
+  "topics": {
+    "<topic-or-framework, lowercased>": ["ch05"],
+    "<another-topic>": ["ch02", "ch11"]
+  }
+}
+```
+
+Rules:
+- `topics` keys are lowercase; values are chapter ids (`"ch05"`), matching the
+  Topic Index in `SKILL.md` exactly — the two must never drift.
+- Every `file` path must point to a chapter file that exists on disk.
+- Keep it small and flat — it is read in full on most queries.
+
+When resolving a user topic at runtime: read `index.json`, look up the topic (exact
+or closest key), open only the referenced chapter file(s). Fall back to the
+Markdown Topic Index only if `index.json` is absent (older skills).
 
 ---
 
@@ -592,6 +631,12 @@ Update the master skill file `$SKILLS_HOME/<skill_name>/SKILL.md`:
 - **Chapter Index**: Append the new chapters to the index table, linking to the newly created files.
 - **Topic Index**: Merge the new topics alphabetically. If an existing topic is also covered in the new chapters, append the new chapter links to its line (e.g. `- **Topic** → ch05, ch13`).
 
+### 5b. Re-generate `index.json`
+Regenerate `$SKILLS_HOME/<skill_name>/index.json` (Step 9.5) so it stays in sync:
+append the new chapters to `chapters`, merge the new topic keys into `topics`, and
+bump `generated`. The `topics` map must match the updated Markdown Topic Index
+exactly. If the existing skill has no `index.json` (older skill), create one now.
+
 ### 6. Cleanup and Proceed to Step 10
 Once the files are successfully written and merged, skip to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.
 
@@ -606,4 +651,4 @@ Once the files are successfully written and merged, skip to **Step 10** to perfo
 5. **Front-load SKILL.md** — compaction keeps the first 5,000 tokens; most important content comes first
 6. **Chapter files are on-demand** — they don't count against skill budget until loaded
 7. **Never copy raw book text** — always synthesize, summarize, extract signal
-8. **Topic index is critical** — it's how the agent navigates to the right chapter file
+8. **Topic index is critical** — it's how the agent navigates to the right chapter file; keep `index.json` and the Markdown Topic Index in sync, every `file` pointing to a real chapter
