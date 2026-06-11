@@ -1,12 +1,12 @@
 <h1 align="center">📚 book-to-skill</h1>
 
 <p align="center">
-  <strong>Turn any technical book, document folder, or collection of sources into a unified Claude Code skill — ready to study, reference, and use while you work.</strong>
+  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in GitHub Copilot CLI, Amp, or Claude Code.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/virgiliojr94/book-to-skill/releases"><img src="https://img.shields.io/github/v/release/virgiliojr94/book-to-skill?style=for-the-badge&color=blueviolet" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Claude_Code-Skill-blueviolet?style=for-the-badge" alt="Claude Code Skill">
+  <img src="https://img.shields.io/badge/Agent_Skills-Open_Standard-blueviolet?style=for-the-badge" alt="Agent Skills standard">
   <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Formats supported">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
 </p>
@@ -36,18 +36,20 @@ You buy a great technical book. You read it once. Three months later you can't r
 
 The usual workarounds don't help:
 - 📄 "Let me just search the PDF" → you get a list of pages, not answers
-- 🧠 "I'll ask Claude about this book" → it either hallucinates or says it doesn't have the content
+- 🧠 "I'll ask the agent about this book" → it either hallucinates or says it doesn't have the content
 - 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again
 
-**book-to-skill solves this by turning the book into a structured skill Claude loads on demand.**
+**book-to-skill solves this by turning the book into a structured skill your agent loads on demand.**
 
-Once installed, you just type `/your-book-slug replication` and Claude reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
+Once installed, you just type `/your-book-slug replication` and the agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
+
+Works with any host that supports the open [Agent Skills](https://github.com/agentskills/agentskills) standard — GitHub Copilot CLI, Amp, and Claude Code all read the same `SKILL.md` format.
 
 ---
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill at `~/.claude/skills/<slug>/`:
+Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code):
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -98,7 +100,7 @@ Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, As
 /book-to-skill ~/articles/new-paper.pdf ~/.claude/skills/project-knowledge
 ```
 
-After the skill is created, use it like any other Claude Code skill:
+After the skill is created, use it like any other agent skill:
 
 ```bash
 /designing-data-intensive-apps                  # load core mental models
@@ -106,6 +108,8 @@ After the skill is created, use it like any other Claude Code skill:
 /designing-data-intensive-apps ch05             # dive into chapter 5
 /designing-data-intensive-apps "what chapters do you have?"
 ```
+
+In GitHub Copilot CLI you may need to run `/skills reload` after the file is written so the new skill appears in `/skills list`. Claude Code and Amp pick it up on the next session.
 
 ---
 
@@ -176,8 +180,11 @@ scripts/extract.py <paths…> --mode <technical|text>
           Generates master SKILL.md with core mental models
                │
                ▼
-          ~/.claude/skills/<slug>/  ✅ written
-          /tmp/book_skill_work/     🗑️  cleaned up
+          Skill written to one of:
+            ~/.copilot/skills/<slug>/   (GitHub Copilot CLI)
+            ~/.agents/skills/<slug>/    (Copilot CLI or Amp, cross-agent)
+            ~/.claude/skills/<slug>/    (Claude Code)
+          /tmp/book_skill_work/         🗑️  cleaned up
 ```
 
 **Extraction benchmark** (103-page technical book, CPU only):
@@ -321,6 +328,25 @@ book-to-skill is built for a different job: you want to go deep on a specific to
 
 ## 📥 Install
 
+The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
+
+**GitHub Copilot CLI** (personal skill):
+
+```bash
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.copilot/skills/book-to-skill
+# then, in a `copilot` session:
+/skills reload
+/skills info book-to-skill
+```
+
+Or the cross-agent path that Copilot CLI and Amp both discover:
+
+```bash
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+```
+
+**Claude Code**:
+
 Copy this into your Claude Code session:
 
 ```
@@ -333,7 +359,7 @@ Or manually using standard `git clone` (ensures modular engine files are fetched
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 ```
 
-Then in any Claude Code session:
+Then in any agent session:
 
 ```bash
 /book-to-skill ~/path/to/your-book.pdf
@@ -358,7 +384,7 @@ book-to-skill/
 │       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
 ├── tools/
 │   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
-│   └── validate_skill.py # checks a generated SKILL.md against Claude Code rules
+│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp)
 ├── tests/                # pytest suite (extraction, detection, discovery tax)
 ├── docs/
 │   ├── PERFORMANCE.md    # measured benchmarks, discovery tax, cost

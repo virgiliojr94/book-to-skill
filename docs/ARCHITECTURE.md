@@ -31,7 +31,11 @@ document into clean text + metadata; the agent turns that into a structured skil
             └────────────────────────────────────────────────────────────────┘
                                    │
                                    ▼
-                ~/.claude/skills/<slug>/
+                <SKILLS_HOME>/<slug>/  ← chosen per host:
+                  ~/.copilot/skills/   GitHub Copilot CLI
+                  ~/.agents/skills/    Copilot CLI or Amp (cross-agent)
+                  ~/.claude/skills/    Claude Code
+                  .github|.claude|.agents/skills/  project-local
                   SKILL.md         core frameworks + chapter & topic index (~4K)
                   chapters/*.md    on-demand, loaded only when asked
                   glossary.md      terms
@@ -61,7 +65,7 @@ document into clean text + metadata; the agent turns that into a structured skil
 | `scripts/extractor/parsers/` | one module per format |
 | `scripts/extractor/dependencies.py` | optional-dependency probing + `--check` |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
-| `tools/validate_skill.py` | checks a generated SKILL.md against Claude Code rules |
+| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude|copilot|amp`) |
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 
 ## Extending

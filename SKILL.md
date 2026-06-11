@@ -1,16 +1,19 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Amp or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
-compatibility: "Amp skill directories (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills) and Claude Code skill directories (~/.claude/skills)."
-allowed-tools:
-  - Bash
-  - shell_command
-  - Read
-  - Write
-  - Glob
-  - Grep
-argument-hint: <path-to-document-folder-or-glob>... [skill-name-slug]
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
+
+<!--
+Cross-agent notes (informational; ignored by host agents):
+  - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
+    .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
+    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
+  - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
+    `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
+    adds `shell_command`. The skill needs shell (to run extract.py) and file
+    read/write — each host will prompt for those on first use.
+  - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug]
+-->
 
 # Book-to-Skill Converter
 
@@ -18,7 +21,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -63,12 +66,16 @@ Four paths available. Route based on what the user asks:
 
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
-1. Claude Code skills: `~/.claude/skills/`
-2. Amp project-local skills: `.agents/skills/`
-3. Amp global skills: `~/.config/agents/skills/`
-4. Amp legacy global skills: `~/.config/amp/skills/`
+1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
+2. Cross-agent personal skills (Copilot + Amp): `~/.agents/skills/`
+3. Claude Code personal skills: `~/.claude/skills/`
+4. Project-local Copilot skills: `.github/skills/`
+5. Project-local Claude skills: `.claude/skills/`
+6. Project-local Amp / Copilot skills: `.agents/skills/`
+7. Amp global skills: `~/.config/agents/skills/`
+8. Amp legacy global skills: `~/.config/amp/skills/`
 
-Generated skills should default to `~/.claude/skills/` for Claude Code unless the user asks for Amp project-local or Amp global output.
+For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
 
 ---
 
@@ -124,7 +131,11 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
+  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
+  "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
+  ".github/skills/book-to-skill/scripts/extract.py" \
+  ".claude/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
@@ -289,11 +300,19 @@ Otherwise, propose two options and let the user choose:
 
 Default to author-concept format if the book has a strong methodological identity.
 
-Choose the destination skill root:
-- **Claude Code default**: `~/.claude/skills`
-- **Amp global**: `~/.config/agents/skills` if that is the user's existing global skill location
-- **Amp project-local**: `.agents/skills` when the user explicitly wants the generated book skill scoped to the current workspace
-- **Amp legacy**: `~/.config/amp/skills` if that is the user's existing global skill location
+Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem for existing skill homes and pick by **the host the user is running in**:
+
+| Host agent | Personal skill root (probe in order) | Project-local root |
+|---|---|---|
+| **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
+| **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
+| **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+
+Selection rules:
+1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
+2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
+3. If the user explicitly asked for project-local output, prefer the project-local row.
+4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -440,11 +459,9 @@ Create `$SKILLS_HOME/<skill_name>/SKILL.md`:
 ---
 name: <skill_name>
 description: "Knowledge base from \"<Full Title>\" by <Author(s)>. Use when applying <author>'s frameworks for <key topics, 3–6 terms>, studying the book, or referencing its concepts."
-allowed-tools:
-  - Read
-  - Grep
-argument-hint: [topic, framework name, or chapter number]
 ---
+
+<!-- argument-hint: [topic, framework name, or chapter number] -->
 
 # <Full Title>
 **Author**: <Author(s)> | **Pages**: ~<N> | **Chapters**: <N> | **Generated**: <YYYY-MM-DD>
@@ -544,6 +561,14 @@ Usage:
   Ask for <skill_name>                  → load core frameworks
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
+
+Reload (if your agent doesn't auto-detect new skills):
+  GitHub Copilot CLI:  /skills reload
+  Claude Code:         restart the session
+  Amp:                 restart the session
+
+Share this skill (Copilot ecosystem, optional):
+  gh skill publish $SKILLS_HOME/<skill_name>
 ```
 
 ---
