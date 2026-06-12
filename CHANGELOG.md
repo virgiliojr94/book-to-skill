@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   failed during collection. The annotations are now lazy (free at runtime), so
   the package imports and runs cleanly on Python 3.9 as well.
 
+### Changed
+- CI test matrix now includes Python 3.9 so the import path above is guarded and
+  cannot silently re-break.
+
 ## [1.1.0] — 2026-06-12
 
 ### Added
