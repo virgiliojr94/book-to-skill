@@ -28,6 +28,8 @@ Usage:
       [--skill-dir <skill_folder>] [--target-chapter N] [--core-tokens 4000]
 """
 
+from __future__ import annotations
+
 import argparse
 import re
 import sys

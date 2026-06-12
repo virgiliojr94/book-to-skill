@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shutil
 import subprocess
 from extractor.config import OUTPUT_DIR
