@@ -5,6 +5,14 @@ All notable changes to **book-to-skill** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **`pyproject.toml`** declaring `requires-python = ">=3.9"` and centralizing the
+  ruff/pytest config so `ruff check .` and `pytest` locally match CI without
+  passing flags by hand. Metadata only — no build backend or console scripts; the
+  tool stays CLI-first via `python3 scripts/extract.py`.
+
 ## [1.1.0] — 2026-06-12
 
 ### Added
