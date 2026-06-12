@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import zipfile
 from extractor.exceptions import ExtractionError
 

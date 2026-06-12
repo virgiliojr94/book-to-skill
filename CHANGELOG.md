@@ -5,6 +5,22 @@ All notable changes to **book-to-skill** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Package now imports on interpreters that evaluate annotations eagerly.**
+  Added `from __future__ import annotations` to every module using PEP 604
+  unions (`str | None`) — `scripts/extractor/{utils,dependencies}.py`, all
+  `scripts/extractor/parsers/*.py`, and `tools/discovery_tax.py`. Before this,
+  importing the package under Python 3.9 raised `TypeError: unsupported operand
+  type(s) for |: 'type' and 'NoneType'` at import time, so the whole test suite
+  failed during collection. The annotations are now lazy (free at runtime), so
+  the package imports and runs cleanly on Python 3.9 as well.
+
+### Changed
+- CI test matrix now includes Python 3.9 so the import path above is guarded and
+  cannot silently re-break.
+
 ## [1.1.0] — 2026-06-12
 
 ### Added
