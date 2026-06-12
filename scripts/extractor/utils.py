@@ -406,7 +406,19 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     }
 
 
+def print_banner() -> None:
+    """Print the attribution banner. Done here (not only in SKILL.md) so it
+    shows on every run regardless of how the agent invokes extraction."""
+    banner = Path(__file__).resolve().parent.parent / "banner.txt"
+    try:
+        sys.stderr.write(banner.read_text(encoding="utf-8") + "\n")
+    except Exception:
+        pass  # best-effort: never block extraction on the banner
+
+
 def main():
+    print_banner()
+
     if "--check" in sys.argv[1:]:
         sys.exit(run_dependency_check())
 
