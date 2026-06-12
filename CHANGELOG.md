@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`pyproject.toml`** declaring `requires-python = ">=3.9"` and centralizing the
+  ruff/pytest config so `ruff check .` and `pytest` locally match CI without
+  passing flags by hand. Metadata only — no build backend or console scripts; the
+  tool stays CLI-first via `python3 scripts/extract.py`.
 - Structure detection now recognizes Markdown/AsciiDoc ATX headings (`#`, `==`)
   as chapters when no numeric "Chapter N" headings are present, fixing a
   zero-chapter result for `.md`/`.adoc` sources. Headings inside fenced code

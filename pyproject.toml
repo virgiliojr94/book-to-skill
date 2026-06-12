@@ -1,0 +1,18 @@
+[project]
+name = "book-to-skill"
+version = "1.1.0"
+description = "Convert books and documents into structured, on-demand agent skills."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+# Tooling config so `ruff check .` and `pytest` locally match CI without flags.
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+# High-value gate only: syntax errors (E9) + pyflakes (F). Style stays ungated.
+select = ["E9", "F"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
