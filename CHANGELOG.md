@@ -5,6 +5,30 @@ All notable changes to **book-to-skill** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-06-12
+
+### Added
+- **GitHub Copilot CLI as a first-class target** — the same `SKILL.md` now
+  discovers, installs, and runs across GitHub Copilot CLI, Amp, and Claude Code
+  via the open Agent Skills standard. Skill Locations cover 8 discovery paths and
+  the script probe walks all of them (#30).
+- **`validate_skill.py --lens claude|copilot|amp`** — audits a generated SKILL.md
+  against each host's rules; `claude` stays the default for CI back-compat (#30).
+- **Attribution banner** — `scripts/banner.txt` is printed at the start of each
+  run (best-effort, never fails the run).
+
+### Changed
+- `SKILL.md` frontmatter trimmed toward the open-standard minimum and the
+  description now names all three hosts so each agent's auto-loader picks it up (#30).
+- README headline + "Agent Skills" badge; install/usage sections cover all three
+  hosts. `docs/ARCHITECTURE.md` shows per-host destination paths (#30).
+
+### Notes
+- `allowed-tools` was dropped from the frontmatter for host-neutrality; the skill
+  is conformant on all three hosts (validated with all three lenses). If Claude
+  users hit permission-prompt friction, the Bash grant from #18 will be restored
+  with Claude-native tokens (Copilot ignores the key either way).
+
 ## [1.0.0] — 2026-06-08
 
 First formally tagged release. The converter is stable, multi-format, and
@@ -53,4 +77,5 @@ validated on real books.
 - Technical PDFs extracted in text mode may lose heading structure; use technical
   mode (Docling) to preserve tables, code, and headings.
 
+[1.1.0]: https://github.com/virgiliojr94/book-to-skill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/virgiliojr94/book-to-skill/releases/tag/v1.0.0
