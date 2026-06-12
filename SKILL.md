@@ -151,6 +151,9 @@ if [ -z "$SCRIPT_PATH" ]; then
   exit 1
 fi
 
+# Attribution banner (best-effort; never fails the run)
+cat "$(dirname "$SCRIPT_PATH")/banner.txt" 2>/dev/null || true
+
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
