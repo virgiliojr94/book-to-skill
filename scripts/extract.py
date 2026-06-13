@@ -7,6 +7,15 @@ Modular entrypoint wrapper.
 import os
 import sys
 
+# Force UTF-8 stdout/stderr so the attribution banner (braille art) and the
+# dependency-check glyphs (✓ / ✗) don't raise UnicodeEncodeError on Windows
+# consoles that default to a legacy code page (e.g. GBK / cp936).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # Ensure the scripts/ directory (where the 'extractor' package lives) is in sys.path
 # so the modular package can be imported reliably regardless of the working directory.
 sys.path.insert(0, str(os.path.dirname(os.path.abspath(__file__))))

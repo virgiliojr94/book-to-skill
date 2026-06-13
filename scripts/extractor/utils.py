@@ -65,6 +65,42 @@ _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
 _ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Ú\"“(]")
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
+# Chinese chapter headings. Two common styles:
+#   1. explicit "第N章" / "第 3 回" / "第十二节" / "第一讲" — 第 + numeral + a
+#      chapter classifier (章回卷节篇讲);
+#   2. a Markdown heading led by a CJK ordinal and a separator, e.g.
+#      "## 一 · 缘起" or "## 第一讲" — common in CJK ebooks and lecture notes.
+# Scoped to CJK numerals, so Latin/Roman detection above is completely unaffected
+# (e.g. "## 5 Setup" is still not treated as a heading here). detect_structure()
+# dedupes by number, so a "##" heading and a repeated "###" sub-ordinal collapse
+# to a single chapter.
+_CN_NUM_VALUES = {
+    "〇": 0, "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
+    "六": 6, "七": 7, "八": 8, "九": 9,
+}
+_CN_NUM_UNITS = {"十": 10, "百": 100, "千": 1000}
+_CN_NUM_CLASS = "〇零一二两三四五六七八九十百千"
+_CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
+_MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
+
+
+def _cn_numeral_to_int(s: str) -> int | None:
+    """Parse a Chinese (or ASCII-digit) chapter numeral into an int (1..999)."""
+    if s.isdigit():
+        n = int(s)
+        return n if 1 <= n <= 999 else None
+    section = current = 0
+    for ch in s:
+        if ch in _CN_NUM_VALUES:
+            current = _CN_NUM_VALUES[ch]
+        elif ch in _CN_NUM_UNITS:
+            section += (current or 1) * _CN_NUM_UNITS[ch]
+            current = 0
+        else:
+            return None
+    total = section + current
+    return total if 1 <= total <= 999 else None
+
 
 def _int_to_roman(n: int) -> str:
     table = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"),
@@ -97,8 +133,9 @@ def _roman_to_int(s: str) -> int | None:
 def _chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading.
 
-    Handles both Arabic ("Chapter 5", "Capítulo 5: ...") and Roman-numeral
-    ("I: Loomings", "II. The Carpet-Bag") heading styles.
+    Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
+    ("I: Loomings", "II. The Carpet-Bag") and Chinese ("第三章 …", "## 一 · …",
+    "## 第一讲") heading styles.
     """
     s = line.strip()
     if len(s) > 80:
@@ -109,6 +146,9 @@ def _chapter_number(line: str) -> int | None:
     rm = _ROMAN_HEAD.match(s)
     if rm:
         return _roman_to_int(rm.group(1))
+    cm = _CN_CHAPTER.match(s) or _MD_CN_HEADING.match(s)
+    if cm:
+        return _cn_numeral_to_int(cm.group(1))
     return None
 
 

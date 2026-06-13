@@ -30,6 +30,15 @@ import re
 import sys
 from pathlib import Path
 
+# Force UTF-8 stdout/stderr so the ✓ / ✗ result glyphs don't raise
+# UnicodeEncodeError on Windows consoles that default to a legacy code page
+# (e.g. GBK / cp936).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 # Claude Code built-in tools. Bash grants may be scoped, e.g. "Bash(python3 *)".
 CLAUDE_CODE_TOOLS = {
     "Bash", "Read", "Write", "Edit", "Glob", "Grep",
