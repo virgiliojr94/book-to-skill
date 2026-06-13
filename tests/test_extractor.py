@@ -30,6 +30,7 @@ from extractor.utils import (
     parse_arguments,
     estimate_tokens,
     detect_structure,
+    _cn_numeral_to_int,
     main,
 )
 from extractor.config import SUPPORTED_EXTENSIONS
@@ -601,6 +602,46 @@ class TestDetectStructure:
         # A chapter heading far past the old 50k-char window must still be found.
         text = "Capítulo 1\n" + ("filler word " * 6000) + "\nCapítulo 2\n"
         assert detect_structure(text)["chapters_detected"] == 2
+
+    # ── Chinese (CJK) chapter headings ──────────────────────────────────────
+
+    def test_chinese_di_n_zhang(self):
+        text = "第一章 绪论\n正文。\n第二章 方法\n更多正文。\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_chinese_di_n_jiang_lecture(self):
+        # lecture transcripts numbered 第N讲
+        text = "第一讲\n正文\n第二讲\n正文\n第三讲\n正文\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_markdown_cjk_ordinal_heading(self):
+        # "## 一 · 缘起" style, common in CJK ebooks
+        text = "## 一 · 缘起\n正文\n## 二 · 主体\n正文\n## 三 · 结语\n正文\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_markdown_di_n_jiang_heading(self):
+        text = "## 第一讲\n正文\n## 第二讲\n正文\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_chinese_dedups_toc_and_body(self):
+        # ToC entry "第一讲..... 2" and body heading "## 第一讲" count once.
+        text = "第一讲..... 2\n第二讲..... 12\n## 第一讲\n正文\n## 第二讲\n正文\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_cjk_detection_does_not_affect_latin(self):
+        # A bare Arabic-numeral Markdown heading is NOT a chapter (unchanged).
+        assert detect_structure("## 5 Setup\n## 6 Teardown\n")["chapters_detected"] == 0
+
+    def test_chinese_numeral_parsing(self):
+        assert _cn_numeral_to_int("一") == 1
+        assert _cn_numeral_to_int("十") == 10
+        assert _cn_numeral_to_int("十一") == 11
+        assert _cn_numeral_to_int("二十") == 20
+        assert _cn_numeral_to_int("二十一") == 21
+        assert _cn_numeral_to_int("一百零八") == 108
+        assert _cn_numeral_to_int("15") == 15
+        assert _cn_numeral_to_int("不是数字") is None
+        assert _cn_numeral_to_int("9999") is None  # out of 1..999 chapter range
 
 
 class TestTextExtraction:
