@@ -7,3 +7,7 @@ updates:
       interval: weekly
     commit-message:
       prefix: ci
+    # One PR per week with all action bumps grouped, instead of one PR per action.
+    groups:
+      github-actions:
+        patterns: ["*"]
