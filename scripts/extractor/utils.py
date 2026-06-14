@@ -100,6 +100,52 @@ _TOC_PATTERN = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
+# ATX-style heading: "# Title", "## Section", AsciiDoc "= Title", "== Section".
+# The required space after the marker distinguishes an AsciiDoc "== X" from a
+# reStructuredText underline "=====" (no space) — the latter is intentionally
+# ignored (RST underline headings are out of scope).
+_ATX_HEADING = re.compile(r"^(#{1,6}|={1,6})\s+(.+?)\s*#*$")
+
+
+def _structural_chapter_count(text: str) -> int:
+    """Count chapter-like ATX headings in Markdown/AsciiDoc sources.
+
+    Groups distinct (case-normalized) heading titles by depth and returns the
+    count at the shallowest depth with >= 2 distinct headings — this selects the
+    real chapter level in the common "# Book Title / ## Chapter" layout where the
+    top level appears once. Headings inside fenced code blocks are skipped so a
+    "# comment" in a code sample is not mistaken for a chapter. Headings whose
+    title starts with an ASCII digit (e.g. "## 5 Setup") are excluded — they
+    are numeric-list-style, not chapters.
+    """
+    levels: dict[int, set[str]] = {}
+    in_fence = False
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("```") or s.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = _ATX_HEADING.match(s)
+        if not m:
+            continue
+        title = m.group(2).strip().lower()
+        if not title:
+            continue
+        # Skip headings whose title starts with a bare ASCII digit ("## 5 Setup").
+        # These are numeric list-item style headings, not chapter headings; they
+        # were intentionally excluded from numeric detection and must stay excluded.
+        if title[0].isdigit():
+            continue
+        levels.setdefault(len(m.group(1)), set()).add(title)
+    if not levels:
+        return 0
+    for depth in sorted(levels):
+        if len(levels[depth]) >= 2:
+            return len(levels[depth])
+    return sum(len(titles) for titles in levels.values())
+
 
 def _cn_numeral_to_int(s: str) -> int | None:
     """Parse a Chinese (or ASCII-digit) chapter numeral into an int (1..999)."""
@@ -186,7 +232,12 @@ def detect_structure(text: str) -> dict:
         if num is not None:
             numbers.add(num)
             headings.append(line.strip())
-    chapters_detected = len(numbers)
+    numeric_count = len(numbers)
+    # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
+    # "Chapter N" headings were found, so books with real chapters are unaffected.
+    chapters_detected = (
+        numeric_count if numeric_count > 0 else _structural_chapter_count(text)
+    )
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))

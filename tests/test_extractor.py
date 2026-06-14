@@ -664,6 +664,39 @@ class TestDetectStructure:
         # A bare Arabic-numeral Markdown heading is NOT a chapter (unchanged).
         assert detect_structure("## 5 Setup\n## 6 Teardown\n")["chapters_detected"] == 0
 
+    def test_markdown_atx_chapters(self):
+        text = "# Book Title\n\n## Introduction\nbody\n\n## Getting Started\nbody\n\n## Advanced\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_markdown_all_h1_chapters(self):
+        text = "# Chapter One\ntext\n# Chapter Two\ntext\n# Chapter Three\ntext\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_asciidoc_section_headings(self):
+        text = "= Doc Title\n\n== First Section\nbody\n\n== Second Section\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_markdown_prefixed_chapter_word(self):
+        # "## Chapter 1:" is not caught by the numeric scan (line starts with '#'),
+        # so the structural fallback must count it.
+        text = "## Chapter 1: Intro\nbody\n## Chapter 2: Models\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_headings_inside_code_fence_are_ignored(self):
+        text = "# Real A\n\n```python\n# a comment\n# another comment\n```\n\n# Real B\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_plain_prose_has_no_structural_chapters(self):
+        # Regression guard: no headings -> still 0, unchanged behavior
+        text = "Just paragraphs of prose.\nMore prose here.\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_numeric_chapters_win_over_markdown_subsections(self):
+        # A book with real "Chapter N" headings must report the numeric count,
+        # not the count of markdown subsection headings.
+        text = "Chapter 1: Intro\n## sub a\n## sub b\n## sub c\nChapter 2: Next\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
     def test_chinese_numeral_parsing(self):
         assert _cn_numeral_to_int("一") == 1
         assert _cn_numeral_to_int("十") == 10
