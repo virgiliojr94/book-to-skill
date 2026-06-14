@@ -144,6 +144,9 @@ def _structural_chapter_count(text: str) -> int:
     for depth in sorted(levels):
         if len(levels[depth]) >= 2:
             return len(levels[depth])
+    # No level has >= 2 distinct headings: a thin doc (e.g. one heading per
+    # level). Count them all — this path runs only as a fallback when numeric
+    # chapter detection already found zero, so it cannot inflate real books.
     return sum(len(titles) for titles in levels.values())
 
 

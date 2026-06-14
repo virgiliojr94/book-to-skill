@@ -676,6 +676,11 @@ class TestDetectStructure:
         text = "= Doc Title\n\n== First Section\nbody\n\n== Second Section\nbody\n"
         assert detect_structure(text)["chapters_detected"] == 2
 
+    def test_asciidoc_deeper_levels(self):
+        # AsciiDoc levels 3-6 (=== .. ======) are also recognized.
+        text = "=== Alpha\nbody\n=== Beta\nbody\n=== Gamma\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
     def test_markdown_prefixed_chapter_word(self):
         # "## Chapter 1:" is not caught by the numeric scan (line starts with '#'),
         # so the structural fallback must count it.
