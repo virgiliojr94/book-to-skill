@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Structure detection now recognizes Markdown/AsciiDoc ATX headings (`#`, `==`)
+  as chapters when no numeric "Chapter N" headings are present, fixing a
+  zero-chapter result for `.md`/`.adoc` sources. Headings inside fenced code
+  blocks are ignored.
+- Table-of-contents detection extended to Chinese, Japanese, French, German,
+  Italian, and Dutch.
+
 ### Security
 - **CI security scanning** — added CodeQL (Python, security-and-quality + weekly
   schedule), Bandit (gates on HIGH severity; reports MEDIUM+ informationally), and
