@@ -85,6 +85,21 @@ _CN_NUM_CLASS = "〇零一二两三四五六七八九十百千"
 _CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
 _MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
 
+# Table-of-contents header lines across common languages. Anchored to a whole
+# line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
+_TOC_HEADERS = (
+    "table of contents", "contents", "índice", "sumário",   # EN / ES / PT
+    "目录", "目錄", "目次",                                   # Chinese / Japanese
+    "table des matières",                                   # French
+    "inhaltsverzeichnis",                                   # German
+    "indice", "sommario",                                   # Italian (no accent — distinct from índice above)
+    "inhoudsopgave",                                        # Dutch
+)
+_TOC_PATTERN = re.compile(
+    r"^\s*(?:" + "|".join(re.escape(h) for h in _TOC_HEADERS) + r")\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
 
 def _cn_numeral_to_int(s: str) -> int | None:
     """Parse a Chinese (or ASCII-digit) chapter numeral into an int (1..999)."""
@@ -173,12 +188,8 @@ def detect_structure(text: str) -> dict:
             headings.append(line.strip())
     chapters_detected = len(numbers)
 
-    # Look for ToC indicators in the first ~30k chars
-    toc_pattern = re.compile(
-        r"^\s*(?:table of contents|contents|índice|sumário)\s*$",
-        re.IGNORECASE | re.MULTILINE,
-    )
-    has_toc = bool(toc_pattern.search(text[:30000]))
+    # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
+    has_toc = bool(_TOC_PATTERN.search(text[:30000]))
 
     return {
         "chapters_detected": chapters_detected,

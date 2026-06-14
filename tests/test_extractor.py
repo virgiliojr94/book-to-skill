@@ -553,6 +553,38 @@ class TestDetectStructure:
         result = detect_structure(text)
         assert result["has_toc"] is False
 
+    def test_toc_chinese(self):
+        assert detect_structure("目录\n第一章 开始\n第二章 进阶\n")["has_toc"] is True
+
+    def test_toc_japanese(self):
+        assert detect_structure("目次\n本文")["has_toc"] is True
+
+    def test_toc_french(self):
+        assert detect_structure("Table des matières\n1 Intro")["has_toc"] is True
+
+    def test_toc_german(self):
+        assert detect_structure("Inhaltsverzeichnis\n1 Einleitung")["has_toc"] is True
+
+    def test_toc_italian(self):
+        assert detect_structure("Indice\n1 Introduzione")["has_toc"] is True
+
+    def test_toc_dutch(self):
+        assert detect_structure("Inhoudsopgave\n1 Inleiding")["has_toc"] is True
+
+    def test_toc_spanish_accented(self):
+        assert detect_structure("Índice\n1 Introducción")["has_toc"] is True
+
+    def test_toc_traditional_chinese(self):
+        assert detect_structure("目錄\n第一章")["has_toc"] is True
+
+    def test_toc_italian_sommario(self):
+        assert detect_structure("Sommario\n1 Introduzione")["has_toc"] is True
+
+    def test_toc_inline_word_is_not_toc(self):
+        # "contents"/"index" mid-sentence must not be mistaken for a ToC header
+        text = "The contents of this chapter are varied and the index is long.\n"
+        assert detect_structure(text)["has_toc"] is False
+
     def test_numbered_list_items_are_not_chapters(self):
         # The AI-Engineering failure: numbered list items were counted as chapters.
         text = (
