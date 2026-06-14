@@ -61,6 +61,29 @@ jobs:
           test -f "$BOOK_SKILL_WORKDIR/metadata.json"
           grep -q "Backpressure" "$BOOK_SKILL_WORKDIR/full_text.txt"
 
+  security:
+    name: security (bandit + zizmor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install scanners
+        run: pip install bandit zizmor
+      - name: Bandit — gate on HIGH severity
+        # Hard gate: only HIGH-severity / MEDIUM-confidence findings fail CI, to
+        # avoid blocking on the known-acceptable subprocess (pip install) calls.
+        # Ratchet down to medium once the open B314 docx-XML finding is hardened.
+        run: bandit -q -r scripts tools --severity-level high --confidence-level medium
+      - name: Bandit — report MEDIUM+ (informational)
+        run: bandit -q -r scripts tools -ll || true
+      - name: Zizmor — workflow audit (informational)
+        # Surfaces GitHub Actions risks (injection, pull_request_target misuse).
+        # Currently only flags unpinned-uses (tags vs SHA) — non-blocking until
+        # the actions are pinned to SHAs (Dependabot follow-up).
+        run: zizmor .github/workflows/ || true
+
   validate-skill:
     name: validate SKILL.md (Claude Code rules)
     runs-on: ubuntu-latest
