@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **CI security scanning** — added CodeQL (Python, security-and-quality + weekly
+  schedule), Bandit (gates on HIGH severity; reports MEDIUM+ informationally), and
+  Zizmor (GitHub Actions workflow audit, informational). Added a Dependabot config
+  for the `github-actions` ecosystem. Known open finding to harden in a follow-up:
+  Bandit B314 (`xml.etree.ElementTree.fromstring` in the DOCX parser — untrusted
+  XML).
+
 ### Fixed
 - **Package now imports on interpreters that evaluate annotations eagerly.**
   Added `from __future__ import annotations` to every module using PEP 604
