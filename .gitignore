@@ -4,3 +4,11 @@ __pycache__/
 # Agent session traces (Stone CLI) — never commit
 .stone/
 **/.stone/
+
+# PyPI packaging build directories
+dist/
+build/
+*.egg-info/
+
+# Local design specifications
+docs/superpowers/specs/
