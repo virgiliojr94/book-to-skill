@@ -20,8 +20,8 @@ import pytest
 # ---------------------------------------------------------------------------
 # Bootstrap: make sure the book_to_skill package is importable
 # ---------------------------------------------------------------------------
-SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from book_to_skill.exceptions import ExtractionError
 from book_to_skill.utils import (
