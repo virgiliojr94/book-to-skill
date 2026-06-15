@@ -40,7 +40,7 @@ jobs:
         # High-value gate: syntax errors (E9, e.g. IndentationError) + pyflakes
         # (F: undefined names, unused imports). Style rules are intentionally
         # not gated yet to avoid blocking on cosmetic churn.
-        run: ruff check --select E9,F --target-version py310 scripts/ tests/
+        run: ruff check --select E9,F --target-version py310 book_to_skill/ scripts/ tests/ tools/
 
   smoke:
     name: smoke (dependency-free extraction)
@@ -75,9 +75,9 @@ jobs:
         # Hard gate: only HIGH-severity / MEDIUM-confidence findings fail CI, to
         # avoid blocking on the known-acceptable subprocess (pip install) calls.
         # Ratchet down to medium once the open B314 docx-XML finding is hardened.
-        run: bandit -q -r scripts tools --severity-level high --confidence-level medium
+        run: bandit -q -r book_to_skill scripts tools --severity-level high --confidence-level medium
       - name: Bandit — report MEDIUM+ (informational)
-        run: bandit -q -r scripts tools -ll || true
+        run: bandit -q -r book_to_skill scripts tools -ll || true
       - name: Zizmor — workflow audit (informational)
         # Surfaces GitHub Actions risks (injection, pull_request_target misuse).
         # Currently only flags unpinned-uses (tags vs SHA) — non-blocking until
