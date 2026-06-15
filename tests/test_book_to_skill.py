@@ -945,7 +945,7 @@ class TestParserExceptionLogging:
 
     def test_pypdf2_warns_on_unexpected_error_and_returns_none(self, tmp_path, capsys):
         """Monkeypatch pypdf2 import to raise; confirm None + stderr warning."""
-        from extractor.parsers.pdf import extract_with_pypdf2
+        from book_to_skill.parsers.pdf import extract_with_pypdf2
 
         broken = tmp_path / "broken.pdf"
         broken.write_bytes(b"%PDF-1.4 fake")

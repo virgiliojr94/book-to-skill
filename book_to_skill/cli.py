@@ -7,6 +7,7 @@ def main():
         try:
             _stream.reconfigure(encoding="utf-8")
         except (AttributeError, ValueError):
+            # Ignore if the stream does not support reconfigure (e.g. mock streams during testing)
             pass
     utils_main()
 
