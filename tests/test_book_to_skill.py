@@ -1,5 +1,5 @@
 """
-Test suite for the three PR blocker fixes + nits in the extractor package.
+Test suite for the three PR blocker fixes + nits in the book_to_skill package.
 
 Covers:
   Fix #1 — EPUB extraction tuple-unpack regression
@@ -18,13 +18,13 @@ from unittest import mock
 import pytest
 
 # ---------------------------------------------------------------------------
-# Bootstrap: make sure the extractor package is importable
+# Bootstrap: make sure the book_to_skill package is importable
 # ---------------------------------------------------------------------------
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from extractor.exceptions import ExtractionError
-from extractor.utils import (
+from book_to_skill.exceptions import ExtractionError
+from book_to_skill.utils import (
     resolve_input_files,
     extract_single_file,
     parse_arguments,
@@ -33,7 +33,7 @@ from extractor.utils import (
     _cn_numeral_to_int,
     main,
 )
-from extractor.config import SUPPORTED_EXTENSIONS
+from book_to_skill.config import SUPPORTED_EXTENSIONS
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -175,7 +175,7 @@ class TestEpubExtractionFix:
 
     def test_epub_extract_with_ebooklib_returns_str_or_none(self):
         """extract_with_ebooklib returns str|None, NOT a tuple."""
-        from extractor.parsers.epub import extract_with_ebooklib
+        from book_to_skill.parsers.epub import extract_with_ebooklib
 
         # With ebooklib likely not installed in test env → returns None
         result = extract_with_ebooklib("nonexistent.epub")
@@ -188,7 +188,7 @@ class TestEpubExtractionFix:
         epub_path = _make_minimal_epub(tmp_path / "test.epub")
 
         # Mock prepare_dependencies to be a no-op
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(epub_path, "text", "no")
 
         assert result["format"] == "epub"
@@ -202,7 +202,7 @@ class TestEpubExtractionFix:
         epub_path = _make_minimal_epub(tmp_path / "test.epub")
 
         # Even if ebooklib is absent, this should NOT raise TypeError/ValueError
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             try:
                 result = extract_single_file(epub_path, "text", "no")
             except (TypeError, ValueError) as exc:
@@ -220,7 +220,7 @@ class TestEpubOpfRelativePaths:
 
     def test_zipfile_fallback_resolves_oebps_paths(self, tmp_path):
         """The core bug: hrefs in OPF are relative to OPF dir, not archive root."""
-        from extractor.parsers.epub import extract_with_zipfile
+        from book_to_skill.parsers.epub import extract_with_zipfile
 
         epub_path = _make_oebps_epub(tmp_path / "oebps.epub")
         text = extract_with_zipfile(str(epub_path))
@@ -233,7 +233,7 @@ class TestEpubOpfRelativePaths:
         """End-to-end: extract_single_file should succeed with OEBPS layout."""
         epub_path = _make_oebps_epub(tmp_path / "test_oebps.epub")
 
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(epub_path, "text", "no")
 
         assert result["format"] == "epub"
@@ -243,7 +243,7 @@ class TestEpubOpfRelativePaths:
 
     def test_container_xml_locates_opf(self, tmp_path):
         """_find_opf_path should prefer META-INF/container.xml over globbing."""
-        from extractor.parsers.epub import _find_opf_path
+        from book_to_skill.parsers.epub import _find_opf_path
 
         epub_path = _make_oebps_epub(tmp_path / "container.epub")
         with zipfile.ZipFile(epub_path) as zf:
@@ -253,7 +253,7 @@ class TestEpubOpfRelativePaths:
 
     def test_count_chapters_with_oebps(self, tmp_path):
         """count_epub_chapters should work with OPF in subdirectory."""
-        from extractor.parsers.epub import count_epub_chapters
+        from book_to_skill.parsers.epub import count_epub_chapters
 
         epub_path = _make_oebps_epub(tmp_path / "chapters.epub")
         count = count_epub_chapters(str(epub_path))
@@ -261,7 +261,7 @@ class TestEpubOpfRelativePaths:
 
     def test_root_level_opf_still_works(self, tmp_path):
         """Regression check: root-level OPF (no subdirectory) should still work."""
-        from extractor.parsers.epub import extract_with_zipfile
+        from book_to_skill.parsers.epub import extract_with_zipfile
 
         epub_path = _make_minimal_epub(tmp_path / "root_opf.epub")
         text = extract_with_zipfile(str(epub_path))
@@ -303,7 +303,7 @@ class TestBatchResilience:
 
         for fp in input_files:
             try:
-                with mock.patch("extractor.utils.prepare_dependencies"):
+                with mock.patch("book_to_skill.utils.prepare_dependencies"):
                     res = extract_single_file(fp, "text", "no")
                 extracted.append(res)
             except ExtractionError as exc:
@@ -322,7 +322,7 @@ class TestBatchResilience:
             "sys.argv",
             ["extract.py", str(bad1), str(bad2), "--install-missing", "no"],
         )
-        monkeypatch.setattr("extractor.utils.prepare_dependencies", lambda *a: None)
+        monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -346,10 +346,10 @@ class TestBatchResilience:
         # So we patch the OUTPUT_* in utils directly
         out_text = out_dir / "full_text.txt"
         out_meta = out_dir / "metadata.json"
-        monkeypatch.setattr("extractor.utils.OUTPUT_DIR", out_dir)
-        monkeypatch.setattr("extractor.utils.OUTPUT_TEXT", out_text)
-        monkeypatch.setattr("extractor.utils.OUTPUT_META", out_meta)
-        monkeypatch.setattr("extractor.utils.prepare_dependencies", lambda *a: None)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_text)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_meta)
+        monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
 
         main()
 
@@ -815,7 +815,7 @@ class TestTextExtraction:
     def test_extract_txt_file(self, tmp_path):
         txt = _make_text_file(tmp_path / "simple.txt", "Simple text content for testing.")
 
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(txt, "text", "no")
 
         assert result["format"] == "txt"
@@ -825,7 +825,7 @@ class TestTextExtraction:
     def test_extract_md_file(self, tmp_path):
         md = _make_md_file(tmp_path / "notes.md", "# My Notes\n\nSome notes here.")
 
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(md, "text", "no")
 
         assert result["format"] == "md"
@@ -838,7 +838,7 @@ class TestHtmlExtraction:
     def test_extract_html_file(self, tmp_path):
         html_file = _make_html_file(tmp_path / "page.html")
 
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(html_file, "text", "no")
 
         assert result["format"] == "html"
@@ -852,7 +852,7 @@ class TestDocxExtraction:
     def test_extract_docx_zipfile_fallback(self, tmp_path):
         docx = _make_minimal_docx(tmp_path / "test.docx")
 
-        with mock.patch("extractor.utils.prepare_dependencies"):
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
             result = extract_single_file(docx, "text", "no")
 
         assert result["format"] == "docx"
@@ -891,10 +891,10 @@ class TestDependencyCheck:
     """Tests for the --check preflight (run_dependency_check)."""
 
     def test_all_present_reports_ready(self, capsys):
-        from extractor.dependencies import run_dependency_check
+        from book_to_skill.dependencies import run_dependency_check
 
-        with mock.patch("extractor.dependencies.python_module_available", return_value=True), \
-             mock.patch("extractor.dependencies.shutil.which", return_value="/usr/bin/tool"):
+        with mock.patch("book_to_skill.dependencies.python_module_available", return_value=True), \
+             mock.patch("book_to_skill.dependencies.shutil.which", return_value="/usr/bin/tool"):
             code = run_dependency_check()
 
         out = capsys.readouterr().out
@@ -903,10 +903,10 @@ class TestDependencyCheck:
         assert "✗" not in out
 
     def test_all_missing_lists_install_commands(self, capsys):
-        from extractor.dependencies import run_dependency_check
+        from book_to_skill.dependencies import run_dependency_check
 
-        with mock.patch("extractor.dependencies.python_module_available", return_value=False), \
-             mock.patch("extractor.dependencies.shutil.which", return_value=None):
+        with mock.patch("book_to_skill.dependencies.python_module_available", return_value=False), \
+             mock.patch("book_to_skill.dependencies.shutil.which", return_value=None):
             code = run_dependency_check()
 
         out = capsys.readouterr().out
@@ -921,13 +921,13 @@ class TestDependencyCheck:
 
     def test_pdftotext_alone_satisfies_pdf_text(self, capsys):
         """pdftotext present (system) should mark PDF text-heavy ready even with no python PDF libs."""
-        from extractor.dependencies import run_dependency_check
+        from book_to_skill.dependencies import run_dependency_check
 
         def which(cmd):
             return "/usr/bin/pdftotext" if cmd == "pdftotext" else None
 
-        with mock.patch("extractor.dependencies.python_module_available", return_value=False), \
-             mock.patch("extractor.dependencies.shutil.which", side_effect=which):
+        with mock.patch("book_to_skill.dependencies.python_module_available", return_value=False), \
+             mock.patch("book_to_skill.dependencies.shutil.which", side_effect=which):
             run_dependency_check()
 
         out = capsys.readouterr().out

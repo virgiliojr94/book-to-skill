@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
-from extractor.config import OUTPUT_DIR
+from book_to_skill.config import OUTPUT_DIR
 
 
 def extract_with_ebook_convert(input_path: str) -> str | None:

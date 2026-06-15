@@ -1,8 +1,8 @@
 import html
 import re
 import sys
-from extractor.parsers.text import read_text_file
-from extractor.exceptions import ExtractionError
+from book_to_skill.parsers.text import read_text_file
+from book_to_skill.exceptions import ExtractionError
 
 
 def strip_rtf_fallback(raw: str) -> str:

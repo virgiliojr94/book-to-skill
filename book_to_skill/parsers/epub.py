@@ -4,7 +4,7 @@ import posixpath
 import re
 import zipfile
 import sys
-from extractor.parsers.html import _HTMLTextExtractor
+from book_to_skill.parsers.html import _HTMLTextExtractor
 
 
 def extract_with_ebooklib(epub_path: str) -> str | None:

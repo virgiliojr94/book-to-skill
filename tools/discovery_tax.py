@@ -38,8 +38,8 @@ from pathlib import Path
 # Reuse the extractor's hardened chapter detection instead of duplicating it, so
 # discovery_tax and the pipeline always agree on what a chapter is (Arabic +
 # Roman headings, prose/cross-reference rejection, list-item rejection).
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from extractor.utils import _chapter_number as chapter_number  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from book_to_skill.utils import _chapter_number as chapter_number  # noqa: E402
 
 TOC_RE = re.compile(r"^\s*(?:sum[áa]rio|table of contents|contents|[íi]ndice)\s*$",
                     re.IGNORECASE | re.MULTILINE)

@@ -9,9 +9,9 @@ import shutil
 import zipfile
 from pathlib import Path
 
-from extractor.exceptions import ExtractionError
+from book_to_skill.exceptions import ExtractionError
 
-from extractor.config import (
+from book_to_skill.config import (
     OUTPUT_DIR,
     OUTPUT_TEXT,
     OUTPUT_META,
@@ -22,24 +22,24 @@ from extractor.config import (
     CALIBRE_EBOOK_EXTENSIONS,
     supported_formats_message,
 )
-from extractor.dependencies import (
+from book_to_skill.dependencies import (
     normalize_install_mode,
     prepare_dependencies,
     run_dependency_check,
 )
-from extractor.parsers.text import read_text_file
-from extractor.parsers.html import extract_html_file
-from extractor.parsers.docx import extract_docx
-from extractor.parsers.rtf import extract_rtf
-from extractor.parsers.calibre import extract_with_ebook_convert
-from extractor.parsers.pdf import (
+from book_to_skill.parsers.text import read_text_file
+from book_to_skill.parsers.html import extract_html_file
+from book_to_skill.parsers.docx import extract_docx
+from book_to_skill.parsers.rtf import extract_rtf
+from book_to_skill.parsers.calibre import extract_with_ebook_convert
+from book_to_skill.parsers.pdf import (
     extract_with_docling,
     extract_with_pdftotext,
     extract_with_pypdf2,
     extract_with_pdfminer,
     count_pages,
 )
-from extractor.parsers.epub import (
+from book_to_skill.parsers.epub import (
     extract_with_ebooklib,
     extract_with_zipfile,
     count_epub_chapters,
@@ -547,7 +547,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
 def print_banner() -> None:
     """Print the attribution banner. Done here (not only in SKILL.md) so it
     shows on every run regardless of how the agent invokes extraction."""
-    banner = Path(__file__).resolve().parent.parent / "banner.txt"
+    banner = Path(__file__).resolve().parent.parent / "scripts" / "banner.txt"
     try:
         sys.stderr.write(banner.read_text(encoding="utf-8") + "\n")
     except Exception:

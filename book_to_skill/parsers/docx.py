@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import zipfile
 import sys
-from extractor.exceptions import ExtractionError
+from book_to_skill.exceptions import ExtractionError
 
 
 def extract_docx_with_python_docx(docx_path: str) -> str | None:

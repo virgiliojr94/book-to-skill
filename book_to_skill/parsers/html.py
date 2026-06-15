@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import html
 import html.parser
-from extractor.parsers.text import read_text_file
+from book_to_skill.parsers.text import read_text_file
 
 
 class _HTMLTextExtractor(html.parser.HTMLParser):
