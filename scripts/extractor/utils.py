@@ -51,20 +51,24 @@ def estimate_tokens(text: str) -> int:
 
 
 # Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
-# Captures the number (bounded to 1..99 — drops years like "2025.") and whatever
-# follows it on the line, so we can reject prose.
+# Also French/German/Italian/Dutch chapter words (chapitre/kapitel/capitolo/
+# hoofdstuk), matching the ToC languages added alongside. "ch.?" stays last so
+# the longer words match in full. Captures the number (bounded to 1..99 — drops
+# years like "2025.") and whatever follows it on the line, so we can reject prose.
 _EXPLICIT_CHAPTER = re.compile(
-    r"^\s*(?:chapter|cap[ií]tulo|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$", re.IGNORECASE
+    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$",
+    re.IGNORECASE,
 )
-# A heading's number is followed by end-of-line, punctuation (". : - —"), or a
-# Capitalized title word. A lowercase continuation ("Chapter 6 explores...",
-# "Chapter 8 are relevant...") is prose / a cross-reference, not a heading.
-_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Ú0-9\"“(]")
+# A heading's number is followed by end-of-line, punctuation (“. : - —“), or a
+# Capitalized title word. A lowercase continuation (“Chapter 6 explores...”,
+# “Chapter 8 are relevant...”) is prose / a cross-reference, not a heading.
+# The uppercase class is À-Þ so titles starting with Ü/Û (common in German, e.g. “Überblick”) are recognized.
+_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Þ0-9\"“(]")
 
 # Roman-numeral chapter heading: "I: Loomings", "II. The Carpet-Bag".
 # Requires a separator (":" or ".") and a Capitalized title after it, so a bare
 # "I" or "V." (a page divider / list marker) is not mistaken for a chapter.
-_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Ú\"“(]")
+_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Þ\"“(]")
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
 # Chinese chapter headings. Two common styles:

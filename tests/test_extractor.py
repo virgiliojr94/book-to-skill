@@ -725,6 +725,38 @@ class TestDetectStructure:
         assert _cn_numeral_to_int("不是数字") is None
         assert _cn_numeral_to_int("9999") is None  # out of 1..999 chapter range
 
+    def test_french_chapitre(self):
+        assert detect_structure("Chapitre 1\nx\nChapitre 2\nx")["chapters_detected"] == 2
+
+    def test_german_kapitel(self):
+        assert detect_structure("Kapitel 1\nx\nKapitel 2\nx")["chapters_detected"] == 2
+
+    def test_italian_capitolo(self):
+        assert detect_structure("Capitolo 1\nx\nCapitolo 2\nx")["chapters_detected"] == 2
+
+    def test_dutch_hoofdstuk(self):
+        assert detect_structure("Hoofdstuk 1\nx\nHoofdstuk 2\nx")["chapters_detected"] == 2
+
+    def test_german_kapitel_with_title(self):
+        text = "Kapitel 1: Einführung\nx\nKapitel 2: Methoden\nx"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_european_lowercase_cross_reference_not_chapter(self):
+        # A lowercase continuation is prose / a cross-reference, not a heading —
+        # the existing _HEADING_TAIL guard must reject it for the new words too.
+        text = "Kapitel 3 behandelt das Thema ausführlich.\nChapitre 6 explique le contexte ici.\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_german_kapitel_umlaut_title(self):
+        # "Überblick" starts with Ü (U+00DC) — the widened À-Þ range accepts it.
+        text = "Kapitel 1 Anfang\nx\nKapitel 2 Überblick\nx"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_roman_heading_umlaut_title(self):
+        # _ROMAN_HEAD range widened too: a Roman heading with an Ü-title counts.
+        text = "I: Überblick\nbody\nII: Anfang\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
 
 class TestTextExtraction:
     """Tests for plain-text file extraction."""
