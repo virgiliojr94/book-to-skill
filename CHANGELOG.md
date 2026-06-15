@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blocks are ignored.
 - Table-of-contents detection extended to Chinese, Japanese, French, German,
   Italian, and Dutch.
+- Chapter detection now recognizes French, German, Italian, and Dutch chapter
+  words (`Chapitre`, `Kapitel`, `Capitolo`, `Hoofdstuk`), matching the
+  table-of-contents languages added previously.
+- Heading-title detection now accepts titles starting with `Ü`/`Û`/`Ý`/`Þ`
+  (e.g. German "Überblick"), which the previous `À–Ú` range excluded.
 
 ### Security
 - **CI security scanning** — added CodeQL (Python, security-and-quality + weekly
