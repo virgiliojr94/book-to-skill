@@ -641,6 +641,17 @@ class TestDetectStructure:
         text = "第一章 绪论\n正文。\n第二章 方法\n更多正文。\n"
         assert detect_structure(text)["chapters_detected"] == 2
 
+    def test_japanese_fullwidth_digit_chapters(self):
+        # Full-width Arabic digits (U+FF10–U+FF19) in "第N章" are common in
+        # Japanese typesetting and must be detected like half-width "第1章".
+        text = "第１章 はじめに\n本文。\n第２章 つぎ\n本文。\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_fullwidth_multi_digit_chapter(self):
+        # Multi-digit full-width numbers ("第１０章") resolve to the right int.
+        text = "第１章 序\n第１０章 終\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
     def test_chinese_di_n_jiang_lecture(self):
         # lecture transcripts numbered 第N讲
         text = "第一讲\n正文\n第二讲\n正文\n第三讲\n正文\n"
@@ -710,6 +721,7 @@ class TestDetectStructure:
         assert _cn_numeral_to_int("二十一") == 21
         assert _cn_numeral_to_int("一百零八") == 108
         assert _cn_numeral_to_int("15") == 15
+        assert _cn_numeral_to_int("１２") == 12  # full-width Arabic digits
         assert _cn_numeral_to_int("不是数字") is None
         assert _cn_numeral_to_int("9999") is None  # out of 1..999 chapter range
 

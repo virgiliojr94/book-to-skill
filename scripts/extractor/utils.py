@@ -82,8 +82,12 @@ _CN_NUM_VALUES = {
 }
 _CN_NUM_UNITS = {"十": 10, "百": 100, "千": 1000}
 _CN_NUM_CLASS = "〇零一二两三四五六七八九十百千"
-_CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
-_MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
+# Full-width Arabic digits (U+FF10–U+FF19) are common in Japanese typesetting,
+# e.g. "第１章". int() already parses them (str.isdigit() is True), so only the
+# regex character classes need to accept them.
+_FW_DIGITS = "０-９"
+_CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
+_MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
 
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
