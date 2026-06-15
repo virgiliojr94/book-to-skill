@@ -1,10 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "book-to-skill"
-version = "1.1.0"
+version = "1.2.0"
 description = "Convert books and documents into structured, on-demand agent skills."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
+
+[project.scripts]
+book-to-skill = "book_to_skill.cli:main"
+
+[project.optional-dependencies]
+epub = ["ebooklib", "beautifulsoup4"]
+pdf = ["PyPDF2", "pdfminer.six"]
+docx = ["python-docx"]
+rtf = ["striprtf"]
+technical = ["docling"]
+all = [
+    "ebooklib",
+    "beautifulsoup4",
+    "PyPDF2",
+    "pdfminer.six",
+    "python-docx",
+    "striprtf",
+    "docling"
+]
 
 # Tooling config so `ruff check .` and `pytest` locally match CI without flags.
 [tool.ruff]
