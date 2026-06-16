@@ -757,6 +757,57 @@ class TestDetectStructure:
         text = "I: Überblick\nbody\nII: Anfang\nbody\n"
         assert detect_structure(text)["chapters_detected"] == 2
 
+    def test_setext_rst_equals_three_sections(self):
+        text = ("Introduction\n============\nbody\n\n"
+                "Getting Started\n===============\nbody\n\n"
+                "Advanced\n========\nbody\n")
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_setext_rst_dash_two_sections(self):
+        text = "Methods\n-------\nbody\n\nResults\n-------\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_setext_markdown_h1(self):
+        text = "First\n=====\ntext\n\nSecond\n======\ntext\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_setext_equals_top_level_wins_over_dash(self):
+        # "=" (level 1) is shallower than "-" (level 2); the two "=" titles win.
+        text = "Chap One\n========\nSec a\n-----\nSec b\n-----\nChap Two\n========\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_setext_thematic_break_under_paragraph_not_heading(self):
+        text = "This is a normal paragraph of body text.\n---\nmore text follows here too.\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_setext_horizontal_rule_with_blank_above_not_heading(self):
+        text = "text here\n\n---\n\nmore\n\n***\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_setext_simple_table_border_not_heading(self):
+        text = "Name    Value\n=====   =====\nfoo     1\nbar     2\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_setext_yaml_front_matter_not_heading(self):
+        text = "---\ntitle: foo\nauthor: bar\n---\nbody text here\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_setext_inside_code_fence_ignored(self):
+        text = "```\nTitle\n=====\nAnother\n=======\n```\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_atx_all_punctuation_title_not_heading(self):
+        # "=====   =====" matches the ATX regex (group 2 = "====="), but the \w guard
+        # rejects it: an all-punctuation title is not a real heading.
+        text = "intro line\n=====   =====\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_atx_heading_followed_by_underline_not_double_counted(self):
+        # A malformed mix (ATX heading then a "=" underline) must not count the
+        # same heading twice (once as ATX, once as setext).
+        text = "# Hi\n====\n# Bye\n=====\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
 
 class TestTextExtraction:
     """Tests for plain-text file extraction."""

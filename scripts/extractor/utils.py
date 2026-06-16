@@ -113,40 +113,63 @@ _TOC_PATTERN = re.compile(
 # reStructuredText underline "=====" (no space) — the latter is intentionally
 # ignored (RST underline headings are out of scope).
 _ATX_HEADING = re.compile(r"^(#{1,6}|={1,6})\s+(.+?)\s*#*$")
+# Setext/RST underline: a full line of "=" (level 1) or "-" (level 2), length
+# >= 2. Marks the line directly above it as a heading title.
+_SETEXT_UNDERLINE = re.compile(r"^(={2,}|-{2,})$")
 
 
 def _structural_chapter_count(text: str) -> int:
-    """Count chapter-like ATX headings in Markdown/AsciiDoc sources.
+    """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources.
 
-    Groups distinct (case-normalized) heading titles by depth and returns the
-    count at the shallowest depth with >= 2 distinct headings — this selects the
-    real chapter level in the common "# Book Title / ## Chapter" layout where the
-    top level appears once. Headings inside fenced code blocks are skipped so a
-    "# comment" in a code sample is not mistaken for a chapter. Headings whose
-    title starts with an ASCII digit (e.g. "## 5 Setup") are excluded — they
-    are numeric-list-style, not chapters.
+    Recognizes ATX headings ("# Title", "== Section") and setext/RST underline
+    headings (a title line directly above a row of "=" or "-"). Groups distinct
+    (case-normalized) titles by depth and returns the count at the shallowest
+    depth with >= 2 distinct titles — this selects the real chapter level in the
+    common "# Book Title / ## Chapter" layout where the top level appears once.
+
+    Guards against false positives: headings inside fenced code blocks are
+    skipped; an ATX title starting with a bare digit ("## 5 Setup") or made only
+    of punctuation ("=====" table borders) is rejected; a setext underline counts
+    only when it sits directly under a non-blank title line at least as long as
+    the underline (so thematic breaks, table borders, and front-matter "---" do
+    not match).
     """
     levels: dict[int, set[str]] = {}
     in_fence = False
+    prev = ""  # previous non-fence line (stripped); a setext title candidate
     for line in text.splitlines():
         s = line.strip()
         if s.startswith("```") or s.startswith("~~~"):
             in_fence = not in_fence
+            prev = ""
             continue
         if in_fence:
+            prev = ""
             continue
+        # Setext/RST underline: "=" (level 1) or "-" (level 2) directly under a
+        # title line at least as long as the underline.
+        if (
+            _SETEXT_UNDERLINE.match(s)
+            and prev
+            and not _SETEXT_UNDERLINE.match(prev)
+            and len(s) >= len(prev)
+        ):
+            depth = 1 if s[0] == "=" else 2
+            levels.setdefault(depth, set()).add(prev.lower())
+            prev = ""
+            continue
+        # ATX heading ("# Title", "== Section").
         m = _ATX_HEADING.match(s)
-        if not m:
+        if m:
+            title = m.group(2).strip().lower()
+            # Reject empty, bare-digit-led ("## 5 Setup"), and all-punctuation
+            # ("=====" table-border) titles — none are real chapter headings.
+            if title and not title[0].isdigit() and re.search(r"\w", title):
+                levels.setdefault(len(m.group(1)), set()).add(title)
+            # An ATX heading line is not a setext title for the next line.
+            prev = ""
             continue
-        title = m.group(2).strip().lower()
-        if not title:
-            continue
-        # Skip headings whose title starts with a bare ASCII digit ("## 5 Setup").
-        # These are numeric list-item style headings, not chapter headings; they
-        # were intentionally excluded from numeric detection and must stay excluded.
-        if title[0].isdigit():
-            continue
-        levels.setdefault(len(m.group(1)), set()).add(title)
+        prev = s
     if not levels:
         return 0
     for depth in sorted(levels):
