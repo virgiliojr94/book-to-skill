@@ -20,5 +20,5 @@ def extract_with_ebook_convert(input_path: str) -> str | None:
             if text.strip():
                 return text
     except Exception as e:
-            print(f"  [warn] extract_with_ebook_convert failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"  [warn] extract_with_ebook_convert failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None
