@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Log unexpected parser exceptions to stderr instead of silently returning `None` 
+  corrupt files and encoding errors are now visible while the fallback chain continues
+  unchanged.
+
 ### Added
 - **`pyproject.toml`** declaring `requires-python = ">=3.9"` and centralizing the
   ruff/pytest config so `ruff check .` and `pytest` locally match CI without
