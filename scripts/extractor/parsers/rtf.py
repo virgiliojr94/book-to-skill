@@ -1,5 +1,6 @@
 import html
 import re
+import sys
 from extractor.parsers.text import read_text_file
 from extractor.exceptions import ExtractionError
 
@@ -25,7 +26,7 @@ def extract_rtf(rtf_path: str) -> tuple[str, str]:
             return text, "striprtf"
     except ImportError:
         pass
-    except Exception:
-        pass
+    except Exception as e:
+            print(f"  [warn] extract_rtf/striprtf failed: {type(e).__name__}: {e}", file=sys.stderr)
 
     return strip_rtf_fallback(raw), "rtf-regex"

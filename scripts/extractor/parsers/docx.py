@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import zipfile
+import sys
 from extractor.exceptions import ExtractionError
 
 
@@ -17,9 +18,9 @@ def extract_docx_with_python_docx(docx_path: str) -> str | None:
         return "\n".join(parts)
     except ImportError:
         return None
-    except Exception:
+    except Exception as e:
+        print(f"  [warn] extract_docx_with_python_docx failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
-
 
 def extract_docx_with_zipfile(docx_path: str) -> str | None:
     try:
@@ -35,7 +36,8 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
             if texts:
                 parts.append("".join(texts))
         return "\n".join(parts) if parts else None
-    except Exception:
+    except Exception as e:
+        print(f"  [warn] extract_docx_with_zipfile failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
 
 

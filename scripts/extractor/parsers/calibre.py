@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from extractor.config import OUTPUT_DIR
 
 
@@ -18,6 +19,6 @@ def extract_with_ebook_convert(input_path: str) -> str | None:
             text = output_path.read_text(encoding="utf-8", errors="replace")
             if text.strip():
                 return text
-    except Exception:
-        pass
+    except Exception as e:
+            print(f"  [warn] extract_with_ebook_convert failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None

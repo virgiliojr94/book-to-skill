@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 
 
 def extract_with_pdftotext(pdf_path: str) -> str | None:
@@ -14,8 +15,8 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None
 
 
@@ -33,8 +34,9 @@ def extract_with_pypdf2(pdf_path: str) -> str | None:
         return "\n".join(text_parts)
     except ImportError:
         return None
-    except Exception:
-        return None
+    except Exception as e:
+            print(f"  [warn] extract_with_pypdf2 failed: {type(e).__name__}: {e}", file=sys.stderr)
+            return None
 
 
 def extract_with_pdfminer(pdf_path: str) -> str | None:
@@ -43,8 +45,9 @@ def extract_with_pdfminer(pdf_path: str) -> str | None:
         return extract_text(pdf_path)
     except ImportError:
         return None
-    except Exception:
-        return None
+    except Exception as e:
+            print(f"  [warn] extract_with_pdfminer failed: {type(e).__name__}: {e}", file=sys.stderr)
+            return None
 
 
 def extract_with_docling(pdf_path: str) -> str | None:
@@ -68,8 +71,9 @@ def extract_with_docling(pdf_path: str) -> str | None:
         return result.document.export_to_markdown()
     except ImportError:
         return None
-    except Exception:
-        return None
+    except Exception as e:
+            print(f"  [warn] extract_with_docling failed: {type(e).__name__}: {e}", file=sys.stderr)
+            return None
 
 
 def count_pages(pdf_path: str) -> int:

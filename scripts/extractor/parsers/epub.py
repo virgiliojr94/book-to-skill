@@ -3,6 +3,7 @@ from __future__ import annotations
 import posixpath
 import re
 import zipfile
+import sys
 from extractor.parsers.html import _HTMLTextExtractor
 
 
@@ -20,7 +21,8 @@ def extract_with_ebooklib(epub_path: str) -> str | None:
         return "\n\n".join(parts)
     except ImportError:
         return None
-    except Exception:
+    except Exception as e:
+        print(f"  [warn] extract_with_ebooklib failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
 
 
@@ -80,7 +82,8 @@ def extract_with_zipfile(epub_path: str) -> str | None:
                 except Exception:
                     continue
             return "\n\n".join(parts) if parts else None
-    except Exception:
+    except Exception as e:
+        print(f"  [warn] extract_with_zipfile failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
 
 
