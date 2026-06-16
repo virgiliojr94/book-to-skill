@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   table-of-contents languages added previously.
 - Heading-title detection now accepts titles starting with `Ü`/`Û`/`Ý`/`Þ`
   (e.g. German "Überblick"), which the previous `À–Ú` range excluded.
+- Structure detection now recognizes setext / reStructuredText underline
+  headings (a title line over a row of `=` or `-`), so `.rst` and setext-style
+  Markdown sources are no longer detected as zero-chapter.
+- All-punctuation ATX "titles" (e.g. a `=====   =====` simple-table border) are
+  no longer miscounted as chapters.
 
 ### Security
 - **CI security scanning** — added CodeQL (Python, security-and-quality + weekly
