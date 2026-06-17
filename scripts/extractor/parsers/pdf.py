@@ -16,7 +16,7 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout
     except Exception as e:
-    print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None
 
 
