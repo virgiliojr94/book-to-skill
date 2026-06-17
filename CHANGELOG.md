@@ -7,50 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Log unexpected parser exceptions to stderr instead of silently returning `None` 
-  corrupt files and encoding errors are now visible while the fallback chain continues
-  unchanged.
+## [1.2.0] — 2026-06-17
 
 ### Added
-- **`pyproject.toml`** declaring `requires-python = ">=3.9"` and centralizing the
-  ruff/pytest config so `ruff check .` and `pytest` locally match CI without
-  passing flags by hand. Metadata only — no build backend or console scripts; the
-  tool stays CLI-first via `python3 scripts/extract.py`.
-- Structure detection now recognizes Markdown/AsciiDoc ATX headings (`#`, `==`)
-  as chapters when no numeric "Chapter N" headings are present, fixing a
-  zero-chapter result for `.md`/`.adoc` sources. Headings inside fenced code
-  blocks are ignored.
-- Table-of-contents detection extended to Chinese, Japanese, French, German,
-  Italian, and Dutch.
-- Chapter detection now recognizes French, German, Italian, and Dutch chapter
-  words (`Chapitre`, `Kapitel`, `Capitolo`, `Hoofdstuk`), matching the
-  table-of-contents languages added previously.
-- Heading-title detection now accepts titles starting with `Ü`/`Û`/`Ý`/`Þ`
-  (e.g. German "Überblick"), which the previous `À–Ú` range excluded.
-- Structure detection now recognizes setext / reStructuredText underline
-  headings (a title line over a row of `=` or `-`), so `.rst` and setext-style
-  Markdown sources are no longer detected as zero-chapter.
-- All-punctuation ATX "titles" (e.g. a `=====   =====` simple-table border) are
-  no longer miscounted as chapters.
-
-### Security
-- **CI security scanning** — added CodeQL (Python, security-and-quality + weekly
-  schedule), Bandit (gates on HIGH severity; reports MEDIUM+ informationally), and
-  Zizmor (GitHub Actions workflow audit, informational). Added a Dependabot config
-  for the `github-actions` ecosystem. Known open finding to harden in a follow-up:
-  Bandit B314 (`xml.etree.ElementTree.fromstring` in the DOCX parser — untrusted
-  XML).
+- **Installable Python package.** The extractor is now a proper `book_to_skill`
+  package with a `pyproject.toml` (hatchling build backend), a `book-to-skill`
+  console script, and `python -m book_to_skill`. Optional extractors are exposed
+  as extras (`epub`, `pdf`, `docx`, `rtf`, `technical`, `all`); the base install
+  stays dependency-free with stdlib fallbacks. `requires-python = ">=3.9"`.
+  `scripts/extract.py` is kept as a thin shim so the existing skill flow is
+  unchanged (#34, #35, #48).
+- **Markdown / AsciiDoc heading detection.** Structure detection recognizes ATX
+  headings (`#`, `==`) as chapters when no numeric "Chapter N" headings are
+  present, fixing a zero-chapter result for `.md` / `.adoc` sources. Headings
+  inside fenced code blocks are ignored (#44).
+- **setext / reStructuredText underline headings** — a title line over a row of
+  `=` or `-` is now detected, so `.rst` and setext-style Markdown no longer
+  report zero chapters. Guarded against thematic breaks, table borders, and YAML
+  front matter (#51).
+- **More chapter languages.** Chapter-word detection now covers French, German,
+  Italian, and Dutch (`Chapitre`, `Kapitel`, `Capitolo`, `Hoofdstuk`), and
+  heading titles starting with `Ü`/`Û`/`Ý`/`Þ` (e.g. "Überblick") are accepted (#49).
+- **Multilingual table-of-contents detection** — Chinese, Japanese, French,
+  German, Italian, and Dutch (#44).
 
 ### Fixed
-- **Package now imports on interpreters that evaluate annotations eagerly.**
-  Added `from __future__ import annotations` to every module using PEP 604
-  unions (`str | None`) — `scripts/extractor/{utils,dependencies}.py`, all
-  `scripts/extractor/parsers/*.py`, and `tools/discovery_tax.py`. Before this,
-  importing the package under Python 3.9 raised `TypeError: unsupported operand
-  type(s) for |: 'type' and 'NoneType'` at import time, so the whole test suite
-  failed during collection. The annotations are now lazy (free at runtime), so
-  the package imports and runs cleanly on Python 3.9 as well.
+- **Full-width Arabic digits in CJK chapter headings** — `第１章` (U+FF10–FF19),
+  common in Japanese typesetting, is now detected like `第1章` (#46).
+- **Parser errors are no longer swallowed silently.** Unexpected exceptions in
+  any extractor are logged to stderr (extractor name + exception type) while the
+  fallback chain still returns `None` and continues, so corrupt files and
+  encoding errors are diagnosable (#47, #50).
+- **All-punctuation ATX "titles"** (e.g. a `=====   =====` table border) are no
+  longer miscounted as chapters (#51).
+- **Package imports on interpreters that evaluate annotations eagerly.** Added
+  `from __future__ import annotations` to every module using PEP 604 unions
+  (`str | None`), so the package imports and runs cleanly on Python 3.9 (#34).
+
+### Security
+- **CI security scanning** — CodeQL (Python, security-and-quality + weekly
+  schedule), Bandit (gates on HIGH severity; reports MEDIUM+ informationally),
+  and Zizmor (GitHub Actions workflow audit, informational), plus a Dependabot
+  config for the `github-actions` ecosystem. Known finding to harden next:
+  Bandit B314 (`xml.etree.ElementTree.fromstring` in the DOCX parser).
 
 ### Changed
 - CI test matrix now includes Python 3.9 so the import path above is guarded and
@@ -128,5 +127,6 @@ validated on real books.
 - Technical PDFs extracted in text mode may lose heading structure; use technical
   mode (Docling) to preserve tables, code, and headings.
 
+[1.2.0]: https://github.com/virgiliojr94/book-to-skill/releases/tag/v1.2.0
 [1.1.0]: https://github.com/virgiliojr94/book-to-skill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/virgiliojr94/book-to-skill/releases/tag/v1.0.0
