@@ -851,3 +851,33 @@ class TestDependencyCheck:
         # the PDF (text-heavy) group line should be followed by a "ready" status
         pdf_block = out.split("PDF (text-heavy)", 1)[1].split("PDF (technical", 1)[0]
         assert "ready" in pdf_block
+
+
+# ---------------------------------------------------------------------------
+# Parser exception logging
+# ---------------------------------------------------------------------------
+
+class TestParserExceptionLogging:
+    """Verify unexpected parser exceptions surface on stderr, chain returns None."""
+
+    def test_pypdf2_warns_on_unexpected_error_and_returns_none(self, tmp_path, capsys):
+        """Monkeypatch pypdf2 import to raise; confirm None + stderr warning."""
+        from extractor.parsers.pdf import extract_with_pypdf2
+
+        broken = tmp_path / "broken.pdf"
+        broken.write_bytes(b"%PDF-1.4 fake")
+
+        real_import = __import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "PyPDF2":
+                raise RuntimeError("simulated failure")
+            return real_import(name, *args, **kwargs)
+
+        with mock.patch("builtins.__import__", side_effect=fake_import):
+            result = extract_with_pypdf2(str(broken))
+
+        assert result is None
+        captured = capsys.readouterr()
+        assert "[warn]" in captured.err
+        assert "failed:" in captured.err
