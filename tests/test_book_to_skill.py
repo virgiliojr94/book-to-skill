@@ -34,6 +34,7 @@ from book_to_skill.utils import (
     main,
 )
 from book_to_skill.config import SUPPORTED_EXTENSIONS
+from book_to_skill.parsers.rtf import strip_rtf_fallback
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -989,4 +990,46 @@ class TestParserExceptionLogging:
         assert result is None
         captured = capsys.readouterr()
         assert "[warn]" in captured.err
-        assert "failed:" in captured.err
+        assert "failed:" in captured.err
+
+
+class TestRtfUnicodeFallback:
+    """The dependency-free RTF fallback decodes RTF \\uN unicode escapes."""
+
+    _BS = chr(92)  # a single backslash, never written as a literal \-escape
+
+    def _esc(self, codepoint, fallback="?"):
+        # Build the RTF escape: backslash + "u" + number + one fallback char.
+        return self._BS + "u" + str(codepoint) + fallback
+
+    def test_rtf_unicode_right_single_quote(self):
+        assert strip_rtf_fallback("It" + self._esc(8217) + "s") == "It’s"
+
+    def test_rtf_unicode_em_dash(self):
+        assert strip_rtf_fallback("a " + self._esc(8212) + " b") == "a — b"
+
+    def test_rtf_unicode_accented_letter(self):
+        assert strip_rtf_fallback("caf" + self._esc(233)) == "caf\xe9"
+
+    def test_rtf_unicode_hex_fallback_consumed(self):
+        # The \uN escape's fallback here is a "\'92" hex byte — it is consumed.
+        text = "x" + self._BS + "u8217" + self._BS + "'92y"
+        assert strip_rtf_fallback(text) == "x’y"
+
+    def test_rtf_unicode_space_delimited_fallback(self):
+        text = "x" + self._BS + "u8217 ?y"
+        assert strip_rtf_fallback(text) == "x’y"
+
+    def test_rtf_unicode_negative_codepoint(self):
+        # RTF encodes code points > 32767 as negative 16-bit; -3 -> U+FFFD.
+        assert strip_rtf_fallback(self._esc(-3)) == "�"
+
+    def test_rtf_fallback_without_unicode_unchanged(self):
+        # Regression: control-word-only input is unaffected by the new step.
+        assert strip_rtf_fallback(self._BS + "b0 Bold" + self._BS + "b0 off") == "Boldoff"
+        assert strip_rtf_fallback("{" + self._BS + "rtf1 hi}") == "hi"
+
+    def test_rtf_unicode_consecutive_escapes_with_hex_fallback(self):
+        # Two adjacent \uN escapes, each with a \'XX hex fallback, decode cleanly.
+        text = self._BS + "u8220" + self._BS + "'93Hi" + self._BS + "u8221" + self._BS + "'94"
+        assert strip_rtf_fallback(text) == "“Hi”"
