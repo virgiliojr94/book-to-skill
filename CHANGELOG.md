@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The dependency-free RTF fallback (used when `striprtf` is not installed) now
+  decodes `\uN` unicode escapes — smart quotes, dashes, accented letters — instead
+  of dropping them and leaving only the ASCII fallback character.
+
 ## [1.2.0] — 2026-06-17
 
 ### Added
