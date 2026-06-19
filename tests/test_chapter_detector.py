@@ -1,4 +1,3 @@
-import pytest
 from book_to_skill.chapter_detector import _chapter_number, detect_structure
 
 def test_chapter_number_arabic():

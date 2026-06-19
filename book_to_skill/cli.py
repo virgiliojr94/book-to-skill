@@ -4,7 +4,6 @@ import glob
 import json
 import os
 import sys
-import shutil
 from pathlib import Path
 
 from book_to_skill.exceptions import ExtractionError

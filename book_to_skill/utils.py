@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import glob
-import json
 import os
-import re
-import sys
 import shutil
 import zipfile
 from pathlib import Path
@@ -12,9 +8,6 @@ from pathlib import Path
 from book_to_skill.exceptions import ExtractionError
 
 from book_to_skill.config import (
-    OUTPUT_DIR,
-    OUTPUT_TEXT,
-    OUTPUT_META,
     WORDS_PER_TOKEN,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
@@ -23,9 +16,7 @@ from book_to_skill.config import (
     supported_formats_message,
 )
 from book_to_skill.dependencies import (
-    normalize_install_mode,
     prepare_dependencies,
-    run_dependency_check,
 )
 from book_to_skill.parsers.text import read_text_file
 from book_to_skill.parsers.html import extract_html_file
@@ -50,9 +41,7 @@ def estimate_tokens(text: str) -> int:
     return int(len(text.split()) / WORDS_PER_TOKEN)
 
 from book_to_skill.chapter_detector import (
-    _chapter_number,
     detect_structure,
-    _cn_numeral_to_int,
 )
 
 
