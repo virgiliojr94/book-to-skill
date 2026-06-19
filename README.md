@@ -125,7 +125,7 @@ The extractor tries tools in order per format and uses the first available. If n
 | Book type | Tool | Install | Speed |
 |-----------|------|---------|-------|
 | Text-heavy (prose, few tables) | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ instant |
-| Text-heavy fallback | `PyPDF2` | `pip3 install PyPDF2` | ⚡ instant |
+| Text-heavy fallback | `pypdf` | `pip3 install pypdf` | ⚡ instant |
 | Text-heavy fallback | `pdfminer.six` | `pip3 install pdfminer.six` | ⚡ instant |
 | **Technical (code, tables, formulas)** | **`docling`** | `pip3 install docling` | ~1.5s/page |
 
@@ -159,7 +159,7 @@ One file · a folder · a glob · a list of paths
 Step 1.5 — "Technical or text-heavy book?"
      │
      ├── technical → Docling  (tables + code blocks as markdown, ~1.5s/page)
-     └── text      → pdftotext → PyPDF2 → pdfminer  (instant)
+     └── text      → pdftotext → pypdf → pdfminer  (instant)
      │
      ▼
 scripts/extract.py <paths…> --mode <technical|text>

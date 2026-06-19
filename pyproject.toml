@@ -15,19 +15,20 @@ book-to-skill = "book_to_skill.cli:main"
 
 [project.optional-dependencies]
 epub = ["ebooklib", "beautifulsoup4"]
-pdf = ["PyPDF2", "pdfminer.six"]
+pdf = ["pypdf", "pdfminer.six"]
 docx = ["python-docx"]
 rtf = ["striprtf"]
 technical = ["docling"]
 all = [
     "ebooklib",
     "beautifulsoup4",
-    "PyPDF2",
+    "pypdf",
     "pdfminer.six",
     "python-docx",
     "striprtf",
     "docling"
 ]
+
 
 # Tooling config so `ruff check .` and `pytest` locally match CI without flags.
 [tool.ruff]

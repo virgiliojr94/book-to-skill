@@ -35,7 +35,7 @@ from book_to_skill.parsers.calibre import extract_with_ebook_convert
 from book_to_skill.parsers.pdf import (
     extract_with_docling,
     extract_with_pdftotext,
-    extract_with_pypdf2,
+    extract_with_pypdf,
     extract_with_pdfminer,
     count_pages,
 )
@@ -462,10 +462,10 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                 print("OK")
             else:
                 print("not available")
-                print("Trying PyPDF2...", end=" ", flush=True)
-                text = extract_with_pypdf2(input_str)
+                print("Trying pypdf...", end=" ", flush=True)
+                text = extract_with_pypdf(input_str)
                 if text:
-                    method = "PyPDF2"
+                    method = "pypdf"
                     print("OK")
                 else:
                     print("not available")
@@ -478,11 +478,12 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                         print("FAILED")
                         raise ExtractionError(
                             "Could not extract text from PDF.\n"
-                            "Install one of: poppler-utils (pdftotext), PyPDF2, or pdfminer.six\n"
+                            "Install one of: poppler-utils (pdftotext), pypdf, or pdfminer.six\n"
                             "  sudo apt install poppler-utils\n"
-                            "  pip3 install PyPDF2\n"
+                            "  pip3 install pypdf\n"
                             "  pip3 install pdfminer.six"
                         )
+
                         
         pages = count_pages(input_str)
         pages_label = "pages"

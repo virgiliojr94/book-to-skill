@@ -969,9 +969,9 @@ class TestDependencyCheck:
 class TestParserExceptionLogging:
     """Verify unexpected parser exceptions surface on stderr, chain returns None."""
 
-    def test_pypdf2_warns_on_unexpected_error_and_returns_none(self, tmp_path, capsys):
-        """Monkeypatch pypdf2 import to raise; confirm None + stderr warning."""
-        from book_to_skill.parsers.pdf import extract_with_pypdf2
+    def test_pypdf_warns_on_unexpected_error_and_returns_none(self, tmp_path, capsys):
+        """Monkeypatch pypdf import to raise; confirm None + stderr warning."""
+        from book_to_skill.parsers.pdf import extract_with_pypdf
 
         broken = tmp_path / "broken.pdf"
         broken.write_bytes(b"%PDF-1.4 fake")
@@ -979,14 +979,14 @@ class TestParserExceptionLogging:
         real_import = __import__
 
         def fake_import(name, *args, **kwargs):
-            if name == "PyPDF2":
+            if name == "pypdf":
                 raise RuntimeError("simulated failure")
             return real_import(name, *args, **kwargs)
 
         with mock.patch("builtins.__import__", side_effect=fake_import):
-            result = extract_with_pypdf2(str(broken))
+            result = extract_with_pypdf(str(broken))
 
         assert result is None
         captured = capsys.readouterr()
         assert "[warn]" in captured.err
-        assert "failed:" in captured.err
+        assert "failed:" in captured.err

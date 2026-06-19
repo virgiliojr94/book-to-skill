@@ -14,11 +14,11 @@ from book_to_skill.config import PYTHON_DEPENDENCIES, HTML_EXTENSIONS
 DEPENDENCY_GROUPS = [
     {
         "label": "PDF (text-heavy)",
-        "modules": ["PyPDF2", "pdfminer"],
+        "modules": ["pypdf", "pdfminer"],
         "any_of_modules": True,
         "any_tool_suffices": True,
         "system": [("pdftotext", "poppler-utils", "sudo apt install poppler-utils")],
-        "note": "any one of pdftotext / PyPDF2 / pdfminer is enough",
+        "note": "any one of pdftotext / pypdf / pdfminer is enough",
     },
     {
         "label": "PDF (technical: tables, code, formulas)",
@@ -175,7 +175,7 @@ def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> N
     if ext == ".pdf" and not shutil.which("pdftotext"):
         offer_dependency_install(
             feature="PDF text extraction",
-            module_names=["PyPDF2", "pdfminer"],
+            module_names=["pypdf", "pdfminer"],
             fallback="any installed Python PDF parser; extraction fails if none are available",
             install_mode=install_mode,
         )
