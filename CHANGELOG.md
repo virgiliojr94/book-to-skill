@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Hierarchical AST extraction.** The structure detector now builds a nested, serializable JSON Abstract Syntax Tree (AST) representing the book's chapter and section hierarchy (supports Markdown ATX/Setext/RST and numeric chapters). Each node includes explicit `start_char` and `end_char` boundaries for precise subsection context slicing.
+- **Robust AST prefaces and fallback handling.** Added a virtual `"Prefácio / Introdução"` node to encompass prefaces and TOC sections before the first chapter, and a single `"Documento Completo"` fallback node for documents without explicit headers, ensuring 100% character coverage on all document architectures.
+
 ### Security
 - **DOCX XXE / Billion Laughs hardening** — the DOCX extractor now scans the
   archive and rejects any XML part that declares a DTD or entities before

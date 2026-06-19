@@ -8,9 +8,9 @@ from pathlib import Path
 from book_to_skill.exceptions import ExtractionError
 
 from book_to_skill.config import (
-    OUTPUT_DIR,
-    OUTPUT_TEXT,
-    OUTPUT_META,
+    OUTPUT_DIR,          # noqa: F401
+    OUTPUT_TEXT,         # noqa: F401
+    OUTPUT_META,         # noqa: F401
     WORDS_PER_TOKEN,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
@@ -45,8 +45,8 @@ def estimate_tokens(text: str) -> int:
 
 from book_to_skill.chapter_detector import (
     detect_structure,
-    _cn_numeral_to_int,
-    _chapter_number,
+    _cn_numeral_to_int,  # noqa: F401
+    _chapter_number,     # noqa: F401
 )
 
 

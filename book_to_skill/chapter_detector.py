@@ -201,8 +201,161 @@ def _structural_chapter_count(text: str) -> int:
     return sum(len(titles) for titles in levels.values())
 
 
+def _detect_all_headers(text: str) -> list[dict]:
+    """Scan lines of text to build an ordered list of detected headers with levels and char indices."""
+    lines = text.splitlines(keepends=True)
+    headers = []
+    
+    current_pos = 0
+    in_fence = False
+    
+    prev_line = ""
+    prev_pos = 0
+    
+    for line in lines:
+        line_len = len(line)
+        s = line.strip()
+        
+        if s.startswith("```") or s.startswith("~~~"):
+            in_fence = not in_fence
+            prev_line = ""
+            prev_pos = current_pos + line_len
+            current_pos += line_len
+            continue
+            
+        if in_fence:
+            prev_line = ""
+            prev_pos = current_pos + line_len
+            current_pos += line_len
+            continue
+            
+        # 1. Setext/RST underline detection
+        if (
+            _SETEXT_UNDERLINE.match(s)
+            and prev_line
+            and not _SETEXT_UNDERLINE.match(prev_line)
+            and len(s) >= len(prev_line)
+        ):
+            depth = 1 if s[0] == "=" else 2
+            
+            # Prevent double-registering if prev_line was already matched as numeric/explicit
+            already_registered = False
+            if headers and headers[-1]["start_char"] == prev_pos:
+                already_registered = True
+                
+            if not already_registered:
+                headers.append({
+                    "title": prev_line,
+                    "level": depth,
+                    "start_char": prev_pos,
+                })
+            
+            prev_line = ""
+            prev_pos = current_pos + line_len
+            current_pos += line_len
+            continue
+            
+        # 2. Explicit chapter numeric heading
+        num = _chapter_number(line)
+        if num is not None:
+            headers.append({
+                "title": s,
+                "level": 1,
+                "start_char": current_pos,
+            })
+            prev_line = ""
+            prev_pos = current_pos + line_len
+            current_pos += line_len
+            continue
+            
+        # 3. ATX style Markdown/AsciiDoc heading
+        m = _ATX_HEADING.match(s)
+        if m:
+            title = m.group(2).strip()
+            if title and not title[0].isdigit() and re.search(r"\w", title):
+                headers.append({
+                    "title": title,
+                    "level": len(m.group(1)),
+                    "start_char": current_pos,
+                })
+            prev_line = ""
+            prev_pos = current_pos + line_len
+            current_pos += line_len
+            continue
+            
+        prev_line = s
+        prev_pos = current_pos
+        current_pos += line_len
+        
+    # Calculate end_char for each header in a subsequent pass
+    total_len = len(text)
+    for idx, h in enumerate(headers):
+        end_char = total_len
+        for next_h in headers[idx + 1:]:
+            if next_h["level"] <= h["level"]:
+                end_char = next_h["start_char"]
+                break
+        h["end_char"] = end_char
+        
+    return headers
+
+
+def _build_hierarchical_ast(text: str) -> list[dict]:
+    """Parse text and build a nested Hierarchical AST list of headers."""
+    headers = _detect_all_headers(text)
+    total_len = len(text)
+    
+    # Handle documents with no detected headers
+    if not headers:
+        if text.strip():
+            return [{
+                "title": "Documento Completo",
+                "level": 1,
+                "start_char": 0,
+                "end_char": total_len,
+                "children": [],
+            }]
+        return []
+        
+    root_nodes = []
+    
+    # Handle Front Matter/Preface before the first real heading
+    first_header_start = headers[0]["start_char"]
+    if first_header_start > 0 and text[:first_header_start].strip():
+        root_nodes.append({
+            "title": "Prefácio / Introdução",
+            "level": 1,
+            "start_char": 0,
+            "end_char": first_header_start,
+            "children": [],
+        })
+        
+    stack = []
+    
+    for h in headers:
+        node = {
+            "title": h["title"],
+            "level": h["level"],
+            "start_char": h["start_char"],
+            "end_char": h["end_char"],
+            "children": [],
+        }
+        
+        while stack and stack[-1]["level"] >= node["level"]:
+            stack.pop()
+            
+        if stack:
+            stack[-1]["children"].append(node)
+        else:
+            root_nodes.append(node)
+            
+        stack.append(node)
+        
+    return root_nodes
+
+
 def detect_structure(text: str) -> dict:
-    """Detect chapter count and table of contents presence.
+    """Detect chapter count, table of contents presence, and hierarchical AST.
 
     Scans the whole text (not just the head) and counts DISTINCT chapter numbers
     from explicit "Chapter N"/"Capítulo N" headings, rejecting prose
@@ -227,9 +380,14 @@ def detect_structure(text: str) -> dict:
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
+    
+    # Build the Hierarchical AST
+    ast = _build_hierarchical_ast(text)
 
     return {
         "chapters_detected": chapters_detected,
         "chapter_headings_sample": headings[:10],
         "has_toc": has_toc,
+        "ast": ast,
     }
+
