@@ -17,10 +17,6 @@ from book_to_skill.dependencies import (
 )
 from book_to_skill.chapter_detector import detect_structure
 import book_to_skill.utils as utils
-from book_to_skill.utils import (
-    extract_single_file,
-    estimate_tokens,
-)
 
 
 def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
@@ -156,7 +152,7 @@ def main():
     
     for file_path in input_files:
         try:
-            res = extract_single_file(file_path, extraction_mode, install_mode)
+            res = utils.extract_single_file(file_path, extraction_mode, install_mode)
         except ExtractionError as exc:
             print(f"WARNING: Skipping {file_path.name}: {exc}", file=sys.stderr)
             errors.append((file_path, str(exc)))
@@ -184,7 +180,7 @@ def main():
     total_pages = sum(src["pages"] for src in extracted_sources)
     total_chars = len(consolidated_text)
     total_words = len(consolidated_text.split())
-    total_tokens = estimate_tokens(consolidated_text)
+    total_tokens = utils.estimate_tokens(consolidated_text)
     
     # Detect structure on consolidated text
     consolidated_structure = detect_structure(consolidated_text)

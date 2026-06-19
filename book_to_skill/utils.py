@@ -8,6 +8,9 @@ from pathlib import Path
 from book_to_skill.exceptions import ExtractionError
 
 from book_to_skill.config import (
+    OUTPUT_DIR,
+    OUTPUT_TEXT,
+    OUTPUT_META,
     WORDS_PER_TOKEN,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
@@ -42,6 +45,8 @@ def estimate_tokens(text: str) -> int:
 
 from book_to_skill.chapter_detector import (
     detect_structure,
+    _cn_numeral_to_int,
+    _chapter_number,
 )
 
 
@@ -246,15 +251,18 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
 
 
 def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
-    from book_to_skill.cli import parse_arguments as cli_parse_arguments
-    return cli_parse_arguments(argv)
+    import importlib
+    cli = importlib.import_module("book_to_skill.cli")
+    return cli.parse_arguments(argv)
 
 
 def resolve_input_files(paths: list[str]) -> list[Path]:
-    from book_to_skill.cli import resolve_input_files as cli_resolve_input_files
-    return cli_resolve_input_files(paths)
+    import importlib
+    cli = importlib.import_module("book_to_skill.cli")
+    return cli.resolve_input_files(paths)
 
 
 def main():
-    from book_to_skill.cli import main as cli_main
-    cli_main()
+    import importlib
+    cli = importlib.import_module("book_to_skill.cli")
+    cli.main()

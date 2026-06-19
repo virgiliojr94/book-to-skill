@@ -1,6 +1,14 @@
 *.pyc
 __pycache__/
 
+# Gemini agent local rules — personal, not for the repo
+.gemini/
+
+# Reversa — framework de engenharia reversa (local, não entra no GitHub)
+.reversa/
+_reversa_sdd/
+_reversa_forward/
+
 # Agent session traces (Stone CLI) — never commit
 .stone/
 **/.stone/
