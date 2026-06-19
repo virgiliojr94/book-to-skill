@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dependency-free RTF fallback (used when `striprtf` is not installed) now
   decodes `\uN` unicode escapes — smart quotes, dashes, accented letters — instead
   of dropping them and leaving only the ASCII fallback character.
+- The stdlib HTML parser (the fallback for HTML files and EPUB extraction when
+  BeautifulSoup is not installed) no longer decodes HTML entities twice, so
+  double-encoded entities such as `&amp;amp;` survive intact.
 
 ## [1.2.0] — 2026-06-17
 
