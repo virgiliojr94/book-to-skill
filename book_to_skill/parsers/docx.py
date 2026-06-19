@@ -30,12 +30,38 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
         with zipfile.ZipFile(docx_path) as zf:
             xml_bytes = zf.read("word/document.xml")
         root = ET.fromstring(xml_bytes)
-        namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         parts: list[str] = []
-        for paragraph in root.iter(f"{namespace}p"):
-            texts = [node.text for node in paragraph.iter(f"{namespace}t") if node.text]
-            if texts:
-                parts.append("".join(texts))
+
+        def emit_block(elem) -> None:
+            # Walk block content in document order. Paragraphs join their runs;
+            # tables emit one tab-joined line per row (same row format as the
+            # python-docx path, but order-preserving — python-docx appends all
+            # tables last). Unknown wrappers (e.g. <w:sdt> content controls) are
+            # recursed into so their paragraphs/tables are not lost; <w:p> and
+            # <w:tbl> are NOT recursed into, so table-cell paragraphs are not
+            # double-counted. Cell text concatenates the cell's runs; nested
+            # tables fold into the parent cell and are also emitted standalone
+            # (rare; best-effort).
+            for child in elem:
+                tag = child.tag
+                if tag == f"{ns}p":
+                    texts = [t.text for t in child.iter(f"{ns}t") if t.text]
+                    if texts:
+                        parts.append("".join(texts))
+                elif tag == f"{ns}tbl":
+                    for row in child.iter(f"{ns}tr"):
+                        cells = []
+                        for cell in row.iter(f"{ns}tc"):
+                            cell_texts = [t.text for t in cell.iter(f"{ns}t") if t.text]
+                            cells.append("".join(cell_texts).strip())
+                        if any(cells):
+                            parts.append("\t".join(cells))
+                else:
+                    emit_block(child)
+
+        body = root.find(f"{ns}body")
+        emit_block(body if body is not None else root)
         return "\n".join(parts) if parts else None
     except Exception as e:
         print(f"  [warn] extract_docx_with_zipfile failed: {type(e).__name__}: {e}", file=sys.stderr)
