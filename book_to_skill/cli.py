@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import sys
+import concurrent.futures
 from pathlib import Path
 
 from book_to_skill.exceptions import ExtractionError
@@ -44,6 +45,11 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
         elif arg == "--no-cache":
             utils.USE_CACHE = False
             i += 1
+        elif arg in ("--workers", "--jobs"):
+            if i + 1 < len(args) and not args[i+1].startswith("--"):
+                i += 2
+            else:
+                i += 1
         elif arg.startswith("-"):
             i += 1
         else:
@@ -55,6 +61,31 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
         extraction_mode = "text"
         
     return input_paths, extraction_mode, install_mode
+
+
+def parse_workers(argv: list[str]) -> int:
+    """Parse argv to find the number of workers requested (default is 1).
+    Supports --workers <N> and --jobs <N>.
+    If the value is 'auto', it returns os.cpu_count() or 4 (as a sensible fallback).
+    If it is 0 or less, or not a number, it defaults to 1.
+    """
+    args = argv[1:]
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg in ("--workers", "--jobs"):
+            if i + 1 < len(args):
+                val = args[i+1].lower()
+                if val == "auto":
+                    return os.cpu_count() or 4
+                try:
+                    num = int(val)
+                    return max(1, num)
+                except ValueError:
+                    return 1
+            return 1
+        i += 1
+    return 1
 
 
 def resolve_input_files(paths: list[str]) -> list[Path]:
@@ -140,7 +171,7 @@ def main():
         sys.exit(0)
 
     if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no] [--no-cache] [--clear-cache]", file=sys.stderr)
+        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no] [--no-cache] [--clear-cache] [--workers N]", file=sys.stderr)
         print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
         print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
         sys.exit(1)
@@ -159,22 +190,46 @@ def main():
         
     utils.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
+    workers = parse_workers(sys.argv)
+    
     extracted_sources = []
     combined_texts = []
     errors = []
     
-    for file_path in input_files:
-        try:
-            res = utils.extract_single_file(file_path, extraction_mode, install_mode)
-        except ExtractionError as exc:
-            print(f"WARNING: Skipping {file_path.name}: {exc}", file=sys.stderr)
-            errors.append((file_path, str(exc)))
-            continue
-        extracted_sources.append(res)
-        
-        # Format the text with a clear boundary
-        separator = f"\n\n{'=' * 80}\nSOURCE: {res['filename']} (Path: {res['source_file']})\n{'=' * 80}\n\n"
-        combined_texts.append(separator + res["text"])
+    if workers > 1 and len(input_files) > 1:
+        def worker_fn(file_path):
+            try:
+                res = utils.extract_single_file(file_path, extraction_mode, install_mode)
+                return (file_path, res, None)
+            except Exception as exc:
+                return (file_path, None, exc)
+                
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(worker_fn, fp) for fp in input_files]
+            results = [fut.result() for fut in futures]
+            
+        for file_path, res, exc in results:
+            if exc is not None:
+                print(f"WARNING: Skipping {file_path.name}: {exc}", file=sys.stderr)
+                errors.append((file_path, str(exc)))
+            else:
+                extracted_sources.append(res)
+                # Format the text with a clear boundary
+                separator = f"\n\n{'=' * 80}\nSOURCE: {res['filename']} (Path: {res['source_file']})\n{'=' * 80}\n\n"
+                combined_texts.append(separator + res["text"])
+    else:
+        for file_path in input_files:
+            try:
+                res = utils.extract_single_file(file_path, extraction_mode, install_mode)
+            except ExtractionError as exc:
+                print(f"WARNING: Skipping {file_path.name}: {exc}", file=sys.stderr)
+                errors.append((file_path, str(exc)))
+                continue
+            extracted_sources.append(res)
+            
+            # Format the text with a clear boundary
+            separator = f"\n\n{'=' * 80}\nSOURCE: {res['filename']} (Path: {res['source_file']})\n{'=' * 80}\n\n"
+            combined_texts.append(separator + res["text"])
     
     if not extracted_sources:
         print(f"\nERROR: All {len(errors)} source(s) failed extraction:", file=sys.stderr)

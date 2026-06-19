@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Parallel batch extraction.** Implemented concurrent document processing inside the CLI utilizing a `ThreadPoolExecutor` from `concurrent.futures`. Added `--workers <N>` and `--jobs <N>` arguments to define concurrency depth. If omitted, execution defaults to the traditional serial mode. If set to `auto` or `0`, worker count defaults to `os.cpu_count()`.
+- **Thread-safe optional dependency resolution.** Introduced a synchronization lock (`DEPENDENCY_LOCK`) when verifying or prompting to install missing packages, shielding interactive prompts and pip installations from concurrent I/O race conditions.
+- **Calibre race condition mitigation.** Swapped static temporary filename `ebook-convert-output.txt` for dynamic files using input path MD5 hashes, preventing collisions during parallel conversions, and cleaned up files after extraction.
 - **Incremental caching support.** Implemented a local caching mechanism (stored in `.book_to_skill_cache/`) that uses SHA-256 file hashes to cache book extraction results (text and metadata/AST). This avoids re-processing unchanged books in repetitive runs.
 - **CLI caching options.** Added `--no-cache` to bypass caching and `--clear-cache` to delete all local cached JSON files.
 - **Hierarchical AST extraction.** The structure detector now builds a nested, serializable JSON Abstract Syntax Tree (AST) representing the book's chapter and section hierarchy (supports Markdown ATX/Setext/RST and numeric chapters). Each node includes explicit `start_char` and `end_char` boundaries for precise subsection context slicing.
