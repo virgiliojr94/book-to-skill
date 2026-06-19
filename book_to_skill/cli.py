@@ -41,6 +41,9 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
                 i += 1
         elif arg == "--no-install-missing":
             i += 1
+        elif arg == "--no-cache":
+            utils.USE_CACHE = False
+            i += 1
         elif arg.startswith("-"):
             i += 1
         else:
@@ -126,8 +129,18 @@ def main():
     if "--check" in sys.argv[1:]:
         sys.exit(run_dependency_check())
 
+    if "--clear-cache" in sys.argv[1:]:
+        if utils.CACHE_DIR.exists():
+            for f in utils.CACHE_DIR.glob("*.json"):
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
+        print("Cache cleared successfully.")
+        sys.exit(0)
+
     if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
+        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no] [--no-cache] [--clear-cache]", file=sys.stderr)
         print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
         print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
         sys.exit(1)

@@ -1,8 +1,8 @@
 *.pyc
 __pycache__/
 
-# Gemini agent local rules — personal, not for the repo
-.gemini/
+# Local book-to-skill cache
+.book_to_skill_cache/
 
 # Reversa — framework de engenharia reversa (local, não entra no GitHub)
 .reversa/

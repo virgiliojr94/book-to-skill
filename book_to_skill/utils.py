@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 import shutil
 import zipfile
+import hashlib
+import json
+import datetime
 from pathlib import Path
 
 from book_to_skill.exceptions import ExtractionError
@@ -48,6 +51,56 @@ from book_to_skill.chapter_detector import (
     _cn_numeral_to_int,  # noqa: F401
     _chapter_number,     # noqa: F401
 )
+
+USE_CACHE = True
+CACHE_DIR = Path(".book_to_skill_cache")
+
+
+def _compute_file_sha256(file_path: Path) -> str:
+    """Read a file in 64KB blocks and compute its SHA-256 hash."""
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(65536):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def _get_cached_extraction(file_path: Path, extraction_mode: str) -> dict | None:
+    """Retrieve cached extraction data if it matches the current file hash and mode."""
+    if not USE_CACHE:
+        return None
+    try:
+        if not file_path.exists():
+            return None
+        sha256 = _compute_file_sha256(file_path)
+        cache_file = CACHE_DIR / f"{sha256}.json"
+        if cache_file.exists():
+            data = json.loads(cache_file.read_text(encoding="utf-8"))
+            if data.get("extraction_mode") == extraction_mode and data.get("sha256") == sha256:
+                return data.get("extraction_result")
+    except Exception:
+        pass  # Graceful degradation on cache read/parse errors
+    return None
+
+
+def _save_to_cache(file_path: Path, extraction_mode: str, data: dict) -> None:
+    """Persist extraction result to cache directory."""
+    if not USE_CACHE:
+        return
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        sha256 = _compute_file_sha256(file_path)
+        cache_file = CACHE_DIR / f"{sha256}.json"
+        
+        cache_data = {
+            "sha256": sha256,
+            "extraction_mode": extraction_mode,
+            "cached_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "extraction_result": data,
+        }
+        cache_file.write_text(json.dumps(cache_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass  # Graceful degradation on cache write errors
 
 
 
@@ -172,6 +225,11 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     if not input_path.exists():
         raise ExtractionError(f"File not found: {input_str}")
         
+    cached_res = _get_cached_extraction(input_path, extraction_mode)
+    if cached_res is not None:
+        print(f"Using cached extraction for {input_path.name}")
+        return cached_res
+        
     ext, document_format = _sniff_format_and_extension(input_path)
     prepare_dependencies(ext, extraction_mode, install_mode)
     
@@ -233,7 +291,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     structure = detect_structure(text)
     file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
     
-    return {
+    result = {
         "source_file": str(input_path.resolve()),
         "filename": input_path.name,
         "format": document_format,
@@ -248,6 +306,10 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         "text": text,
         **structure,
     }
+    
+    _save_to_cache(input_path, extraction_mode, result)
+    
+    return result
 
 
 def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Incremental caching support.** Implemented a local caching mechanism (stored in `.book_to_skill_cache/`) that uses SHA-256 file hashes to cache book extraction results (text and metadata/AST). This avoids re-processing unchanged books in repetitive runs.
+- **CLI caching options.** Added `--no-cache` to bypass caching and `--clear-cache` to delete all local cached JSON files.
 - **Hierarchical AST extraction.** The structure detector now builds a nested, serializable JSON Abstract Syntax Tree (AST) representing the book's chapter and section hierarchy (supports Markdown ATX/Setext/RST and numeric chapters). Each node includes explicit `start_char` and `end_char` boundaries for precise subsection context slicing.
 - **Robust AST prefaces and fallback handling.** Added a virtual `"Prefácio / Introdução"` node to encompass prefaces and TOC sections before the first chapter, and a single `"Documento Completo"` fallback node for documents without explicit headers, ensuring 100% character coverage on all document architectures.
 
