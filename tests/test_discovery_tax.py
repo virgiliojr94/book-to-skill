@@ -120,3 +120,31 @@ class TestDiscoveryTaxOrdering:
         assert skill < d_best < dump, (skill, d_best, dump)
         assert d_best <= d_loop, (d_best, d_loop)
         assert skill < d_loop
+
+    def test_html_report_generation(self, tmp_path, capsys):
+        book = tmp_path / "full_text.txt"
+        book.write_text(SYNTHETIC_BOOK, encoding="utf-8")
+        html_out = tmp_path / "report.html"
+
+        argv = [
+            "discovery_tax.py",
+            "--full-text", str(book),
+            "--target-chapter", "3",
+            "--core-tokens", "200",
+            "--html", str(html_out)
+        ]
+        old = sys.argv
+        sys.argv = argv
+        try:
+            code = dt.main()
+        finally:
+            sys.argv = old
+
+        assert code == 0
+        assert html_out.exists()
+        
+        html_content = html_out.read_text(encoding="utf-8")
+        assert "<!DOCTYPE html>" in html_content
+        assert "Token Tax Dashboard" in html_content
+        assert "highcharts.js" in html_content
+        assert "Turn Calculator" in html_content

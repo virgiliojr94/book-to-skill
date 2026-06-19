@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Visual token tax dashboard.** Added a new `--html <output_file.html>` CLI flag to `tools/discovery_tax.py` which exports a dynamic and interactive standalone HTML report. It visualizes the token savings of the book-to-skill strategy versus other retrieval methods (Context Dump, Discovery Loop) using Highcharts, and includes a built-in Javascript turn calculator for ROI simulation.
 - **Parallel batch extraction.** Implemented concurrent document processing inside the CLI utilizing a `ThreadPoolExecutor` from `concurrent.futures`. Added `--workers <N>` and `--jobs <N>` arguments to define concurrency depth. If omitted, execution defaults to the traditional serial mode. If set to `auto` or `0`, worker count defaults to `os.cpu_count()`.
 - **Thread-safe optional dependency resolution.** Introduced a synchronization lock (`DEPENDENCY_LOCK`) when verifying or prompting to install missing packages, shielding interactive prompts and pip installations from concurrent I/O race conditions.
 - **Calibre race condition mitigation.** Swapped static temporary filename `ebook-convert-output.txt` for dynamic files using input path MD5 hashes, preventing collisions during parallel conversions, and cleaned up files after extraction.
