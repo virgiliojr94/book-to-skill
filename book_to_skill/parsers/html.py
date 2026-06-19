@@ -31,7 +31,10 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
             self._parts.append(data)
 
     def get_text(self) -> str:
-        return html.unescape("".join(self._parts))
+        # HTMLParser(convert_charrefs=True) already decoded entities in
+        # handle_data; do NOT unescape again or double-encoded entities
+        # (e.g. "&amp;amp;") collapse incorrectly.
+        return "".join(self._parts)
 
 
 def extract_html_content(raw_html: str) -> str:

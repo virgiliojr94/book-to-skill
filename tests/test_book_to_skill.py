@@ -1033,3 +1033,35 @@ class TestRtfUnicodeFallback:
         # Two adjacent \uN escapes, each with a \'XX hex fallback, decode cleanly.
         text = self._BS + "u8220" + self._BS + "'93Hi" + self._BS + "u8221" + self._BS + "'94"
         assert strip_rtf_fallback(text) == "“Hi”"
+
+
+class TestHtmlEntityDecoding:
+    """The stdlib HTML parser decodes entities exactly once (not twice)."""
+
+    def _text(self, fragment):
+        # Feed a raw fragment (no block tags) through a fresh stdlib parser.
+        from book_to_skill.parsers.html import _HTMLTextExtractor
+        p = _HTMLTextExtractor()
+        p.feed(fragment)
+        return p.get_text()
+
+    def test_double_encoded_ampersand(self):
+        # The bug: this used to collapse to "&" (decoded twice).
+        assert self._text("&amp;amp;") == "&amp;"
+
+    def test_double_encoded_tag(self):
+        assert self._text("&amp;lt;tag&amp;gt;") == "&lt;tag&gt;"
+
+    def test_single_entities_still_decode(self):
+        assert self._text("&lt;b&gt;") == "<b>"
+        assert self._text("&amp;") == "&"
+
+    def test_numeric_and_named_entities(self):
+        assert self._text("&#233;") == "é"      # decimal numeric
+        assert self._text("&#xE9;") == "é"      # hex numeric
+        assert self._text("&copy;") == "©"      # non-ASCII named entity
+        assert self._text("hello") == "hello"   # plain text
+
+    def test_skip_tag_content_excluded(self):
+        # Confirms the change didn't disturb skip-tag handling.
+        assert self._text("<style>x{}</style>keep") == "keep"
