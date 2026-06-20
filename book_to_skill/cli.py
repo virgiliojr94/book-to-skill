@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import sys
+import re
 import concurrent.futures
 from pathlib import Path
 
@@ -18,6 +19,10 @@ from book_to_skill.dependencies import (
 )
 from book_to_skill.chapter_detector import detect_structure
 import book_to_skill.utils as utils
+from book_to_skill.glossary_extractor import (
+    extract_glossary_data,
+    generate_cheatsheet_markdown,
+)
 
 
 def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
@@ -289,6 +294,80 @@ def main():
     
     utils.OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
     
+    chunk_mode = "--chunk" in sys.argv
+    extract_glossary_mode = "--extract-glossary" in sys.argv
+
+    # Global Glossary / Cheatsheet Extraction
+    if extract_glossary_mode:
+        glossary_data = extract_glossary_data(consolidated_text)
+        cheatsheet_md = generate_cheatsheet_markdown(consolidated_text, glossary_data, metadata["filename"])
+        
+        glossary_path = utils.OUTPUT_DIR / "glossary.json"
+        cheatsheet_path = utils.OUTPUT_DIR / "cheatsheet.md"
+        glossary_path.write_text(json.dumps(glossary_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        cheatsheet_path.write_text(cheatsheet_md, encoding="utf-8")
+
+    # AST-Aware Chunking
+    chunks_count = 0
+    if chunk_mode:
+        chunks_dir = utils.OUTPUT_DIR / "chunks"
+        chunks_dir.mkdir(parents=True, exist_ok=True)
+        
+        manifest_chunks = []
+        
+        def slugify(title_text: str) -> str:
+            text_lower = title_text.lower()
+            text_clean = re.sub(r"[^a-z0-9\s_-]", "", text_lower)
+            text_underscored = re.sub(r"[\s_-]+", "_", text_clean)
+            return text_underscored.strip("_")
+            
+        for idx, node in enumerate(consolidated_structure["ast"]):
+            title = node["title"]
+            start_char = node["start_char"]
+            end_char = node["end_char"]
+            
+            chunk_text = consolidated_text[start_char:end_char]
+            slug = slugify(title) or f"section_{idx+1}"
+            folder_name = f"chunk_{idx+1:03d}_{slug}"
+            chunk_folder = chunks_dir / folder_name
+            chunk_folder.mkdir(parents=True, exist_ok=True)
+            
+            # Write sliced text
+            text_file = chunk_folder / "text.txt"
+            text_file.write_text(chunk_text, encoding="utf-8")
+            
+            chunk_tokens = utils.estimate_tokens(chunk_text)
+            chunk_words = len(chunk_text.split())
+            
+            chunk_info = {
+                "index": idx + 1,
+                "title": title,
+                "folder": folder_name,
+                "start_char": start_char,
+                "end_char": end_char,
+                "words": chunk_words,
+                "estimated_tokens": chunk_tokens,
+            }
+            
+            # Generate chunk-specific glossary & cheatsheet if requested
+            if extract_glossary_mode:
+                chunk_glossary = extract_glossary_data(chunk_text)
+                chunk_cheatsheet = generate_cheatsheet_markdown(chunk_text, chunk_glossary, title)
+                
+                (chunk_folder / "glossary.json").write_text(json.dumps(chunk_glossary, indent=2, ensure_ascii=False), encoding="utf-8")
+                (chunk_folder / "cheatsheet.md").write_text(chunk_cheatsheet, encoding="utf-8")
+                
+            manifest_chunks.append(chunk_info)
+            
+        chunks_count = len(manifest_chunks)
+        # Write chunks manifest.json
+        manifest_data = {
+            "book_filename": metadata["filename"],
+            "total_chunks": chunks_count,
+            "chunks": manifest_chunks
+        }
+        (chunks_dir / "manifest.json").write_text(json.dumps(manifest_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
     print(f"   Sources : {len(extracted_sources)} processed")
@@ -305,6 +384,11 @@ def main():
         )
     print(f"\n   Text -> {utils.OUTPUT_TEXT}")
     print(f"   Meta -> {utils.OUTPUT_META}")
+    if extract_glossary_mode and not chunk_mode:
+        print(f"   Glossary -> {utils.OUTPUT_DIR / 'glossary.json'}")
+        print(f"   Cheatsheet -> {utils.OUTPUT_DIR / 'cheatsheet.md'}")
+    if chunk_mode:
+        print(f"   Chunks   -> {utils.OUTPUT_DIR / 'chunks'} ({chunks_count} sections sliced)")
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
