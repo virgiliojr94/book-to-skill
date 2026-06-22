@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dependency-free DOCX fallback (used when `python-docx` is not installed)
   now reconstructs tables as tab-joined rows in document order, instead of
   flattening each cell onto its own line.
+- The dependency-free EPUB extractor (used when `ebooklib` is not installed) now
+  reads content in true spine (reading) order instead of manifest order, so
+  chapters are no longer scrambled. Content documents not listed in the spine are
+  still included (appended after the spine content).
 
 ## [1.2.0] — 2026-06-17
 
