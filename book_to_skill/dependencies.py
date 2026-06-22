@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 from book_to_skill.config import PYTHON_DEPENDENCIES, HTML_EXTENSIONS
 
 
@@ -163,54 +164,58 @@ def offer_dependency_install(
         print(f"Using fallback: {fallback}.")
 
 
+DEPENDENCY_LOCK = threading.Lock()
+
+
 def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> None:
-    if ext == ".pdf" and extraction_mode == "technical":
-        offer_dependency_install(
-            feature="Technical PDF extraction",
-            module_names=["docling"],
-            fallback="the PDF text fallback chain",
-            install_mode=install_mode,
-        )
+    with DEPENDENCY_LOCK:
+        if ext == ".pdf" and extraction_mode == "technical":
+            offer_dependency_install(
+                feature="Technical PDF extraction",
+                module_names=["docling"],
+                fallback="the PDF text fallback chain",
+                install_mode=install_mode,
+            )
 
-    if ext == ".pdf" and not shutil.which("pdftotext"):
-        offer_dependency_install(
-            feature="PDF text extraction",
-            module_names=["pypdf", "pdfminer"],
-            fallback="any installed Python PDF parser; extraction fails if none are available",
-            install_mode=install_mode,
-        )
+        if ext == ".pdf" and not shutil.which("pdftotext"):
+            offer_dependency_install(
+                feature="PDF text extraction",
+                module_names=["pypdf", "pdfminer"],
+                fallback="any installed Python PDF parser; extraction fails if none are available",
+                install_mode=install_mode,
+            )
 
-    if ext == ".epub":
-        offer_dependency_install(
-            feature="EPUB extraction",
-            module_names=["ebooklib", "bs4"],
-            fallback="a stdlib ZIP/HTML parser",
-            install_mode=install_mode,
-        )
+        if ext == ".epub":
+            offer_dependency_install(
+                feature="EPUB extraction",
+                module_names=["ebooklib", "bs4"],
+                fallback="a stdlib ZIP/HTML parser",
+                install_mode=install_mode,
+            )
 
-    if ext in HTML_EXTENSIONS:
-        offer_dependency_install(
-            feature="HTML extraction",
-            module_names=["bs4"],
-            fallback="a stdlib HTML parser",
-            install_mode=install_mode,
-        )
+        if ext in HTML_EXTENSIONS:
+            offer_dependency_install(
+                feature="HTML extraction",
+                module_names=["bs4"],
+                fallback="a stdlib HTML parser",
+                install_mode=install_mode,
+            )
 
-    if ext == ".docx":
-        offer_dependency_install(
-            feature="DOCX extraction",
-            module_names=["docx"],
-            fallback="a stdlib ZIP/XML parser",
-            install_mode=install_mode,
-        )
+        if ext == ".docx":
+            offer_dependency_install(
+                feature="DOCX extraction",
+                module_names=["docx"],
+                fallback="a stdlib ZIP/XML parser",
+                install_mode=install_mode,
+            )
 
-    if ext == ".rtf":
-        offer_dependency_install(
-            feature="RTF extraction",
-            module_names=["striprtf"],
-            fallback="a basic regex cleanup fallback",
-            install_mode=install_mode,
-        )
+        if ext == ".rtf":
+            offer_dependency_install(
+                feature="RTF extraction",
+                module_names=["striprtf"],
+                fallback="a basic regex cleanup fallback",
+                install_mode=install_mode,
+            )
 
 
 def run_dependency_check() -> int:
