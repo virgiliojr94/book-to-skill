@@ -1,6 +1,14 @@
 *.pyc
 __pycache__/
 
+# Local book-to-skill cache
+.book_to_skill_cache/
+
+# Reversa — framework de engenharia reversa (local, não entra no GitHub)
+.reversa/
+_reversa_sdd/
+_reversa_forward/
+
 # Agent session traces (Stone CLI) — never commit
 .stone/
 **/.stone/
