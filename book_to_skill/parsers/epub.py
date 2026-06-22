@@ -56,15 +56,39 @@ def extract_with_zipfile(epub_path: str) -> str | None:
             opf_path = _find_opf_path(zf)
             opf_dir = posixpath.dirname(opf_path) if opf_path else ""
 
-            # Read OPF spine to get reading order, fall back to sorted xhtml files
+            # Build reading order from the OPF spine (not the manifest's href
+            # order), then append any remaining content docs as a safety net.
             spine_order: list[str] = []
+            seen: set[str] = set()
             if opf_path:
                 opf_text = zf.read(opf_path).decode("utf-8", errors="replace")
-                raw_hrefs = re.findall(r'href=["\']([^"\']+\.(?:xhtml|html))["\']', opf_text)
-                # Resolve hrefs relative to the OPF directory
-                for href in raw_hrefs:
-                    resolved = posixpath.normpath(posixpath.join(opf_dir, href)) if opf_dir else href
-                    spine_order.append(resolved)
+
+                # Manifest: item id -> resolved href. Parse each <item> opening
+                # tag so attribute order (id before/after href) does not matter;
+                # both self-closing <item .../> and <item ...></item> forms work
+                # because all attributes live in the opening tag.
+                manifest: dict[str, str] = {}
+                for item_tag in re.findall(r"<item\b[^>]*?/?>", opf_text):
+                    id_m = re.search(r'\bid=["\']([^"\']+)["\']', item_tag)
+                    href_m = re.search(r'\bhref=["\']([^"\']+)["\']', item_tag)
+                    if id_m and href_m:
+                        href = href_m.group(1)
+                        resolved = posixpath.normpath(posixpath.join(opf_dir, href)) if opf_dir else href
+                        manifest[id_m.group(1)] = resolved
+
+                # Spine: ordered idrefs -> hrefs (true reading order).
+                for idref in re.findall(r'<itemref\b[^>]*?\bidref=["\']([^"\']+)["\']', opf_text):
+                    href = manifest.get(idref)
+                    if href and href not in seen:
+                        spine_order.append(href)
+                        seen.add(href)
+
+                # Safety net: append remaining manifest content documents (e.g. a
+                # nav doc not in the spine) in manifest order, so nothing is lost.
+                for href in manifest.values():
+                    if href.endswith((".html", ".xhtml")) and href not in seen:
+                        spine_order.append(href)
+                        seen.add(href)
 
             html_files = spine_order or sorted(
                 n for n in names if n.endswith((".html", ".xhtml"))

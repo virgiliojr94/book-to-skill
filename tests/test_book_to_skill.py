@@ -36,6 +36,7 @@ from book_to_skill.utils import (
 from book_to_skill.config import SUPPORTED_EXTENSIONS
 from book_to_skill.parsers.docx import extract_docx_with_zipfile
 from book_to_skill.parsers.rtf import strip_rtf_fallback
+from book_to_skill.parsers.epub import extract_with_zipfile
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1134,3 +1135,106 @@ class TestDocxTableReconstruction:
         )
         out = extract_docx_with_zipfile(self._make_docx(tmp_path, body))
         assert out == "Before\nInside SDT\nAfter"
+
+
+class TestEpubSpineOrder:
+    """The stdlib EPUB extractor reads content in spine order, with a safety net."""
+
+    def _make_epub(self, tmp_path, opf_xml, files, opf_name="content.opf"):
+        import zipfile
+        p = tmp_path / "book.epub"
+        with zipfile.ZipFile(p, "w") as zf:
+            zf.writestr("mimetype", "application/epub+zip")
+            zf.writestr(
+                "META-INF/container.xml",
+                '<?xml version="1.0"?>'
+                '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">'
+                f'<rootfiles><rootfile full-path="{opf_name}" media-type="application/oebps-package+xml"/></rootfiles>'
+                '</container>',
+            )
+            zf.writestr(opf_name, opf_xml)
+            for name, html in files.items():
+                zf.writestr(name, html)
+        return str(p)
+
+    def _doc(self, text):
+        return f"<html><body><p>{text}</p></body></html>"
+
+    def test_spine_order_overrides_manifest_order(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c2" href="ch2.xhtml" media-type="application/xhtml+xml"/>'
+            '<item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/><itemref idref="c2"/></spine></package>'
+        )
+        files = {"ch1.xhtml": self._doc("FIRST"), "ch2.xhtml": self._doc("SECOND")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert out.index("FIRST") < out.index("SECOND")
+
+    def test_non_spine_doc_kept_as_safety_net_after_spine(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>'
+            '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/></spine></package>'
+        )
+        files = {"ch1.xhtml": self._doc("CONTENT"), "nav.xhtml": self._doc("NAVTOC")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert "NAVTOC" in out
+        assert out.index("CONTENT") < out.index("NAVTOC")
+
+    def test_item_attribute_order_robust(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item href="only.xhtml" id="c1" media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/></spine></package>'
+        )
+        files = {"only.xhtml": self._doc("ONLY")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert "ONLY" in out
+
+    def test_spine_absent_uses_safety_net(self, tmp_path):
+        # No <spine>: the manifest content doc is still included via the safety net.
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="a" href="a.xhtml" media-type="application/xhtml+xml"/>'
+            '</manifest></package>'
+        )
+        files = {"a.xhtml": self._doc("ALPHA")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert "ALPHA" in out
+
+    def test_opf_in_subdir_resolves_hrefs(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/></spine></package>'
+        )
+        files = {"OEBPS/ch1.xhtml": self._doc("SUBDIR")}
+        out = extract_with_zipfile(
+            self._make_epub(tmp_path, opf, files, opf_name="OEBPS/content.opf")
+        )
+        assert "SUBDIR" in out
+
+    def test_non_self_closing_item_tag(self, tmp_path):
+        # <item ...></item> (non-self-closing) is parsed via its opening tag.
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"></item>'
+            '</manifest><spine><itemref idref="c1"></itemref></spine></package>'
+        )
+        files = {"ch1.xhtml": self._doc("NONSELFCLOSE")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert "NONSELFCLOSE" in out
+
+    def test_no_opf_falls_back_to_sorted_files(self, tmp_path):
+        # No container.xml / no OPF at all: the final fallback reads sorted
+        # content files from the zip.
+        import zipfile
+        p = tmp_path / "noopf.epub"
+        with zipfile.ZipFile(p, "w") as zf:
+            zf.writestr("mimetype", "application/epub+zip")
+            zf.writestr("a.xhtml", self._doc("AAA"))
+            zf.writestr("b.xhtml", self._doc("BBB"))
+        out = extract_with_zipfile(str(p))
+        assert "AAA" in out and "BBB" in out
