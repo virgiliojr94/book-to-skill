@@ -14,6 +14,9 @@ from book_to_skill.config import (
     HTML_EXTENSIONS,
     CALIBRE_EBOOK_EXTENSIONS,
     supported_formats_message,
+    OUTPUT_DIR,
+    OUTPUT_TEXT,
+    OUTPUT_META,
 )
 from book_to_skill.dependencies import (
     prepare_dependencies,
@@ -35,14 +38,17 @@ from book_to_skill.parsers.epub import (
     extract_with_zipfile,
     count_epub_chapters,
 )
+from book_to_skill.chapter_detector import (
+    detect_structure,
+    _chapter_number,
+    _cn_numeral_to_int,
+    _roman_to_int,
+    _int_to_roman,
+)
 
 
 def estimate_tokens(text: str) -> int:
     return int(len(text.split()) / WORDS_PER_TOKEN)
-
-from book_to_skill.chapter_detector import (
-    detect_structure,
-)
 
 
 

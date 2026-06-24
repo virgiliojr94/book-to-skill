@@ -9,6 +9,9 @@ from pathlib import Path
 from book_to_skill.exceptions import ExtractionError
 from book_to_skill.config import (
     SUPPORTED_EXTENSIONS,
+    OUTPUT_DIR,
+    OUTPUT_TEXT,
+    OUTPUT_META,
     supported_formats_message,
 )
 from book_to_skill.dependencies import (
@@ -16,7 +19,6 @@ from book_to_skill.dependencies import (
     run_dependency_check,
 )
 from book_to_skill.chapter_detector import detect_structure
-import book_to_skill.utils as utils
 from book_to_skill.utils import (
     extract_single_file,
     estimate_tokens,
@@ -148,7 +150,7 @@ def main():
         print(f"ERROR: No supported files found matching: {', '.join(raw_input_paths)}", file=sys.stderr)
         sys.exit(1)
         
-    utils.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     extracted_sources = []
     combined_texts = []
@@ -177,7 +179,7 @@ def main():
     consolidated_text = "".join(combined_texts).strip()
     
     # Write combined text
-    utils.OUTPUT_TEXT.write_text(consolidated_text, encoding="utf-8")
+    OUTPUT_TEXT.write_text(consolidated_text, encoding="utf-8")
     
     # Consolidate metadata
     total_file_size_mb = sum(src["file_size_mb"] for src in extracted_sources)
@@ -201,7 +203,7 @@ def main():
         "words": total_words,
         "estimated_tokens": total_tokens,
         "estimated_tokens_human": f"~{total_tokens // 1000}K",
-        "output_text": str(utils.OUTPUT_TEXT),
+        "output_text": str(OUTPUT_TEXT),
         "total_sources": len(extracted_sources),
         "sources": [
             {
@@ -223,7 +225,7 @@ def main():
         **consolidated_structure,
     }
     
-    utils.OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
@@ -239,8 +241,8 @@ def main():
             "   WARN    : No table of contents detected — chapter mapping in Step 3 "
             "will rely on heading scan only, which may miss or duplicate sections."
         )
-    print(f"\n   Text -> {utils.OUTPUT_TEXT}")
-    print(f"   Meta -> {utils.OUTPUT_META}")
+    print(f"\n   Text -> {OUTPUT_TEXT}")
+    print(f"   Meta -> {OUTPUT_META}")
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
