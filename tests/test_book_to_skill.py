@@ -1141,7 +1141,6 @@ class TestEpubSpineOrder:
     """The stdlib EPUB extractor reads content in spine order, with a safety net."""
 
     def _make_epub(self, tmp_path, opf_xml, files, opf_name="content.opf"):
-        import zipfile
         p = tmp_path / "book.epub"
         with zipfile.ZipFile(p, "w") as zf:
             zf.writestr("mimetype", "application/epub+zip")
@@ -1230,7 +1229,6 @@ class TestEpubSpineOrder:
     def test_no_opf_falls_back_to_sorted_files(self, tmp_path):
         # No container.xml / no OPF at all: the final fallback reads sorted
         # content files from the zip.
-        import zipfile
         p = tmp_path / "noopf.epub"
         with zipfile.ZipFile(p, "w") as zf:
             zf.writestr("mimetype", "application/epub+zip")
