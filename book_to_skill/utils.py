@@ -14,9 +14,9 @@ from book_to_skill.config import (
     HTML_EXTENSIONS,
     CALIBRE_EBOOK_EXTENSIONS,
     supported_formats_message,
-    OUTPUT_DIR,
-    OUTPUT_TEXT,
-    OUTPUT_META,
+    OUTPUT_DIR,  # noqa: F401 — re-export for backward compat
+    OUTPUT_TEXT,  # noqa: F401 — re-export for backward compat
+    OUTPUT_META,  # noqa: F401 — re-export for backward compat
 )
 from book_to_skill.dependencies import (
     prepare_dependencies,
@@ -40,10 +40,10 @@ from book_to_skill.parsers.epub import (
 )
 from book_to_skill.chapter_detector import (
     detect_structure,
-    _chapter_number,
-    _cn_numeral_to_int,
-    _roman_to_int,
-    _int_to_roman,
+    _chapter_number,  # noqa: F401 — re-export for backward compat
+    _cn_numeral_to_int,  # noqa: F401 — re-export for backward compat
+    _roman_to_int,  # noqa: F401 — re-export for backward compat
+    _int_to_roman,  # noqa: F401 — re-export for backward compat
 )
 
 
