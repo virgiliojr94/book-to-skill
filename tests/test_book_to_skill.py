@@ -34,6 +34,7 @@ from book_to_skill.utils import (
     main,
 )
 from book_to_skill.config import SUPPORTED_EXTENSIONS
+from book_to_skill.parsers.text import read_text_file
 from book_to_skill.parsers.docx import extract_docx_with_zipfile
 from book_to_skill.parsers.rtf import strip_rtf_fallback
 from book_to_skill.parsers.epub import extract_with_zipfile
@@ -1236,3 +1237,50 @@ class TestEpubSpineOrder:
             zf.writestr("b.xhtml", self._doc("BBB"))
         out = extract_with_zipfile(str(p))
         assert "AAA" in out and "BBB" in out
+
+
+class TestTextEncodingDetection:
+    """read_text_file decodes UTF-16/UTF-32 by BOM, with a BOM-less fallback."""
+
+    SAMPLE = "Café — naïve résumé\nSecond line"
+
+    def _write(self, tmp_path, raw_bytes):
+        p = tmp_path / "sample.txt"
+        p.write_bytes(raw_bytes)
+        return str(p)
+
+    def test_utf16_le_bom(self, tmp_path):
+        raw = b"\xff\xfe" + self.SAMPLE.encode("utf-16-le")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_utf16_be_bom(self, tmp_path):
+        raw = b"\xfe\xff" + self.SAMPLE.encode("utf-16-be")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_utf32_le_bom(self, tmp_path):
+        raw = b"\xff\xfe\x00\x00" + self.SAMPLE.encode("utf-32-le")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_utf8_bom(self, tmp_path):
+        raw = b"\xef\xbb\xbf" + self.SAMPLE.encode("utf-8")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_utf8_no_bom(self, tmp_path):
+        raw = self.SAMPLE.encode("utf-8")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_cp1252_no_bom(self, tmp_path):
+        # 0xE9 (é) is valid cp1252 but not a valid standalone utf-8 byte.
+        raw = "café".encode("cp1252")
+        assert read_text_file(self._write(tmp_path, raw)) == "café"
+
+    def test_ascii_no_bom(self, tmp_path):
+        assert read_text_file(self._write(tmp_path, b"hello world")) == "hello world"
+
+    def test_utf32_be_bom(self, tmp_path):
+        raw = b"\x00\x00\xfe\xff" + self.SAMPLE.encode("utf-32-be")
+        assert read_text_file(self._write(tmp_path, raw)) == self.SAMPLE
+
+    def test_empty_file_returns_empty_string(self, tmp_path):
+        # An empty file decodes to "" (not None, which is reserved for read errors).
+        assert read_text_file(self._write(tmp_path, b"")) == ""

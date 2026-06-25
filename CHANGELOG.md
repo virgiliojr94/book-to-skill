@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).
 
 ### Fixed
+- Text files (`.txt`, `.md`, `.rst`, `.adoc`, `.html`, `.rtf`) saved as UTF-16 or
+  UTF-32 (e.g. Windows Notepad "Unicode" or PowerShell output) are now decoded by
+  their byte-order mark instead of being read as `cp1252`/`latin-1` mojibake.
 - The dependency-free RTF fallback (used when `striprtf` is not installed) now
   decodes `\uN` unicode escapes — smart quotes, dashes, accented letters — instead
   of dropping them and leaving only the ASCII fallback character.
