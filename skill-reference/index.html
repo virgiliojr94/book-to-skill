@@ -1,0 +1,1950 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file.">
+      
+      
+      
+        <link rel="canonical" href="https://booktoskill.is-a.dev/skill-reference/">
+      
+      
+        <link rel="prev" href="../PERFORMANCE/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Skill Reference - book-to-skill</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#book-to-skill-converter" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="book-to-skill" class="md-header__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            book-to-skill
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Skill Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PERFORMANCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Performance
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Skill Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="book-to-skill" class="md-nav__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    book-to-skill
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PERFORMANCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes-of-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes of Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes of Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-full-conversion-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Full Conversion (Default)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-analyze-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Analyze Only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-from-prior-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Generate from Prior Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-update-fold-in-existing-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Update / Fold-in (Existing Skill)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skill-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill Locations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-out-of-scope-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 0 — Out-of-scope check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-validate-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Validate input
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-15-identify-content-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1.5 — Identify content type
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-extract-text-from-the-source-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Extract text from the source documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-25-pre-flight-cost-estimate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2.5 — Pre-flight cost estimate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-26-repl-style-access-for-large-books-50k-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2.6 — REPL-style access for large books (&gt; 50k tokens)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-analyze-book-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Analyze book structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-ask-purpose-full-conversion-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Ask purpose (Full Conversion only)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-determine-skill-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5 — Determine skill name
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-create-skill-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6 — Create skill directory structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-generate-chapter-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7 — Generate chapter summaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-tables-technical-books-only-omit-if-book_typetext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Tables (technical books only — omit if BOOK_TYPE=text)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-depthstudy-only-omit-for-depthreference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Example (DEPTH=study only — omit for DEPTH=reference)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Takeaways
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connects-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connects To
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-cleanup-and-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10 — Cleanup and report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-fold-in-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update / Fold-in Workflow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update / Fold-in Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-read-existing-skill-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Read Existing Skill Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-match-content-identify-revisions-vs-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Match Content &amp; Identify Revisions vs. Additions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-or-update-chapter-summary-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Generate or Update Chapter Summary Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-merge-supporting-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Merge Supporting Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-re-generate-the-master-skillmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Re-generate the Master SKILL.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-cleanup-and-proceed-to-step-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cleanup and Proceed to Step 10
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes-of-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes of Operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes of Operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-full-conversion-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Full Conversion (Default)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-analyze-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Analyze Only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-from-prior-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Generate from Prior Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-update-fold-in-existing-skill" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Update / Fold-in (Existing Skill)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skill-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skill Locations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-out-of-scope-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 0 — Out-of-scope check
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-validate-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Validate input
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-15-identify-content-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1.5 — Identify content type
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-extract-text-from-the-source-documents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Extract text from the source documents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-25-pre-flight-cost-estimate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2.5 — Pre-flight cost estimate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-26-repl-style-access-for-large-books-50k-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2.6 — REPL-style access for large books (&gt; 50k tokens)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-analyze-book-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Analyze book structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-ask-purpose-full-conversion-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Ask purpose (Full Conversion only)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-determine-skill-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5 — Determine skill name
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-create-skill-directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6 — Create skill directory structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-generate-chapter-summaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7 — Generate chapter summaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-tables-technical-books-only-omit-if-book_typetext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference Tables (technical books only — omit if BOOK_TYPE=text)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-depthstudy-only-omit-for-depthreference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked Example (DEPTH=study only — omit for DEPTH=reference)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaways" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Takeaways
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connects-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connects To
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-cleanup-and-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10 — Cleanup and report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-fold-in-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update / Fold-in Workflow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update / Fold-in Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-read-existing-skill-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Read Existing Skill Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-match-content-identify-revisions-vs-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Match Content &amp; Identify Revisions vs. Additions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-generate-or-update-chapter-summary-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Generate or Update Chapter Summary Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-merge-supporting-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Merge Supporting Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-re-generate-the-master-skillmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Re-generate the Master SKILL.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-cleanup-and-proceed-to-step-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Cleanup and Proceed to Step 10
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quality Rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<!--
+Cross-agent notes (informational; ignored by host agents):
+  - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
+    .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
+    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
+  - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
+    `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
+    adds `shell_command`. The skill needs shell (to run extract.py) and file
+    read/write — each host will prompt for those on first use.
+  - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug]
+-->
+
+<h1 id="book-to-skill-converter">Book-to-Skill Converter<a class="headerlink" href="#book-to-skill-converter" title="Permanent link">&para;</a></h1>
+<p>Transform written knowledge into actionable agent skills by extracting structure — not producing summaries.</p>
+<h2 id="philosophy">Philosophy<a class="headerlink" href="#philosophy" title="Permanent link">&para;</a></h2>
+<p>Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.</p>
+<p><strong>Extract structure, not summaries.</strong> A skill isn't a book report. It's a toolkit of:
+- Named frameworks (mental models with clear application)
+- Actionable principles (rules that guide decisions)
+- Techniques (step-by-step methods)
+- Anti-patterns (what to avoid and why)
+- Voice calibration (how the author thinks and communicates)</p>
+<p><strong>Preserve the author's precision.</strong> Frameworks often have specific names for reasons. "The 5 Whys" isn't interchangeable with "ask why multiple times." Capture the exact formulation.</p>
+<p><strong>Layer depth appropriately.</strong> Simple books → simple skills. Complex books with 10+ frameworks → skills with reference files and on-demand chapters.</p>
+<hr />
+<h2 id="modes-of-operation">Modes of Operation<a class="headerlink" href="#modes-of-operation" title="Permanent link">&para;</a></h2>
+<p>Four paths available. Route based on what the user asks:</p>
+<h3 id="1-full-conversion-default">1. Full Conversion (Default)<a class="headerlink" href="#1-full-conversion-default" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> User provides one or more document/directory/glob paths without special instructions
+<strong>Action:</strong> Run all steps below (Steps 0–9)
+<strong>Output:</strong> Complete skill with SKILL.md, chapters/, glossary, patterns, cheatsheet</p>
+<h3 id="2-analyze-only">2. Analyze Only<a class="headerlink" href="#2-analyze-only" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> User says "analyze", "just extract", or "I want to review before generating"
+<strong>Action:</strong> Run Steps 0–3, then produce a structured extraction report (frameworks, principles, techniques found). Stop — do NOT generate skill files.
+<strong>Output:</strong> Analysis report for user review</p>
+<h3 id="3-generate-from-prior-analysis">3. Generate from Prior Analysis<a class="headerlink" href="#3-generate-from-prior-analysis" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> User has existing analysis notes or previously ran analyze-only
+<strong>Action:</strong> Skip Steps 0–3, use the provided analysis as input, run Steps 4–9
+<strong>Output:</strong> Skill files from the provided analysis</p>
+<h3 id="4-update-fold-in-existing-skill">4. Update / Fold-in (Existing Skill)<a class="headerlink" href="#4-update-fold-in-existing-skill" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> User provides one or more new source paths and indicates they want to update an existing skill (either by pointing to the existing skill folder, providing a skill slug that already exists in <code>SKILLS_HOME</code>, or explicitly requesting an update).
+<strong>Action:</strong> Run Step 0 (out-of-scope check), Step 1 (validate inputs), Step 1.5 (identify book type), and Step 2 (extract new files). Then skip to Step 5 (identify/detect existing skill path) and run the <strong>Update / Fold-in Workflow</strong> to merge the new content into the existing skill files.
+<strong>Output:</strong> Updated existing skill with new/revised chapter summaries and merged indexes/glossaries.</p>
+<hr />
+<h2 id="skill-locations">Skill Locations<a class="headerlink" href="#skill-locations" title="Permanent link">&para;</a></h2>
+<p>This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:</p>
+<ol>
+<li>GitHub Copilot CLI personal skills: <code>~/.copilot/skills/</code></li>
+<li>Cross-agent personal skills (Copilot + Amp): <code>~/.agents/skills/</code></li>
+<li>Claude Code personal skills: <code>~/.claude/skills/</code></li>
+<li>Project-local Copilot skills: <code>.github/skills/</code></li>
+<li>Project-local Claude skills: <code>.claude/skills/</code></li>
+<li>Project-local Amp / Copilot skills: <code>.agents/skills/</code></li>
+<li>Amp global skills: <code>~/.config/agents/skills/</code></li>
+<li>Amp legacy global skills: <code>~/.config/amp/skills/</code></li>
+</ol>
+<p>For <strong>generated</strong> book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.</p>
+<hr />
+<h2 id="step-0-out-of-scope-check">Step 0 — Out-of-scope check<a class="headerlink" href="#step-0-out-of-scope-check" title="Permanent link">&para;</a></h2>
+<p>If no arguments are provided, stop and respond:</p>
+<blockquote>
+<p>"book-to-skill requires a supported document path, folder, or glob pattern. Usage: <code>book-to-skill &lt;path-to-document-folder-or-glob&gt;... [skill-name-slug]</code>"</p>
+</blockquote>
+<p>Throughout the workflow:
+- Identify the input paths and the optional skill slug.
+- If the last argument is not a file, folder, or glob that exists or matches any files, and it looks like a skill slug (e.g. lowercase hyphens, alphanumeric), treat it as <code>SKILL_NAME</code>.
+- Treat all other arguments as the list of <code>INPUT_PATHS</code>.
+- If any input path is an existing skill directory (contains <code>SKILL.md</code> and a <code>chapters/</code> sub-folder), or if <code>SKILL_NAME</code> matches an existing skill slug in <code>SKILLS_HOME</code>, flag this run as an <strong>Update/Fold-in</strong> operation (Mode 4).</p>
+<hr />
+<h2 id="step-1-validate-input">Step 1 — Validate input<a class="headerlink" href="#step-1-validate-input" title="Permanent link">&para;</a></h2>
+<p>Verify that there is at least one supported file, directory, or glob pattern among the <code>INPUT_PATHS</code>.
+For directories and globs, expand them to find matching supported files (<code>.pdf</code>, <code>.epub</code>, <code>.docx</code>, <code>.txt</code>, <code>.md</code>, <code>.markdown</code>, <code>.rst</code>, <code>.adoc</code>, <code>.html</code>, <code>.htm</code>, <code>.rtf</code>, <code>.mobi</code>, <code>.azw</code>, <code>.azw3</code>).</p>
+<p>If no supported files are found, stop with a clear error message.</p>
+<hr />
+<h2 id="step-15-identify-content-type">Step 1.5 — Identify content type<a class="headerlink" href="#step-15-identify-content-type" title="Permanent link">&para;</a></h2>
+<p>Before extracting, ask the user:</p>
+<blockquote>
+<p>"What kind of content do these sources have? This helps me choose the best extraction method.</p>
+<ol>
+<li><strong>Technical</strong> — has code blocks, tables, formulas, diagrams (e.g. programming books, academic papers, architecture guides)</li>
+<li><strong>Text-heavy</strong> — mostly prose, few or no tables/code (e.g. management, productivity, narrative non-fiction)</li>
+<li><strong>Not sure</strong> — I'll use the fast method and warn you if quality seems limited"</li>
+</ol>
+</blockquote>
+<p>Store the answer as <code>BOOK_TYPE</code>:
+- Option 1 → <code>BOOK_TYPE=technical</code>
+- Option 2 → <code>BOOK_TYPE=text</code>
+- Option 3 → <code>BOOK_TYPE=text</code></p>
+<p><strong>If <code>BOOK_TYPE=technical</code></strong>, inform the user before proceeding:</p>
+<blockquote>
+<p>"📐 Technical mode selected — using Docling for structure-aware extraction (tables, code blocks, formulas preserved as markdown). This takes ~1.5s per page, so expect a few minutes for longer sources. Starting now…"</p>
+</blockquote>
+<p><strong>If <code>BOOK_TYPE=text</code></strong>, inform:</p>
+<blockquote>
+<p>"📄 Text mode selected — using the fastest suitable extractor for each file type. Plain text/Markdown/HTML are usually ready in seconds; PDFs use pdftotext when available."</p>
+</blockquote>
+<hr />
+<h2 id="step-2-extract-text-from-the-source-documents">Step 2 — Extract text from the source documents<a class="headerlink" href="#step-2-extract-text-from-the-source-documents" title="Permanent link">&para;</a></h2>
+<p>Run the extraction script, passing the input paths:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">SCRIPT_PATH</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">for</span><span class="w"> </span>candidate<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.copilot/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.agents/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.claude/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="s2">&quot;.github/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="s2">&quot;.claude/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="s2">&quot;.agents/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/agents/skills/book-to-skill/scripts/extract.py&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/amp/skills/book-to-skill/scripts/extract.py&quot;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">do</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$candidate</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nv">SCRIPT_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$candidate</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">    </span><span class="k">break</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span><span class="k">fi</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="k">done</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SCRIPT_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Could not find scripts/extract.py for book-to-skill&quot;</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">fi</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="nv">PYTHON_BIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PYTHON_BIN</span><span class="k">:-</span><span class="nv">python3</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="k">if</span><span class="w"> </span>!<span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PYTHON_BIN</span><span class="s2">&quot;</span><span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span><span class="nv">PYTHON_BIN</span><span class="o">=</span><span class="s2">&quot;python&quot;</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="k">fi</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="s2">&quot;</span><span class="nv">$PYTHON_BIN</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SCRIPT_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="nv">$INPUT_PATHS</span><span class="w"> </span>--mode<span class="w"> </span>&lt;BOOK_TYPE&gt;<span class="w"> </span>--install-missing<span class="w"> </span>ask
+</code></pre></div>
+<p>Before extraction, the script checks optional Python packages needed for the detected format. If a better extractor is missing, it prompts the user with the available fallback. Non-interactive sessions default to fallback unless install mode is explicitly <code>yes</code>.</p>
+<p><strong>Tip — preflight the environment:</strong> run <code>"$PYTHON_BIN" "$SCRIPT_PATH" --check</code> to print a per-format report of which extractors are installed and the exact command to install whatever is missing, without processing any file. Useful when a user reports a setup or quality problem.</p>
+<p>This creates:
+- <code>&lt;tempdir&gt;/book_skill_work/full_text.txt</code> — combined extracted text of all sources with clear visually demarcated boundaries.
+- <code>&lt;tempdir&gt;/book_skill_work/metadata.json</code> — overall combined size, words, pages, token counts, and a detailed list of individual processed <code>sources</code>.</p>
+<p>Read <code>&lt;tempdir&gt;/book_skill_work/metadata.json</code> to inspect the results.</p>
+<hr />
+<h2 id="step-25-pre-flight-cost-estimate">Step 2.5 — Pre-flight cost estimate<a class="headerlink" href="#step-25-pre-flight-cost-estimate" title="Permanent link">&para;</a></h2>
+<p>Read <code>&lt;tempdir&gt;/book_skill_work/metadata.json</code> and present the user with an estimate <strong>before doing any generation</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>📖 Sources detected: &lt;total_sources&gt; source(s)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>&lt;list each source filename and format from the sources metadata list&gt;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>📄 Combined Pages/Sections: ~&lt;N&gt; | Words: ~&lt;N&gt; | Total tokens: ~&lt;N&gt;K
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>💰 Estimated token cost (Full Conversion / Update):
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   Input  (reading + prompts): ~&lt;N&gt;K tokens
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   Output (skill files generated/updated):  ~&lt;N&gt;K tokens
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   Total:                           ~&lt;N&gt;K tokens
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>   Reference prices (as of 2025):
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   Claude Sonnet 4.5 → ~$&lt;X&gt; USD
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   Claude Haiku 4.5  → ~$&lt;X&gt; USD
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>   ⏱  Estimated time: ~&lt;N&gt; minutes
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>📁 Files to be generated/updated:
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>   SKILL.md + chapter files + glossary + patterns + cheatsheet
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>➡  Proceed with Full Conversion / Update? (or type &quot;analyze only&quot; to preview first)
+</code></pre></div>
+<p><strong>How to estimate:</strong>
+- Input tokens ≈ <code>estimated_tokens</code> from metadata × 1.3 (prompts overhead per chapter pass)
+- Output tokens ≈ chapters × per-chapter budget + 4,000 (SKILL.md) + 4,500 (glossary + patterns + cheatsheet)
+  - Per-chapter budget midpoint by <code>BOOK_TYPE</code> (DEPTH is decided later in Step 4 and can raise it): <code>text</code> ≈ 1,000, <code>technical</code> ≈ 1,800. If the user has already indicated reference-only vs deep study, use the matching row of the Step 7 matrix.
+- Price: Sonnet input=$3/MTok output=$15/MTok — Haiku input=$0.80/MTok output=$4/MTok</p>
+<p>Wait for the user to confirm before proceeding. If they say "analyze only", switch to Mode 2.</p>
+<hr />
+<h2 id="step-26-repl-style-access-for-large-books-50k-tokens">Step 2.6 — REPL-style access for large books (&gt; 50k tokens)<a class="headerlink" href="#step-26-repl-style-access-for-large-books-50k-tokens" title="Permanent link">&para;</a></h2>
+<p>Inspired by the Recursive Language Model (RLM) paradigm: treat <code>full_text.txt</code> as a queryable corpus, not a single read. Loading the whole file into context burns budget you will need later for generation.</p>
+<p>For books over ~50k tokens, prefer programmatic probes over <code>Read(full_text.txt)</code> without bounds:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Size check before any Read</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>wc<span class="w"> </span>-w<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FULL_TEXT_PATH</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Find chapter offsets without loading the whole file</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>grep<span class="w"> </span>-n<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;^\s*(Chapter|CHAPTER)\s+[0-9]+&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FULL_TEXT_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-40
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Pull only the chapter you need (lines start..end inclusive)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">&#39;&lt;start&gt;,&lt;end&gt;p&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FULL_TEXT_PATH</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Verify a framework is actually mentioned before claiming it in SKILL.md</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>grep<span class="w"> </span>-c<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;westrum\|dora&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$FULL_TEXT_PATH</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Targeted Read with offset/limit avoids dumping the full file</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># Read(file_path=full_text.txt, offset=&lt;line&gt;, limit=&lt;lines&gt;)</span>
+</code></pre></div>
+<p>Use this approach for Step 3 (structure analysis), Step 7 (per-chapter summaries), and Step 8 (glossary / patterns extraction). On books under 50k tokens, a single <code>Read</code> is fine.</p>
+<p>Why this matters: a 200-page book is ~75k tokens. Re-reading it once per chapter (28 passes) costs ~2M input tokens; using grep + sed to pull only relevant slices keeps generation cost proportional to the output, not the source.</p>
+<hr />
+<h2 id="step-3-analyze-book-structure">Step 3 — Analyze book structure<a class="headerlink" href="#step-3-analyze-book-structure" title="Permanent link">&para;</a></h2>
+<p>Read the first 8,000 characters of the extracted <code>full_text.txt</code> to identify:
+- Book <strong>title</strong> and <strong>author(s)</strong>
+- <strong>Chapter structure</strong> (look for "Chapter N", "PART I", numbered headings, table of contents)
+- <strong>Core themes</strong> and subject domain
+- Approximate number of chapters</p>
+<p>Then read the Table of Contents section if present to map all chapters.</p>
+<p><strong>If mode is "Analyze Only":</strong> produce the extraction report now and stop. Structure:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>## Extraction Report — &lt;Title&gt;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>### Author&#39;s Core Frameworks
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>- **&lt;Framework Name&gt;**: &lt;what it is and when to apply&gt;
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>### Key Principles
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>- &lt;Principle&gt;: &lt;actionable rule&gt;
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>### Techniques &amp; Methods
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>- &lt;Technique&gt;: &lt;step-by-step or how-to&gt;
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>### Anti-patterns
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>- &lt;What to avoid&gt;: &lt;why&gt;
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>### Suggested Skill Name
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>`{author-lastname}-{core-concept}` — e.g. `cialdini-influence`
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>### Chapters Detected
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>| # | Title | Main Frameworks |
+</code></pre></div></p>
+<hr />
+<h2 id="step-4-ask-purpose-full-conversion-only">Step 4 — Ask purpose (Full Conversion only)<a class="headerlink" href="#step-4-ask-purpose-full-conversion-only" title="Permanent link">&para;</a></h2>
+<p>Before generating, ask the user:</p>
+<blockquote>
+<p>"What should this skill help you do? (Pick one or more)
+1. Apply the author's frameworks while working
+2. Think with the author's mental models
+3. Reference specific chapters and concepts
+4. All of the above"</p>
+</blockquote>
+<p>Use the answer to weight what gets highlighted in the SKILL.md Core section.</p>
+<p><strong>Derive <code>DEPTH</code> from the answer (no extra prompt):</strong>
+- Answer is <strong>only</strong> option 3 (reference) → <code>DEPTH=reference</code> — lean, fast-lookup chapters.
+- Answer includes option 1, 2, or 4 → <code>DEPTH=study</code> — deeper chapters with more worked detail, examples, and reasoning.</p>
+<p><code>DEPTH</code> and <code>BOOK_TYPE</code> together set the per-chapter token budget in Step 7. Do <strong>not</strong> ask a separate "study vs reference" question — it is inferred here. (In Modes 2/3, where Step 4 is skipped, default <code>DEPTH=study</code>.)</p>
+<hr />
+<h2 id="step-5-determine-skill-name">Step 5 — Determine skill name<a class="headerlink" href="#step-5-determine-skill-name" title="Permanent link">&para;</a></h2>
+<p>If <code>SKILL_NAME</code> was provided, use it as the skill slug.
+Otherwise, propose two options and let the user choose:
+- <strong>By author-concept</strong>: <code>{author-lastname}-{core-concept}</code> (e.g. <code>cialdini-influence</code>, <code>meadows-systems</code>)
+- <strong>By title</strong>: lowercase hyphens from book title (e.g. <code>designing-data-intensive-apps</code>)</p>
+<p>Default to author-concept format if the book has a strong methodological identity.</p>
+<p>Choose the destination skill root (<code>SKILLS_HOME</code>). Probe the user's filesystem for existing skill homes and pick by <strong>the host the user is running in</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Host agent</th>
+<th>Personal skill root (probe in order)</th>
+<th>Project-local root</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GitHub Copilot CLI</strong></td>
+<td><code>~/.copilot/skills</code> → <code>~/.agents/skills</code></td>
+<td><code>.github/skills</code> → <code>.claude/skills</code> → <code>.agents/skills</code></td>
+</tr>
+<tr>
+<td><strong>Amp</strong></td>
+<td><code>~/.agents/skills</code> → <code>~/.config/agents/skills</code> → <code>~/.config/amp/skills</code></td>
+<td><code>.agents/skills</code></td>
+</tr>
+<tr>
+<td><strong>Claude Code</strong></td>
+<td><code>~/.claude/skills</code></td>
+<td><code>.claude/skills</code></td>
+</tr>
+</tbody>
+</table>
+<p>Selection rules:
+1. If <strong>exactly one</strong> of the host's candidate roots exists on disk, use it without asking.
+2. If <strong>none</strong> exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
+3. If the user explicitly asked for project-local output, prefer the project-local row.
+4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"</p>
+<p>Set <code>SKILLS_HOME</code> to the selected root and check if <code>$SKILLS_HOME/&lt;skill_name&gt;/</code> already exists.
+If it does, prompt the user to choose:
+1. <strong>Update / Fold-in</strong> (Mode 4) — integrate new files/content into the existing skill components.
+2. <strong>Overwrite</strong> — delete and regenerate the skill from scratch.
+3. <strong>Rename</strong> — append <code>-2</code> or use a different custom slug.</p>
+<p>If the user selects <strong>Update / Fold-in</strong>, proceed immediately to the <strong>Update / Fold-in Workflow</strong> section after Step 2.5 (skipping Steps 3, 4, 6, 7, 8, 9).</p>
+<hr />
+<h2 id="step-6-create-skill-directory-structure">Step 6 — Create skill directory structure<a class="headerlink" href="#step-6-create-skill-directory-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SKILLS_HOME</span><span class="s2">/&lt;skill_name&gt;/chapters&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="step-7-generate-chapter-summaries">Step 7 — Generate chapter summaries<a class="headerlink" href="#step-7-generate-chapter-summaries" title="Permanent link">&para;</a></h2>
+<p><strong>TOKEN BUDGET RULE — CRITICAL (adaptive):</strong></p>
+<p>The per-chapter budget scales with <code>BOOK_TYPE</code> and <code>DEPTH</code>. Technical chapters need room for code and tables; study depth needs room for worked reasoning. Pick the budget from this matrix:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><code>DEPTH=reference</code></th>
+<th><code>DEPTH=study</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BOOK_TYPE=text</code></td>
+<td>800–1,200 tokens</td>
+<td>1,000–1,800 tokens</td>
+</tr>
+<tr>
+<td><code>BOOK_TYPE=technical</code></td>
+<td>1,200–1,800 tokens</td>
+<td>2,000–3,000 tokens</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>These are per-file targets, not hard caps — a dense chapter may run over, a thin one under. Density still beats length (Quality Rule #3): never pad to hit a number.</li>
+<li>Files are loaded on-demand, so a larger chapter only costs tokens when that chapter is actually read.</li>
+<li>When in doubt between two cells (e.g. mixed-content book), use the lower budget and let depth come from precision, not volume.</li>
+</ul>
+<p><strong><code>DEPTH=study</code> is earned with content, not a bigger number.</strong> The standard section template (Core Idea → Connects To) naturally lands a dense prose chapter around 700–900 tokens. To reach the study budget <em>honestly</em> — not by padding — a study-depth chapter must add concrete material:
+- <strong>Reproduce one worked example or artifact</strong> from the chapter (e.g. the example press release, a sample dialogue, a filled-in template, a decision the author walks through) under a <code>## Worked Example</code> section. This is the single biggest lever and the main thing a learner returns for.
+- <strong>Expand the "How" of each framework</strong> into explicit steps or criteria, not a one-liner.
+- <strong>Add a short "Why it works / failure mode" note</strong> to the top 1–2 frameworks.</p>
+<p>If a chapter genuinely has no worked example and resists expansion, let it land below the study floor rather than padding — and note that the chapter is thin in its Core Idea. A <code>reference</code>-depth chapter, by contrast, deliberately omits worked examples and keeps only the decision-ready essentials.</p>
+<p>For EACH chapter/major section identified in Step 3:</p>
+<p>Read the corresponding section of the extracted <code>full_text.txt</code> (use character offsets or grep for chapter headings).</p>
+<p>Create <code>$SKILLS_HOME/&lt;skill_name&gt;/chapters/ch&lt;NN&gt;-&lt;slug&gt;.md</code> using the structure below.</p>
+<p><strong>Adapt emphasis based on <code>BOOK_TYPE</code>:</strong>
+- <code>technical</code> → prioritize "Code Examples", "Reference Tables", and "Commands &amp; APIs" sections; preserve exact syntax
+- <code>text</code> → prioritize "Frameworks Introduced", "Mental Models", and "Key Takeaways"; skip empty technical sections</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gh"># Chapter N: &lt;Full Title&gt;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="gu">## Core Idea</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>&lt;1–2 sentences: the single most important thing this chapter teaches&gt;
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="gu">## Frameworks Introduced</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">-</span><span class="w"> </span><span class="gs">**&lt;Framework Name&gt;**</span>: &lt;exact formulation — preserve the author&#39;s naming&gt;
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="k">-</span><span class="w"> </span>When to use: &lt;specific situation&gt;
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="k">-</span><span class="w"> </span>How: &lt;steps or criteria&gt;
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="gu">## Key Concepts</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="k">-</span><span class="w"> </span><span class="gs">**&lt;Term&gt;**</span>: &lt;precise definition in 1 sentence&gt;
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>(5–10 most important terms from this chapter)
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="gu">## Mental Models</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>&lt;2–4 frameworks or thinking tools. Write as &quot;Use X when Y&quot; or &quot;Think of X as Y&quot;&gt;
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="gu">## Anti-patterns</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="k">-</span><span class="w"> </span><span class="gs">**&lt;What to avoid&gt;**</span>: &lt;why it fails&gt;
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="gu">## Code Examples *(technical books only — omit if BOOK_TYPE=text)*</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>&lt;!-- Copy the most instructive snippet from the chapter. Preserve indentation exactly. --&gt;
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>```&lt;language&gt;
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>&lt;key code example from this chapter&gt;
+</code></pre></div>
+- <strong>What it demonstrates</strong>: <one line></p>
+<h2 id="reference-tables-technical-books-only-omit-if-book_typetext">Reference Tables <em>(technical books only — omit if BOOK_TYPE=text)</em><a class="headerlink" href="#reference-tables-technical-books-only-omit-if-book_typetext" title="Permanent link">&para;</a></h2>
+<!-- Reproduce any comparison matrix, parameter table, or decision table from the chapter in markdown. -->
+
+<h2 id="worked-example-depthstudy-only-omit-for-depthreference">Worked Example <em>(DEPTH=study only — omit for DEPTH=reference)</em><a class="headerlink" href="#worked-example-depthstudy-only-omit-for-depthreference" title="Permanent link">&para;</a></h2>
+<!-- Reproduce or reconstruct one concrete example the author works through: a
+     sample document, a dialogue, a filled-in template, a before/after, or a
+     decision walked end-to-end. This is what makes a study chapter worth its
+     budget. Keep it faithful to the source; never copy long raw passages —
+     reconstruct the example compactly. -->
+
+<h2 id="key-takeaways">Key Takeaways<a class="headerlink" href="#key-takeaways" title="Permanent link">&para;</a></h2>
+<ol>
+<li><Actionable insight></li>
+<li><Actionable insight></li>
+<li><Actionable insight>
+(3–7 takeaways a practitioner must remember)</li>
+</ol>
+<h2 id="connects-to">Connects To<a class="headerlink" href="#connects-to" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Ch N</strong>: <why this chapter relates></li>
+<li><strong><Concept></strong>: <external concept or standard it connects with>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>---
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>## Step 8 — Generate supporting files
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>### glossary.md
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>Create `$SKILLS_HOME/&lt;skill_name&gt;/glossary.md`:
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>- Every significant term from the book, alphabetically sorted
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>- Format: `**Term** — definition (Ch N)`
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>- Max 1,500 tokens
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>### patterns.md
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>Create `$SKILLS_HOME/&lt;skill_name&gt;/patterns.md`:
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>- All concrete techniques, design patterns, algorithms from the book
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>- Format: `## Pattern Name\n**When to use**: ...\n**How**: ...\n**Trade-offs**: ...`
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>- Max 2,000 tokens
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>### cheatsheet.md
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>Create `$SKILLS_HOME/&lt;skill_name&gt;/cheatsheet.md`:
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>**This is the most differentiated layer of the skill — treat it as a reasoning aid, not a keyword list.** Anyone can grep the glossary for a term. The cheatsheet captures the author&#39;s *judgment*: the decisions they&#39;d make and why. It&#39;s the file that turns &quot;I know the words&quot; into &quot;I&#39;d act the way the author would&quot;.
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>Prioritize, in order:
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>1. **Decision rules** — &quot;When X, do Y, because Z.&quot; The if/then logic the author applies, stated so the reader can apply it without re-reading the book.
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>2. **Decision trees / flowcharts** (as nested bullets or a small table) — for choices with more than two branches.
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>3. **Trade-off matrices** — competing options scored on the dimensions the author cares about, so the reader can pick under their own constraints.
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>4. **Thresholds &amp; defaults** — the specific numbers, ratios, or rules of thumb the author commits to (e.g. &quot;keep functions under ~20 lines&quot;, &quot;alert when error budget &lt; 10%&quot;).
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>5. **Tells &amp; smells** — fast heuristics for recognizing a situation (&quot;if you see X, you&#39;re probably in trouble Y&quot;).
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>Avoid: bare term→definition rows (that&#39;s the glossary), and prose paragraphs (that&#39;s the chapters). Every line should help the reader *decide* something.
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>- Format mostly as compact tables and decision rules; the content you&#39;d want on a single printed page kept beside you while working.
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>- Max 1,200 tokens.
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>---
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>## Step 9 — Generate the master SKILL.md
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>**CRITICAL TOKEN BUDGET: Keep SKILL.md body under 4,000 tokens.**
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>Compaction truncates from the END — put the most important content FIRST.
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a>Create `$SKILLS_HOME/&lt;skill_name&gt;/SKILL.md`:
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a>```markdown
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a>---
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a>name: &lt;skill_name&gt;
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a>description: &quot;Knowledge base from \&quot;&lt;Full Title&gt;\&quot; by &lt;Author(s)&gt;. Use when applying &lt;author&gt;&#39;s frameworks for &lt;key topics, 3–6 terms&gt;, studying the book, or referencing its concepts.&quot;
+<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a>---
+<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a>
+<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a>&lt;!-- argument-hint: [topic, framework name, or chapter number] --&gt;
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a>
+<a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a># &lt;Full Title&gt;
+<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>**Author**: &lt;Author(s)&gt; | **Pages**: ~&lt;N&gt; | **Chapters**: &lt;N&gt; | **Generated**: &lt;YYYY-MM-DD&gt;
+<a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a>
+<a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a>## How to Use This Skill
+<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a>
+<a id="__codelineno-6-56" name="__codelineno-6-56" href="#__codelineno-6-56"></a>- **Without arguments** — load core frameworks for reference
+<a id="__codelineno-6-57" name="__codelineno-6-57" href="#__codelineno-6-57"></a>- **With a topic** — ask about `replication`, `pricing`, or another indexed topic; I find and read the relevant chapter
+<a id="__codelineno-6-58" name="__codelineno-6-58" href="#__codelineno-6-58"></a>- **With chapter** — ask for `ch05`; I load that specific chapter
+<a id="__codelineno-6-59" name="__codelineno-6-59" href="#__codelineno-6-59"></a>- **Browse** — ask &quot;what chapters do you have?&quot; to see the full index
+<a id="__codelineno-6-60" name="__codelineno-6-60" href="#__codelineno-6-60"></a>
+<a id="__codelineno-6-61" name="__codelineno-6-61" href="#__codelineno-6-61"></a>When you ask about a topic not covered in Core Frameworks below, I will read
+<a id="__codelineno-6-62" name="__codelineno-6-62" href="#__codelineno-6-62"></a>the relevant chapter file before answering.
+<a id="__codelineno-6-63" name="__codelineno-6-63" href="#__codelineno-6-63"></a>
+<a id="__codelineno-6-64" name="__codelineno-6-64" href="#__codelineno-6-64"></a>---
+<a id="__codelineno-6-65" name="__codelineno-6-65" href="#__codelineno-6-65"></a>
+<a id="__codelineno-6-66" name="__codelineno-6-66" href="#__codelineno-6-66"></a>## Core Frameworks &amp; Mental Models
+<a id="__codelineno-6-67" name="__codelineno-6-67" href="#__codelineno-6-67"></a>&lt;!-- ~2,000 tokens: the author&#39;s most important named frameworks and principles.
+<a id="__codelineno-6-68" name="__codelineno-6-68" href="#__codelineno-6-68"></a>     Preserve exact names. Write as &quot;Use X when Y&quot;, &quot;Prefer X over Y because Z&quot;.
+<a id="__codelineno-6-69" name="__codelineno-6-69" href="#__codelineno-6-69"></a>     This is a toolkit, not a summary. --&gt;
+<a id="__codelineno-6-70" name="__codelineno-6-70" href="#__codelineno-6-70"></a>
+<a id="__codelineno-6-71" name="__codelineno-6-71" href="#__codelineno-6-71"></a>&lt;generate 2,000 tokens of the most critical frameworks and insights here&gt;
+<a id="__codelineno-6-72" name="__codelineno-6-72" href="#__codelineno-6-72"></a>
+<a id="__codelineno-6-73" name="__codelineno-6-73" href="#__codelineno-6-73"></a>---
+<a id="__codelineno-6-74" name="__codelineno-6-74" href="#__codelineno-6-74"></a>
+<a id="__codelineno-6-75" name="__codelineno-6-75" href="#__codelineno-6-75"></a>## Chapter Index
+<a id="__codelineno-6-76" name="__codelineno-6-76" href="#__codelineno-6-76"></a>
+<a id="__codelineno-6-77" name="__codelineno-6-77" href="#__codelineno-6-77"></a>| # | Title | Key Frameworks |
+<a id="__codelineno-6-78" name="__codelineno-6-78" href="#__codelineno-6-78"></a>|---|-------|----------------|
+<a id="__codelineno-6-79" name="__codelineno-6-79" href="#__codelineno-6-79"></a>| [ch01](chapters/ch01-&lt;slug&gt;.md) | &lt;Title&gt; | &lt;framework1&gt;, &lt;framework2&gt; |
+<a id="__codelineno-6-80" name="__codelineno-6-80" href="#__codelineno-6-80"></a>| [ch02](chapters/ch02-&lt;slug&gt;.md) | &lt;Title&gt; | &lt;framework1&gt;, &lt;framework2&gt; |
+<a id="__codelineno-6-81" name="__codelineno-6-81" href="#__codelineno-6-81"></a>...
+<a id="__codelineno-6-82" name="__codelineno-6-82" href="#__codelineno-6-82"></a>
+<a id="__codelineno-6-83" name="__codelineno-6-83" href="#__codelineno-6-83"></a>## Topic Index
+<a id="__codelineno-6-84" name="__codelineno-6-84" href="#__codelineno-6-84"></a>
+<a id="__codelineno-6-85" name="__codelineno-6-85" href="#__codelineno-6-85"></a>&lt;!-- Alphabetical. Major terms/frameworks → chapter(s) that cover them. --&gt;
+<a id="__codelineno-6-86" name="__codelineno-6-86" href="#__codelineno-6-86"></a>- **&lt;Term&gt;** → ch&lt;N&gt;[, ch&lt;N&gt;]
+<a id="__codelineno-6-87" name="__codelineno-6-87" href="#__codelineno-6-87"></a>- **&lt;Term&gt;** → ch&lt;N&gt;
+<a id="__codelineno-6-88" name="__codelineno-6-88" href="#__codelineno-6-88"></a>
+<a id="__codelineno-6-89" name="__codelineno-6-89" href="#__codelineno-6-89"></a>## Supporting Files
+<a id="__codelineno-6-90" name="__codelineno-6-90" href="#__codelineno-6-90"></a>
+<a id="__codelineno-6-91" name="__codelineno-6-91" href="#__codelineno-6-91"></a>- [glossary.md](glossary.md) — all key terms with definitions
+<a id="__codelineno-6-92" name="__codelineno-6-92" href="#__codelineno-6-92"></a>- [patterns.md](patterns.md) — all techniques and design patterns
+<a id="__codelineno-6-93" name="__codelineno-6-93" href="#__codelineno-6-93"></a>- [cheatsheet.md](cheatsheet.md) — quick reference tables and decision guides
+<a id="__codelineno-6-94" name="__codelineno-6-94" href="#__codelineno-6-94"></a>
+<a id="__codelineno-6-95" name="__codelineno-6-95" href="#__codelineno-6-95"></a>---
+<a id="__codelineno-6-96" name="__codelineno-6-96" href="#__codelineno-6-96"></a>
+<a id="__codelineno-6-97" name="__codelineno-6-97" href="#__codelineno-6-97"></a>## Scope &amp; Limits
+<a id="__codelineno-6-98" name="__codelineno-6-98" href="#__codelineno-6-98"></a>
+<a id="__codelineno-6-99" name="__codelineno-6-99" href="#__codelineno-6-99"></a>This skill covers the book content only. For hands-on implementation in your codebase,
+<a id="__codelineno-6-100" name="__codelineno-6-100" href="#__codelineno-6-100"></a>combine with project-specific tools. For topics beyond this book, check related skills
+<a id="__codelineno-6-101" name="__codelineno-6-101" href="#__codelineno-6-101"></a>or ask the agent directly.
+</code></pre></div></li>
+</ul>
+<hr />
+<h2 id="step-10-cleanup-and-report">Step 10 — Cleanup and report<a class="headerlink" href="#step-10-cleanup-and-report" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">PYTHON_BIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PYTHON_BIN</span><span class="k">:-</span><span class="nv">python3</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">if</span><span class="w"> </span>!<span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PYTHON_BIN</span><span class="s2">&quot;</span><span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nv">PYTHON_BIN</span><span class="o">=</span><span class="s2">&quot;python&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">fi</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="s2">&quot;</span><span class="nv">$PYTHON_BIN</span><span class="s2">&quot;</span><span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s">import os</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s">import shutil</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="s">import tempfile</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="s">from pathlib import Path</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="s">shutil.rmtree(</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="s">    os.environ.get(&quot;BOOK_SKILL_WORKDIR&quot;, Path(tempfile.gettempdir()) / &quot;book_skill_work&quot;),</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="s">    ignore_errors=True,</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="s">)</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="s">PY</span>
+</code></pre></div>
+<p>Then report to the user:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>✅ Skill created: $SKILLS_HOME/&lt;skill_name&gt;/
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>📚 Book: &lt;Full Title&gt; — &lt;Author&gt;
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>📄 Pages: ~&lt;N&gt; | Chapters: &lt;N&gt;
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>Files generated:
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  SKILL.md         — core frameworks + index   (~X tokens)
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  chapters/        — &lt;N&gt; chapter summaries     (~X tokens each, ~X total)
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>  glossary.md      — key terms                 (~X tokens)
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  patterns.md      — techniques &amp; patterns     (~X tokens)
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>  cheatsheet.md    — quick reference           (~X tokens)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>  ─────────────────────────────────────────────────────
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>  Total skill size: ~X tokens (loaded on-demand, not all at once)
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>💡 Tip: check your agent&#39;s session cost/usage command to see actual token usage.
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>Usage:
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>  Ask for &lt;skill_name&gt;                  → load core frameworks
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>  Ask &lt;skill_name&gt; about &lt;topic&gt;        → find and explain a topic
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>  Ask &lt;skill_name&gt; for ch&lt;N&gt;            → dive into a specific chapter
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>Reload (if your agent doesn&#39;t auto-detect new skills):
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>  GitHub Copilot CLI:  /skills reload
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>  Claude Code:         restart the session
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>  Amp:                 restart the session
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>Share this skill (Copilot ecosystem, optional):
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>  gh skill publish $SKILLS_HOME/&lt;skill_name&gt;
+</code></pre></div>
+<hr />
+<h2 id="update-fold-in-workflow">Update / Fold-in Workflow<a class="headerlink" href="#update-fold-in-workflow" title="Permanent link">&para;</a></h2>
+<p>When performing an Update/Fold-in operation on an existing skill at <code>$SKILLS_HOME/&lt;skill_name&gt;/</code>:</p>
+<h3 id="1-read-existing-skill-structure">1. Read Existing Skill Structure<a class="headerlink" href="#1-read-existing-skill-structure" title="Permanent link">&para;</a></h3>
+<p>Read and parse the existing skill's files:
+- Read <code>$SKILLS_HOME/&lt;skill_name&gt;/SKILL.md</code> to parse the existing <strong>Chapter Index</strong>, <strong>Topic Index</strong>, metadata (author, total chapters), and <strong>Core Frameworks</strong>.
+- List all files in <code>$SKILLS_HOME/&lt;skill_name&gt;/chapters/</code> to find the highest chapter number (e.g. <code>ch12</code>).
+- Read <code>$SKILLS_HOME/&lt;skill_name&gt;/glossary.md</code>, <code>$SKILLS_HOME/&lt;skill_name&gt;/patterns.md</code>, and <code>$SKILLS_HOME/&lt;skill_name&gt;/cheatsheet.md</code> to see what terms and frameworks are already indexed.</p>
+<h3 id="2-match-content-identify-revisions-vs-additions">2. Match Content &amp; Identify Revisions vs. Additions<a class="headerlink" href="#2-match-content-identify-revisions-vs-additions" title="Permanent link">&para;</a></h3>
+<p>Analyze the new extracted text in <code>&lt;tempdir&gt;/book_skill_work/full_text.txt</code> to identify if the new content represents:
+- <strong>Updates/Revisions to existing chapters</strong>: If a section of the new content directly updates or expands an existing chapter's topic, read the existing chapter file, merge the new details into it, and rewrite the file.
+- <strong>New additions</strong>: If the content introduces new chapters, papers, or separate sections, create <strong>new chapter summary files</strong> under <code>chapters/</code>. Start numbering these files after the highest existing chapter number (e.g. if the existing chapters stop at <code>ch12</code>, create <code>ch13-*.md</code>, <code>ch14-*.md</code>, etc.).</p>
+<h3 id="3-generate-or-update-chapter-summary-files">3. Generate or Update Chapter Summary Files<a class="headerlink" href="#3-generate-or-update-chapter-summary-files" title="Permanent link">&para;</a></h3>
+<p>For each new or revised chapter:
+- Read the corresponding section of the extracted new text.
+- Follow the formatting guidelines in <strong>Step 7</strong> to build the summary.
+- Write/update the file in <code>$SKILLS_HOME/&lt;skill_name&gt;/chapters/</code>.</p>
+<h3 id="4-merge-supporting-files">4. Merge Supporting Files<a class="headerlink" href="#4-merge-supporting-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Merge glossary.md</strong>:</li>
+<li>Read the existing <code>$SKILLS_HOME/&lt;skill_name&gt;/glossary.md</code>.</li>
+<li>Extract all new terms and definitions from the new content (Step 8 glossary guidelines).</li>
+<li>Combine and alphabetize the list of existing and new terms.</li>
+<li>If a term already exists, append the new chapter/source references to it (e.g. <code>**Term** — definition (Ch 4, Ch 13)</code>).</li>
+<li>Rewrite <code>$SKILLS_HOME/&lt;skill_name&gt;/glossary.md</code> with the fully merged, alphabetized list.</li>
+<li><strong>Merge patterns.md</strong>:</li>
+<li>Read existing <code>$SKILLS_HOME/&lt;skill_name&gt;/patterns.md</code>.</li>
+<li>Extract any new techniques, algorithms, or patterns from the new content.</li>
+<li>Append the new patterns, ensuring consistent formatting, and keeping the total length concise (under 2,500 tokens).</li>
+<li><strong>Merge cheatsheet.md</strong>:</li>
+<li>Read existing <code>$SKILLS_HOME/&lt;skill_name&gt;/cheatsheet.md</code>.</li>
+<li>Extract new comparison rules, decision tables, or parameter guides.</li>
+<li>Integrate them cleanly into the cheatsheet structure.</li>
+</ul>
+<h3 id="5-re-generate-the-master-skillmd">5. Re-generate the Master SKILL.md<a class="headerlink" href="#5-re-generate-the-master-skillmd" title="Permanent link">&para;</a></h3>
+<p>Update the master skill file <code>$SKILLS_HOME/&lt;skill_name&gt;/SKILL.md</code>:
+- <strong>Metadata</strong>: Increment the chapter count, update the estimated page count, and add the new source names if appropriate. Update the <code>Generated</code> date to the current date.
+- <strong>Core Frameworks</strong>: Fold in the most high-impact mental models or principles from the new content (ensuring the overall file remains under 4,000 tokens).
+- <strong>Chapter Index</strong>: Append the new chapters to the index table, linking to the newly created files.
+- <strong>Topic Index</strong>: Merge the new topics alphabetically. If an existing topic is also covered in the new chapters, append the new chapter links to its line (e.g. <code>- **Topic** → ch05, ch13</code>).</p>
+<h3 id="6-cleanup-and-proceed-to-step-10">6. Cleanup and Proceed to Step 10<a class="headerlink" href="#6-cleanup-and-proceed-to-step-10" title="Permanent link">&para;</a></h3>
+<p>Once the files are successfully written and merged, skip to <strong>Step 10</strong> to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.</p>
+<hr />
+<h2 id="quality-rules">Quality Rules<a class="headerlink" href="#quality-rules" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Extract structure, not summaries</strong> — capture named frameworks, exact formulations, anti-patterns; not chapter recaps</li>
+<li><strong>Preserve the author's precision</strong> — "The 5 Whys" ≠ "ask why multiple times"; keep exact naming</li>
+<li><strong>Density over completeness</strong> — a 1,000-token summary beats a 10,000-token excerpt</li>
+<li><strong>Practitioner voice</strong> — write "Use X when Y", not "The book explains X"</li>
+<li><strong>Front-load SKILL.md</strong> — compaction keeps the first 5,000 tokens; most important content comes first</li>
+<li><strong>Chapter files are on-demand</strong> — they don't count against skill budget until loaded</li>
+<li><strong>Never copy raw book text</strong> — always synthesize, summarize, extract signal</li>
+<li><strong>Topic index is critical</strong> — it's how the agent navigates to the right chapter file</li>
+</ol>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../PERFORMANCE/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Performance">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Performance
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.instant", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

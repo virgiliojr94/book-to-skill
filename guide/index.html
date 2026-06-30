@@ -1,0 +1,1582 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Convert books and documents into structured, on-demand agent skills.">
+      
+      
+      
+        <link rel="canonical" href="https://booktoskill.is-a.dev/guide/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../ARCHITECTURE/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Guide - book-to-skill</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#why" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="book-to-skill" class="md-header__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            book-to-skill
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PERFORMANCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Performance
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../skill-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Skill Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="book-to-skill" class="md-nav__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    book-to-skill
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤔 Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-generates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 What it generates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#beyond-books" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Beyond books
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔧 Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚙️ How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-discovery-loop-tax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧾 The Discovery Loop Tax
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ❓ FAQ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📥 Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📥 Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#standalone-cli-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standalone CLI (pip)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📁 Repository structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copyright-fair-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚖️ Copyright &amp; fair use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sponsors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💖 Sponsors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#star-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Star History
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PERFORMANCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skill-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤔 Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-generates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 What it generates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#beyond-books" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Beyond books
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔧 Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚙️ How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-discovery-loop-tax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧾 The Discovery Loop Tax
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ❓ FAQ
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📥 Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📥 Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#standalone-cli-pip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standalone CLI (pip)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repository-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📁 Repository structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copyright-fair-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ⚖️ Copyright &amp; fair use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sponsors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💖 Sponsors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#star-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Star History
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<p align="center">
+  <img src="docs/assets/logo.png" alt="book-to-skill logo" width="120">
+</p>
+
+<h1 align="center">book-to-skill</h1>
+
+<p align="center">
+  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in GitHub Copilot CLI, Amp, or Claude Code.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/virgiliojr94/book-to-skill/releases"><img src="https://img.shields.io/github/v/release/virgiliojr94/book-to-skill?style=for-the-badge&color=blueviolet" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Agent_Skills-Open_Standard-blueviolet?style=for-the-badge" alt="Agent Skills standard">
+  <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Formats supported">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
+  <a href="https://github.com/sponsors/virgiliojr94"><img src="https://img.shields.io/github/sponsors/virgiliojr94?style=for-the-badge&color=ea4aaa&logo=githubsponsors&logoColor=white" alt="Sponsor"></a>
+</p>
+
+<p align="center">
+  <a href="https://trendshift.io/repositories/27038" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/27038/daily?language=Python" alt="book-to-skill | Trendshift (Python)" width="250" height="55"></a>
+  <a href="https://trendshift.io/repositories/27038" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/27038/daily" alt="book-to-skill | Trendshift" width="250" height="55"></a>
+</p>
+
+<p align="center">
+  🏆 <strong>#10 Python Repository of the Day</strong> and <strong>#25 Repository of the Day</strong> on Trendshift (May 23, 2026)
+</p>
+
+<p align="center">
+  <a href="#-why">Why</a> ·
+  <a href="#-what-it-generates">What it generates</a> ·
+  <a href="#-beyond-books">Beyond books</a> ·
+  <a href="#-usage">Usage</a> ·
+  <a href="#-requirements">Requirements</a> ·
+  <a href="#-how-it-works">How it works</a> ·
+  <a href="#-the-discovery-loop-tax">Discovery Loop Tax</a> ·
+  <a href="#-faq">FAQ</a> ·
+  <a href="#-install">Install</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="docs/PERFORMANCE.md">Performance</a> ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a>
+</p>
+
+<p align="center">
+  <strong>24×–51× fewer tokens than dumping the book into context</strong> to answer one question, measured on real books (<a href="#-the-discovery-loop-tax">how it's measured</a>).
+</p>
+
+<p><strong>How it works, in 3 steps:</strong></p>
+<ol>
+<li><strong>Point</strong> it at a file, folder, or glob — <code>/book-to-skill ./my-book.pdf</code></li>
+<li><strong>It distills</strong> the book into a skill — frameworks, decision rules, anti-patterns, and per-chapter files. Structure, not a summary.</li>
+<li><strong>Your agent loads it on demand</strong> — ask <code>/my-book replication</code> and it reads the right chapter and answers from the real content, no hallucination.</li>
+</ol>
+<hr />
+<h2 id="why">🤔 Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<p>You buy a great technical book. You read it once. Three months later you can't remember chapter 7 existed.</p>
+<p>The usual workarounds don't help:
+- 📄 "Let me just search the PDF" → you get a list of pages, not answers
+- 🧠 "I'll ask the agent about this book" → it either hallucinates or says it doesn't have the content
+- 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again</p>
+<p><strong>book-to-skill solves this by turning the book into a structured skill your agent loads on demand.</strong></p>
+<p>Once installed, you just type <code>/your-book-slug replication</code> and the agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.</p>
+<p>Works with any host that supports the open <a href="https://github.com/agentskills/agentskills">Agent Skills</a> standard — GitHub Copilot CLI, Amp, and Claude Code all read the same <code>SKILL.md</code> format.</p>
+<hr />
+<h2 id="what-it-generates">📦 What it generates<a class="headerlink" href="#what-it-generates" title="Permanent link">&para;</a></h2>
+<p>Running <code>/book-to-skill your-book.pdf</code> (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (<code>~/.copilot/skills/&lt;slug&gt;/</code> for Copilot CLI, <code>~/.agents/skills/&lt;slug&gt;/</code> for Amp or cross-agent, <code>~/.claude/skills/&lt;slug&gt;/</code> for Claude Code):</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SKILL.md</code></td>
+<td>Core mental models + chapter index</td>
+<td>~4,000 tokens</td>
+</tr>
+<tr>
+<td><code>chapters/ch01-*.md</code> …</td>
+<td>One file per chapter, loaded on-demand</td>
+<td>~1,000 tokens each</td>
+</tr>
+<tr>
+<td><code>glossary.md</code></td>
+<td>Every key term, alphabetically sorted with chapter refs</td>
+<td>~1,500 tokens</td>
+</tr>
+<tr>
+<td><code>patterns.md</code></td>
+<td>All techniques, algorithms, and design patterns</td>
+<td>~2,000 tokens</td>
+</tr>
+<tr>
+<td><code>cheatsheet.md</code></td>
+<td>Decision tables and quick-reference rules</td>
+<td>~1,000 tokens</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Chapter files are loaded on-demand</strong> — they don't count against the skill budget until you ask about that topic.</p>
+<hr />
+<h2 id="beyond-books">🏢 Beyond books<a class="headerlink" href="#beyond-books" title="Permanent link">&para;</a></h2>
+<p>The name says "book", but the input is any structured prose. The same extraction works on knowledge you own and re-read constantly:</p>
+<ul>
+<li><strong>Internal documentation</strong> — architecture decision records, runbooks, onboarding guides. Fold a whole <code>docs/</code> folder into one skill and ask it while you code.</li>
+<li><strong>Brand &amp; design systems</strong> — voice guidelines, tone-of-voice docs, component principles. Turn a brand book into a skill your team queries instead of skimming a 60-page PDF.</li>
+<li><strong>Research clusters</strong> — a stack of papers plus your own notes, merged into a single unified skill and updated as new material lands (see <a href="#-usage">Update / fold-in</a>).</li>
+<li><strong>Specs &amp; standards</strong> — RFCs, API contracts, compliance docs you reference but never memorize.</li>
+</ul>
+<p>If you re-open a document often enough to wish you'd memorized it, it's a candidate.</p>
+<hr />
+<h2 id="usage">🚀 Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/book-to-skill &lt;path-to-document-folder-or-glob&gt;... [skill-name-slug]
+</code></pre></div>
+<p>Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, AsciiDoc, HTML, RTF, MOBI/AZW/AZW3.</p>
+<p><strong>Examples:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Process several files together into a unified skill</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>/book-to-skill<span class="w"> </span>~/papers/paper1.pdf<span class="w"> </span>~/notes/export.txt<span class="w"> </span>unified-research
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Process all supported files in a folder together</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>/book-to-skill<span class="w"> </span>~/workspace/project-docs/<span class="w"> </span>project-knowledge
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Process files matching a glob pattern</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>/book-to-skill<span class="w"> </span><span class="s2">&quot;~/books/*.epub&quot;</span><span class="w"> </span>my-library
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Update/fold new material into an existing skill folder</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>/book-to-skill<span class="w"> </span>~/articles/new-paper.pdf<span class="w"> </span>~/.claude/skills/project-knowledge
+</code></pre></div>
+<p>After the skill is created, use it like any other agent skill:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/designing-data-intensive-apps<span class="w">                  </span><span class="c1"># load core mental models</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>/designing-data-intensive-apps<span class="w"> </span>replication<span class="w">      </span><span class="c1"># find and explain a topic</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>/designing-data-intensive-apps<span class="w"> </span>ch05<span class="w">             </span><span class="c1"># dive into chapter 5</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>/designing-data-intensive-apps<span class="w"> </span><span class="s2">&quot;what chapters do you have?&quot;</span>
+</code></pre></div>
+<p>In GitHub Copilot CLI you may need to run <code>/skills reload</code> after the file is written so the new skill appears in <code>/skills list</code>. Claude Code and Amp pick it up on the next session.</p>
+<hr />
+<h2 id="requirements">🔧 Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<p>The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.</p>
+<blockquote>
+<p><strong>Check your setup in one command:</strong> <code>python3 scripts/extract.py --check</code> prints which extractors are installed for every format and the exact command to install anything missing — no file needed.</p>
+</blockquote>
+<p><strong>PDF — choose by book type:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Book type</th>
+<th>Tool</th>
+<th>Install</th>
+<th>Speed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Text-heavy (prose, few tables)</td>
+<td><code>pdftotext</code> (poppler)</td>
+<td><code>sudo apt install poppler-utils</code></td>
+<td>⚡ instant</td>
+</tr>
+<tr>
+<td>Text-heavy fallback</td>
+<td><code>pypdf</code></td>
+<td><code>pip3 install pypdf</code></td>
+<td>⚡ instant</td>
+</tr>
+<tr>
+<td>Text-heavy fallback</td>
+<td><code>pdfminer.six</code></td>
+<td><code>pip3 install pdfminer.six</code></td>
+<td>⚡ instant</td>
+</tr>
+<tr>
+<td><strong>Technical (code, tables, formulas)</strong></td>
+<td><strong><code>docling</code></strong></td>
+<td><code>pip3 install docling</code></td>
+<td>~1.5s/page</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Before extraction begins, the skill asks you whether the book is <strong>technical</strong> or <strong>text-heavy</strong> and picks the right tool automatically. Docling preserves markdown tables and code blocks; pdftotext is faster for prose-only books.</p>
+</blockquote>
+<p><strong>EPUB:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Install</th>
+<th>Quality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ebooklib</code> + <code>beautifulsoup4</code></td>
+<td><code>pip3 install ebooklib beautifulsoup4</code></td>
+<td>⭐⭐⭐ Best</td>
+</tr>
+<tr>
+<td>stdlib <code>zipfile</code></td>
+<td>built-in — no install needed</td>
+<td>⭐⭐ Always available</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Other formats:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Tool</th>
+<th>Install</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DOCX</td>
+<td><code>python-docx</code> (fallback: stdlib ZIP/XML)</td>
+<td><code>pip3 install python-docx</code></td>
+</tr>
+<tr>
+<td>HTML</td>
+<td><code>beautifulsoup4</code> (fallback: stdlib <code>html.parser</code>)</td>
+<td><code>pip3 install beautifulsoup4</code></td>
+</tr>
+<tr>
+<td>RTF</td>
+<td><code>striprtf</code> (fallback: regex)</td>
+<td><code>pip3 install striprtf</code></td>
+</tr>
+<tr>
+<td>MOBI / AZW / AZW3</td>
+<td>Calibre <code>ebook-convert</code> (external app, not pip)</td>
+<td>https://calibre-ebook.com/download</td>
+</tr>
+<tr>
+<td>TXT / Markdown / reStructuredText / AsciiDoc</td>
+<td>built-in</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="how-it-works">⚙️ How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>One file · a folder · a glob · a list of paths
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>     │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>     ▼
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Step 1.5 — &quot;Technical or text-heavy book?&quot;
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>     │
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>     ├── technical → Docling  (tables + code blocks as markdown, ~1.5s/page)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>     └── text      → pdftotext → pypdf → pdfminer  (instant)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>     │
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>     ▼
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>scripts/extract.py &lt;paths…&gt; --mode &lt;technical|text&gt;
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  per source: PDF → pdftotext/Docling · EPUB → ebooklib → stdlib zipfile · DOCX/HTML/RTF/…
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>  (one bad source is skipped with a warning; the rest still process)
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>     │
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>     ├── /tmp/book_skill_work/full_text.txt   (all sources merged, with source markers)
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>     └── /tmp/book_skill_work/metadata.json   (aggregated stats + per-source array)
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>               │
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>               ▼
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>          Claude analyzes structure
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>          (title, author, chapters, ToC — spanning all sources)
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>          ── or, if targeting an existing skill: folds new content in (Mode 4)
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>               │
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>               ▼
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>          Generates per-chapter summaries  (800–1,200 tokens each)
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>          technical → includes Code Examples + Reference Tables sections
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>          Generates glossary, patterns, cheatsheet
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>          Generates master SKILL.md with core mental models
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>               │
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>               ▼
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>          Skill written to one of:
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>            ~/.copilot/skills/&lt;slug&gt;/   (GitHub Copilot CLI)
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>            ~/.agents/skills/&lt;slug&gt;/    (Copilot CLI or Amp, cross-agent)
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>            ~/.claude/skills/&lt;slug&gt;/    (Claude Code)
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>          /tmp/book_skill_work/         🗑️  cleaned up
+</code></pre></div>
+<p><strong>Extraction benchmark</strong> (103-page technical book, CPU only):</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Time</th>
+<th>Tokens</th>
+<th>Tables</th>
+<th>Code blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pdftotext</td>
+<td>0.1s</td>
+<td>27K</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Docling</td>
+<td>164s</td>
+<td>27K (+1.2%)</td>
+<td>48</td>
+<td>36</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Real conversions</strong> (measured: pages, extracted tokens, chapters auto-detected,
+estimated one-pass cost on Claude Sonnet 4.5 at \$3/\$15 per MTok):</p>
+<table>
+<thead>
+<tr>
+<th>Book</th>
+<th>Format</th>
+<th style="text-align: right;">Pages</th>
+<th style="text-align: right;">Tokens</th>
+<th style="text-align: right;">Chapters</th>
+<th style="text-align: right;">~Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Think Python 2</td>
+<td>PDF</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: right;">119K</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">\$0.88</td>
+</tr>
+<tr>
+<td>Working Backwards</td>
+<td>PDF</td>
+<td style="text-align: right;">371</td>
+<td style="text-align: right;">175K</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">\$0.96</td>
+</tr>
+<tr>
+<td>Pro Git</td>
+<td>PDF</td>
+<td style="text-align: right;">501</td>
+<td style="text-align: right;">229K</td>
+<td style="text-align: right;">— †</td>
+<td style="text-align: right;">\$1.23</td>
+</tr>
+<tr>
+<td>Moby-Dick</td>
+<td>EPUB</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">301K</td>
+<td style="text-align: right;">— †</td>
+<td style="text-align: right;">\$1.42</td>
+</tr>
+</tbody>
+</table>
+<p>† Chapter auto-detection needs explicit <code>Chapter N</code> / <code>Capítulo N</code> headings. Pro Git
+uses section titles and Moby-Dick uses chapter <em>titles</em> / roman numerals, so neither
+auto-segments — extraction and conversion still work, but you point at sections
+manually. A full skill costs roughly <strong>\$1 per book</strong>; far less than re-reading the
+PDF every session.</p>
+<details>
+<summary>Design principles (click to expand)</summary>
+
+1. **Density over completeness** — a 1,000-token summary beats a 10,000-token excerpt
+2. **Practitioner voice** — "Use X when Y", not "The book explains X"
+3. **Front-loaded SKILL.md** — compaction keeps the first ~5,000 tokens; the most important content comes first
+4. **On-demand chapters** — the topic index tells Claude which file to read; chapters load only when needed
+5. **Never raw text** — always synthesize, summarize, extract signal from the source
+
+</details>
+
+<hr />
+<h2 id="the-discovery-loop-tax">🧾 The Discovery Loop Tax<a class="headerlink" href="#the-discovery-loop-tax" title="Permanent link">&para;</a></h2>
+<p>A PDF-reading agent doesn't just read — it <em>navigates</em>. Ask it one question and it
+fetches the table of contents, notices a term it can't define, pulls more pages,
+backtracks. Every one of those hops lands in the conversation history and gets
+<strong>re-processed on every subsequent turn</strong>. To stay inside its budget, a sub-agent
+is then forced to compress what it read at brutal ratios, handing the main agent a
+<strong>degraded summary it can't fact-check</strong> against the source.</p>
+<p>book-to-skill pays the navigation cost <strong>once, at compile time</strong>. At runtime the
+assistant loads a small resident core plus the one pre-compiled chapter it needs —
+no discovery loop, no compress-to-fit, and the full extracted source stays on disk
+for verification.</p>
+<p><strong>Measured, not asserted.</strong> Running <a href="tools/discovery_tax.py"><code>tools/discovery_tax.py</code></a>
+on three real books — tokens entering context to answer a single targeted question
+(book-to-skill = resident core + one compiled chapter ≈ 5,000 tokens):</p>
+<table>
+<thead>
+<tr>
+<th>Book (size)</th>
+<th style="text-align: right;">Context-dump</th>
+<th style="text-align: right;">Discovery loop</th>
+<th style="text-align: right;">book-to-skill</th>
+<th style="text-align: center;">vs dump / loop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Think Python 2 (119K, small chapters)</td>
+<td style="text-align: right;">119,264</td>
+<td style="text-align: right;">12,152</td>
+<td style="text-align: right;">~5,000</td>
+<td style="text-align: center;">24× / <strong>2.4×</strong></td>
+</tr>
+<tr>
+<td>Working Backwards (175K, medium chapters)</td>
+<td style="text-align: right;">175,253</td>
+<td style="text-align: right;">33,444</td>
+<td style="text-align: right;">~5,000</td>
+<td style="text-align: center;">35× / 6.7×</td>
+</tr>
+<tr>
+<td>AI Engineering (256K, large chapters)</td>
+<td style="text-align: right;">256,287</td>
+<td style="text-align: right;">77,866</td>
+<td style="text-align: right;">~5,000</td>
+<td style="text-align: center;">51× / <strong>15.6×</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The advantage <strong>scales with chapter size</strong>: against a context-dump it's consistently
+24–51× (and that cost recurs <em>every turn</em>); against a one-time discovery loop it
+ranges from a modest 2.4× on a book of small chapters to 15.6× on one of large
+chapters. Reproduce on your own book:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python3<span class="w"> </span>tools/discovery_tax.py<span class="w"> </span>--full-text<span class="w"> </span>/tmp/book_skill_work/full_text.txt<span class="w"> </span>--target-chapter<span class="w"> </span><span class="m">5</span>
+</code></pre></div>
+<blockquote>
+<p><strong>Honest caveats:</strong> (1) the discovery figures are a one-time cost and a <em>model</em>
+using the book's real ToC/chapter sizes — a well-tuned agent lands nearer the best
+case; the context-dump cost, by contrast, recurs on <strong>every</strong> turn. (2) The tool
+needs explicit <code>Chapter N</code> / <code>Capítulo N</code> headings to segment a book; titles-only
+or roman-numeral books (and EPUBs extracted without <code>ebooklib</code>) won't segment
+cleanly. book-to-skill wins when you return to the knowledge repeatedly; for a
+single one-off read, a plain PDF agent is fine.</p>
+</blockquote>
+<hr />
+<h2 id="faq">❓ FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
+<p><strong>"Can't I just dump the PDF/EPUB into my Claude project context?"</strong></p>
+<p>You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load — typically a SKILL.md core (~4K) plus the one chapter you asked about (~1K). The rest stays on disk until you need it.</p>
+<p>The economics are amortization, not size. Pasting the book pays the full token bill <strong>on every turn of every session, forever</strong>. book-to-skill pays the extraction cost <strong>once</strong> and every future conversation loads only the slice it needs. The bigger your context window, the more this matters — a large window makes the dump <em>possible</em>, not <em>cheap</em>.</p>
+<p>More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Claude isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.</p>
+<hr />
+<p><strong>"Claude has a 1M-token context window now — can't I just keep the whole book loaded?"</strong></p>
+<p>A bigger window changes what <em>fits</em>, not what's <em>smart</em>. Three reasons it isn't a substitute:</p>
+<ul>
+<li><strong>You pay per token, per call.</strong> A 1M window doesn't make those tokens free — it makes a large, recurring bill possible. The skill loads kilobytes, not megabytes.</li>
+<li><strong>Recall degrades with fill.</strong> Models lose precision retrieving a specific fact buried in a near-full context ("lost in the middle"). A 1K curated chapter beats 200K of raw prose for answering one question.</li>
+<li><strong>Window ≠ structure.</strong> A full book in context is still raw text the model must re-parse every turn. The skill ships pre-extracted frameworks — reasoning, not retrieval.</li>
+</ul>
+<p>Use the big window for what it's good at: a one-off pass over material you'll never need again. Use a skill for knowledge you'll reach for repeatedly.</p>
+<hr />
+<p><strong>"Isn't this just RAG?"</strong></p>
+<p>RAG works at query time: chunk the book → embed everything → find similar vectors → inject into prompt. It's optimized for "find me the part that talks about X."</p>
+<p>book-to-skill works at compile time: one deep analysis run extracts the author's actual frameworks, names them, describes when to use each, captures the anti-patterns. The output is structure the author spent years building — not a similarity search over their sentences.</p>
+<p>RAG answers: <em>"here are chunks close to your query."</em><br />
+A skill answers: <em>"here are the 12 frameworks this author built, ready to reason with."</em></p>
+<p>Pick by shape of the job:</p>
+<ul>
+<li><strong>Wide and shallow</strong> — a library of dozens of books, "find the part that mentions X" → a RAG tool (e.g. CandleKeep) wins.</li>
+<li><strong>Narrow and deep</strong> — one book or a tight cluster of related sources, frameworks you apply while you work → book-to-skill wins.</li>
+</ul>
+<p>They're complementary, not competing: RAG indexes a shelf, book-to-skill masters a spine.</p>
+<hr />
+<p><strong>"Popular books are already in Claude's training data. Why bother?"</strong></p>
+<p>For widely-known books (Clean Code, DDIA, Pragmatic Programmer), Claude has general knowledge — but it's compressed, averaged across the entire internet's discussion of the book, and may hallucinate specific quotes or chapter locations.</p>
+<p>book-to-skill works from your actual copy. Every framework name, every anti-pattern list, every chapter number is grounded in the text you provided. No training data drift, no hallucinated chapter titles.</p>
+<p>It also shines for books Claude doesn't know at all: niche technical references, internal company documentation, recent publications, translated works.</p>
+<hr />
+<p><strong>"NotebookLM handles multiple books better."</strong></p>
+<p>Absolutely true — if your workflow is "I have 80 separate books and I want to search across all of them," NotebookLM is the right tool.</p>
+<p>book-to-skill is built for a different job: you want to go deep on a specific topic or library, having multiple related documents (papers, chapters, notes) folded into a single unified skill, and even updating it over time as new material arrives! This integrates your customized knowledge base right into your coding or writing workflow, rather than in a separate browser tab.</p>
+<hr />
+<h2 id="install">📥 Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Two ways to use it, do not confuse them:</strong>
+- <strong>As an agent skill</strong> (the <code>/book-to-skill</code> command in Claude Code, Copilot CLI, or Amp) → <strong><code>git clone</code> into your skills folder</strong> (below). This is what gives you the slash command and the full convert-a-book flow.
+- <strong>As a standalone CLI</strong> (just the text extractor) → <code>pip install book-to-skill</code>, then <code>book-to-skill --help</code>. This does <strong>not</strong> register the agent skill; it only installs the extraction engine. See <a href="#standalone-cli-pip">the CLI section</a>.</p>
+</blockquote>
+<p>The skill follows the open <a href="https://github.com/agentskills/agentskills">Agent Skills</a> standard, so a single install works for any compatible host.</p>
+<p><strong>GitHub Copilot CLI</strong> (personal skill):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/virgiliojr94/book-to-skill.git<span class="w"> </span>~/.copilot/skills/book-to-skill
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># then, in a `copilot` session:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>/skills<span class="w"> </span>reload
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>/skills<span class="w"> </span>info<span class="w"> </span>book-to-skill
+</code></pre></div>
+<p>Or the cross-agent path that Copilot CLI and Amp both discover:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/virgiliojr94/book-to-skill.git<span class="w"> </span>~/.agents/skills/book-to-skill
+</code></pre></div>
+<p><strong>Claude Code</strong>:</p>
+<p>Copy this into your Claude Code session:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Install book-to-skill: https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/SKILL.md
+</code></pre></div>
+<p>Or manually using standard <code>git clone</code> (ensures modular engine files are fetched correctly):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/virgiliojr94/book-to-skill.git<span class="w"> </span>~/.claude/skills/book-to-skill
+</code></pre></div>
+<p>Then in any agent session:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>/book-to-skill<span class="w"> </span>~/path/to/your-book.pdf
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># or</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>/book-to-skill<span class="w"> </span>~/path/to/your-book.epub
+</code></pre></div>
+<h3 id="standalone-cli-pip">Standalone CLI (pip)<a class="headerlink" href="#standalone-cli-pip" title="Permanent link">&para;</a></h3>
+<p><code>pip install book-to-skill</code> is a <strong>separate, optional</strong> path. It installs only the
+text-extraction engine as a CLI, for scripting or to grab the optional extractors;
+it does <strong>not</strong> register the <code>/book-to-skill</code> agent skill (use the <code>git clone</code> above
+for that).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;book-to-skill[pdf,epub,docx]&quot;</span><span class="w">   </span><span class="c1"># engine + optional extractors</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>book-to-skill<span class="w"> </span>~/path/to/book.pdf<span class="w"> </span>--mode<span class="w"> </span>text<span class="w">  </span><span class="c1"># or: python -m book_to_skill ...</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>book-to-skill<span class="w"> </span>--check<span class="w">                          </span><span class="c1"># report which extractors are installed</span>
+</code></pre></div>
+<hr />
+<h2 id="repository-structure">📁 Repository structure<a class="headerlink" href="#repository-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>book-to-skill/
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>├── SKILL.md              # Skill definition + step-by-step instructions (the generator spec)
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>├── scripts/
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>│   ├── extract.py        # Thin entrypoint wrapper
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>│   └── extractor/        # Modular extraction package
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>│       ├── config.py     # Extensions, paths, dependency constants
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>│       ├── dependencies.py  # optional-dep probing + --check
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>│       ├── exceptions.py # ExtractionError (per-source failures, batch-safe)
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>│       ├── utils.py      # CLI parsing, multi-source resolution, chapter detection, runner
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>│       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>├── tools/
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>│   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp)
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>├── tests/                # pytest suite (extraction, detection, discovery tax)
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>├── docs/
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>│   ├── PERFORMANCE.md    # measured benchmarks, discovery tax, cost
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>│   └── ARCHITECTURE.md   # pipeline + component map
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>├── CHANGELOG.md          # release history (semver)
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>├── CONTRIBUTING.md       # dev setup, PR conventions, release process
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>├── SECURITY.md           # vulnerability reporting
+<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>└── README.md             # This file
+</code></pre></div>
+<hr />
+<h2 id="copyright-fair-use">⚖️ Copyright &amp; fair use<a class="headerlink" href="#copyright-fair-use" title="Permanent link">&para;</a></h2>
+<p>book-to-skill ships <strong>no book content</strong> — not a single page. It's a converter you point at files you already own.</p>
+<ul>
+<li><strong>Processing is local.</strong> Extraction and analysis run on your machine. Your files are never uploaded by this tool. (If your agent's model runs in the cloud, the text you feed it follows that provider's normal data terms — same as any prompt.)</li>
+<li><strong>You use your own copy.</strong> Bring a book you bought, docs your company owns, or papers you have the right to read.</li>
+<li><strong>The output is your notes.</strong> A generated skill is a structured, synthesized derivative — framework names, definitions, takeaways — not a reproduction of the text. The skill explicitly never copies raw passages (see Quality Rule #7). Treat it like handwritten study notes: yours, for personal use.</li>
+<li><strong>Don't redistribute.</strong> Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private. Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.</li>
+</ul>
+<p>When in doubt, follow the license or terms of the source document. This project is a tool; how you use it is on you.</p>
+<hr />
+<h2 id="sponsors">💖 Sponsors<a class="headerlink" href="#sponsors" title="Permanent link">&para;</a></h2>
+<p>book-to-skill is free and MIT-licensed, maintained on personal time. If it saves you tokens or study hours, consider sponsoring its upkeep: PR reviews, multilingual fixes, releases, and docs.</p>
+<p><strong><a href="https://github.com/sponsors/virgiliojr94">Become a sponsor → github.com/sponsors/virgiliojr94</a></strong></p>
+<p>Every sponsor is listed in <a href="../BACKERS/">BACKERS.md</a>. Thank you for keeping open, privacy-first tooling alive. ✨</p>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>MIT — applies to the converter (code + skill definition) in this repository, <strong>not</strong> to any book or document you process with it.</p>
+<h2 id="star-history">Star History<a class="headerlink" href="#star-history" title="Permanent link">&para;</a></h2>
+<p><a href="https://www.star-history.com/?repos=virgiliojr94%2Fbook-to-skill&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&legend=top-left" />
+ </picture>
+</a></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../ARCHITECTURE/" class="md-footer__link md-footer__link--next" aria-label="Next: Architecture">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Architecture
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.instant", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
