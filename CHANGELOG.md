@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   covers the `pip` ecosystem.
 
 ### Changed
+- **Modularização de `utils.py`.** A lógica de detecção de capítulos foi extraída para `chapter_detector.py` e a lógica de processamento em lote e ponto de entrada da CLI foi movida para `cli.py`. O módulo `utils.py` foi preservado como uma fachada (shim) de compatibilidade mantendo todas as assinaturas e comportamentos originais intactos.
 - **The `pdf` extra now installs `pypdf` instead of the deprecated `PyPDF2`**
   (`pip install book-to-skill[pdf]`). `pypdf` is the maintained successor;
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).

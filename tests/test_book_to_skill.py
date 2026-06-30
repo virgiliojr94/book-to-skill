@@ -347,12 +347,15 @@ class TestBatchResilience:
         )
 
         # Need to re-import config constants since they're evaluated at import time
-        # So we patch the OUTPUT_* in utils directly
+        # So we patch the OUTPUT_* in both utils (shim) and cli (where main() runs)
         out_text = out_dir / "full_text.txt"
         out_meta = out_dir / "metadata.json"
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_text)
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_meta)
+        monkeypatch.setattr("book_to_skill.cli.OUTPUT_DIR", out_dir)
+        monkeypatch.setattr("book_to_skill.cli.OUTPUT_TEXT", out_text)
+        monkeypatch.setattr("book_to_skill.cli.OUTPUT_META", out_meta)
         monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
 
         main()
