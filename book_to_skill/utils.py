@@ -93,6 +93,30 @@ _FW_DIGITS = "０-９"
 _CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
 _MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
 
+# Korean chapter headings. Two safe styles:
+#   1. "제N장" / "제 12 화" / "제1부" — the 제 prefix (Hangul "je-") is an
+#      unambiguous chapter marker, so any classifier (장/화/부/편/강/과) is safe.
+#   2. bare "N강" / "N화" / "N부" — common lecture/episode/part units. "N장" is
+#      DELIBERATELY excluded here: 장 is also the everyday counter for flat sheets
+#      ("사진 10장"), so a bare number + 장 would false-match prose. The 강/화/부
+#      units are not everyday counters, and _HEADING_TAIL still gates the tail so
+#      "3화보다" (prose cross-reference) is rejected. Arabic + full-width digits
+#      only (Sino-Korean numerals like 제삼장 are rare and skipped).
+_KO_CHAPTER = re.compile(rf"^\s*제\s*([0-9{_FW_DIGITS}]{{1,2}})\s*[장화부편강과]")
+_KO_UNIT = re.compile(rf"^\s*([0-9{_FW_DIGITS}]{{1,2}})\s*[강화부](?P<rest>.*)$")
+# Korean-aware heading tail for the bare "N강" unit. Unlike _HEADING_TAIL (which
+# expects a Latin capital title word), a Korean title starts with Hangul, so we
+# accept: end-of-line, a separator, or whitespace-then-any-title-char. A unit
+# followed DIRECTLY by a Hangul particle ("4강은", "3화보다" — no space) is prose
+# cross-reference and is rejected.
+_KO_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–·、]|^\s+\S")
+# Standalone numeric section divider whose whole line is just "N." (1..99 + a
+# period), e.g. "01.", "2.", "12.". Common in Korean (and other) publishing where
+# the chapter number is a divider and the title sits on the following line(s).
+# Requiring the line to be ONLY "N." — nothing after the period — keeps numbered
+# list items ("1. Buy milk"), step labels ("1단계"), and years ("2025.") out.
+_NUM_DIVIDER = re.compile(rf"^\s*([0-9{_FW_DIGITS}]{{1,2}})\.\s*$")
+
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
 _TOC_HEADERS = (
@@ -246,6 +270,18 @@ def _chapter_number(line: str) -> int | None:
     cm = _CN_CHAPTER.match(s) or _MD_CN_HEADING.match(s)
     if cm:
         return _cn_numeral_to_int(cm.group(1))
+    km = _KO_CHAPTER.match(s)
+    if km:
+        n = int(km.group(1))
+        return n if 1 <= n <= 99 else None
+    ku = _KO_UNIT.match(s)
+    if ku and _KO_HEADING_TAIL.match(ku.group("rest")):
+        n = int(ku.group(1))
+        return n if 1 <= n <= 99 else None
+    nd = _NUM_DIVIDER.match(s)
+    if nd:
+        n = int(nd.group(1))
+        return n if 1 <= n <= 99 else None
     return None
 
 
