@@ -547,6 +547,32 @@ class TestDetectStructure:
         result = detect_structure(text)
         assert result["chapters_detected"] == 2
 
+    def test_detects_chapters_korean_je_marker(self):
+        # "제N장/화/부/편/강/과" — the 제 prefix is an unambiguous chapter marker.
+        text = "제1장 시작하며\n본문입니다.\n제 2 화 전개\n제5부 부록"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_detects_chapters_korean_lecture_unit(self):
+        # bare "N강/N화/N부" lecture/episode units (장 excluded — it's the everyday
+        # counter for flat sheets, e.g. "사진 10장").
+        text = "4강 마무리 강의\n내용\n5강 정리"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_korean_counter_is_not_a_chapter(self):
+        # 장 as a sheet counter and units glued to a particle must not match.
+        text = "사진 10장을 준비했다. 4강은 어렵고 3화보다 쉽다. 표 2개."
+        assert detect_structure(text)["chapters_detected"] == 0
+
+    def test_detects_numeric_divider_lines(self):
+        # A line that is only "N." (common in Korean publishing; the title sits on
+        # the next line). List items / step labels / years must not match.
+        text = "01.\n첫 번째 장 제목\n02.\n두 번째 장 제목"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_numeric_list_item_is_not_a_divider(self):
+        text = "1. Buy milk\n2. Buy eggs\n1단계 준비\n2025."
+        assert detect_structure(text)["chapters_detected"] == 0
+
     def test_detects_toc(self):
         text = "Table of Contents\n1. Intro\n2. Body"
         result = detect_structure(text)
