@@ -34,6 +34,7 @@ from book_to_skill.utils import (
     main,
 )
 from book_to_skill.config import SUPPORTED_EXTENSIONS
+from book_to_skill.parsers import pdf as pdf_parser
 from book_to_skill.parsers.text import read_text_file
 from book_to_skill.parsers.docx import extract_docx_with_zipfile
 from book_to_skill.parsers.rtf import strip_rtf_fallback
@@ -1284,3 +1285,26 @@ class TestTextEncodingDetection:
     def test_empty_file_returns_empty_string(self, tmp_path):
         # An empty file decodes to "" (not None, which is reserved for read errors).
         assert read_text_file(self._write(tmp_path, b"")) == ""
+
+
+class TestPdftotextEncoding:
+    """pdftotext output (UTF-8) is decoded as UTF-8, not the locale encoding."""
+
+    def test_pdftotext_decodes_as_utf8(self, monkeypatch):
+        captured = {}
+
+        class _Result:
+            returncode = 0
+            stdout = "Café — naïve"
+
+        monkeypatch.setattr(pdf_parser.shutil, "which", lambda name: "/usr/bin/pdftotext")
+
+        def fake_run(cmd, **kwargs):
+            captured.update(kwargs)
+            return _Result()
+
+        monkeypatch.setattr(pdf_parser.subprocess, "run", fake_run)
+
+        assert pdf_parser.extract_with_pdftotext("x.pdf") == "Café — naïve"
+        assert captured.get("encoding") == "utf-8"
+        assert captured.get("errors") == "replace"
