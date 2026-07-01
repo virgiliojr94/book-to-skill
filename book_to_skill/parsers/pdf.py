@@ -13,7 +13,8 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
         pdf_path = os.path.abspath(pdf_path)
         result = subprocess.run(
             ["pdftotext", "-layout", pdf_path, "-"],
-            capture_output=True, text=True, timeout=120
+            capture_output=True, text=True, timeout=120,
+            encoding="utf-8", errors="replace",
         )
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout
