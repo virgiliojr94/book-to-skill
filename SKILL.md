@@ -146,8 +146,27 @@ do
   fi
 done
 
+# Self-bootstrap: if no installed copy was found (e.g. the host acted on the
+# "Install book-to-skill: <raw SKILL.md URL>" one-liner and saved only this
+# file), clone the full repo into a cache dir and run the engine from there.
+# The git clone install stays primary; this only rescues the SKILL.md-only case.
 if [ -z "$SCRIPT_PATH" ]; then
-  echo "Could not find scripts/extract.py for book-to-skill" >&2
+  CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/book-to-skill"
+  REPO_URL="https://github.com/virgiliojr94/book-to-skill.git"
+  if [ -f "$CACHE_DIR/scripts/extract.py" ]; then
+    SCRIPT_PATH="$CACHE_DIR/scripts/extract.py"
+  elif command -v git >/dev/null 2>&1; then
+    echo "book-to-skill engine not found locally; cloning into $CACHE_DIR ..." >&2
+    if git clone --depth 1 "$REPO_URL" "$CACHE_DIR" >&2 && [ -f "$CACHE_DIR/scripts/extract.py" ]; then
+      SCRIPT_PATH="$CACHE_DIR/scripts/extract.py"
+    fi
+  fi
+fi
+
+if [ -z "$SCRIPT_PATH" ]; then
+  echo "Could not find scripts/extract.py for book-to-skill." >&2
+  echo "Install the whole repo (not just SKILL.md), e.g.:" >&2
+  echo "  git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill" >&2
   exit 1
 fi
 
@@ -185,9 +204,8 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
    Output (skill files generated/updated):  ~<N>K tokens
    Total:                           ~<N>K tokens
 
-   Reference prices (as of 2025):
-   Claude Sonnet 4.5 → ~$<X> USD
-   Claude Haiku 4.5  → ~$<X> USD
+   (Cost depends on your model's current pricing — multiply the token counts
+    above by your provider's per-1M-token input and output rates.)
 
    ⏱  Estimated time: ~<N> minutes
 
@@ -201,7 +219,10 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
 - Input tokens ≈ `estimated_tokens` from metadata × 1.3 (prompts overhead per chapter pass)
 - Output tokens ≈ chapters × per-chapter budget + 4,000 (SKILL.md) + 4,500 (glossary + patterns + cheatsheet)
   - Per-chapter budget midpoint by `BOOK_TYPE` (DEPTH is decided later in Step 4 and can raise it): `text` ≈ 1,000, `technical` ≈ 1,800. If the user has already indicated reference-only vs deep study, use the matching row of the Step 7 matrix.
-- Price: Sonnet input=$3/MTok output=$15/MTok — Haiku input=$0.80/MTok output=$4/MTok
+- Do NOT hardcode dollar amounts: model names and per-token prices change often.
+  Report the token counts and let the user apply their current per-1M-token rate.
+  If you show an illustrative figure, label it clearly as an estimate to verify
+  against current pricing and include the date you are quoting.
 
 Wait for the user to confirm before proceeding. If they say "analyze only", switch to Mode 2.
 
@@ -356,7 +377,7 @@ If a chapter genuinely has no worked example and resists expansion, let it land 
 
 For EACH chapter/major section identified in Step 3:
 
-Read the corresponding section of the extracted `full_text.txt` (use character offsets or grep for chapter headings).
+Read the corresponding section of the extracted `full_text.txt`. The extractor now records each chapter's span in `metadata.json` under `chapters` — every entry has `number`, `title`, `line_start`, `line_end`, `char_start`, and `char_end`. Slice each chapter with a **bounded** read from those line offsets — `Read(file_path=full_text.txt, offset=<line_start>, limit=<line_end - line_start + 1>)` — (or a byte slice using `char_start`/`char_end`) instead of re-scanning for headings. Only fall back to grepping the heading when `chapters` is empty (no ToC or headings were detected).
 
 Create `$SKILLS_HOME/<skill_name>/chapters/ch<NN>-<slug>.md` using the structure below.
 
@@ -518,7 +539,28 @@ or ask the agent directly.
 
 ---
 
-## Step 10 — Cleanup and report
+## Step 10 — Verify fidelity, clean up, and report
+
+**Before cleanup** (which deletes `full_text.txt`), run the fidelity check so any
+framework or term the skill asserts that is NOT present in the source book is
+surfaced for review:
+
+```bash
+WORKDIR="${BOOK_SKILL_WORKDIR:-${TMPDIR:-/tmp}/book_skill_work}"
+for d in "$HOME/.claude/skills/book-to-skill" "$HOME/.copilot/skills/book-to-skill" \
+         "$HOME/.agents/skills/book-to-skill" ".claude/skills/book-to-skill" \
+         ".agents/skills/book-to-skill"; do
+  if [ -f "$d/tools/verify_fidelity.py" ]; then
+    python3 "$d/tools/verify_fidelity.py" \
+      --skill-dir "$SKILLS_HOME/<skill_name>" \
+      --full-text "$WORKDIR/full_text.txt" || true
+    break
+  fi
+done
+```
+
+Review any flagged terms — fix or remove confabulations — before reporting done.
+Then clean up:
 
 ```bash
 PYTHON_BIN="${PYTHON_BIN:-python3}"
@@ -632,3 +674,6 @@ Once the files are successfully written and merged, skip to **Step 10** to perfo
 6. **Chapter files are on-demand** — they don't count against skill budget until loaded
 7. **Never copy raw book text** — always synthesize, summarize, extract signal
 8. **Topic index is critical** — it's how the agent navigates to the right chapter file
+9. **Source-anchor every framework** — each named framework/term must be traceable to the book: cite its chapter (e.g. `(ch05)`) and, where practical, anchor a short (<15-word) verbatim phrase in quotes. Never introduce a framework, term, or statistic that is not in `full_text.txt`; if you cannot verify it, omit it or mark it `[unverified]` rather than inventing.
+10. **Slice from emitted offsets** — `metadata.json` → `chapters` provides `line_start`/`line_end`/`char_start`/`char_end` per chapter; slice each chapter from those instead of re-scanning for headings.
+11. **Run the fidelity check** — before cleanup, run `tools/verify_fidelity.py` (Step 10) and resolve any flagged terms.

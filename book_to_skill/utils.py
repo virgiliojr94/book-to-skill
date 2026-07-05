@@ -16,6 +16,7 @@ from book_to_skill.config import (
     OUTPUT_TEXT,
     OUTPUT_META,
     WORDS_PER_TOKEN,
+    CJK_CHARS_PER_TOKEN,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
     HTML_EXTENSIONS,
@@ -37,6 +38,8 @@ from book_to_skill.parsers.pdf import (
     extract_with_pdftotext,
     extract_with_pypdf,
     extract_with_pdfminer,
+    extract_with_ocr,
+    looks_image_only,
     count_pages,
 )
 from book_to_skill.parsers.epub import (
@@ -46,8 +49,32 @@ from book_to_skill.parsers.epub import (
 )
 
 
+# CJK codepoints: ideographs + extensions, kana, hangul, CJK punctuation, and
+# fullwidth forms. These are not whitespace-delimited, so counting "words" on a
+# Chinese/Japanese book collapses it to a handful of tokens; count them directly.
+_CJK_RE = re.compile(
+    r"[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff"
+    r"\uac00-\ud7a3\uf900-\ufaff\uff00-\uffef]"
+)
+
+
 def estimate_tokens(text: str) -> int:
-    return int(len(text.split()) / WORDS_PER_TOKEN)
+    """Estimate the token count of ``text`` with a deterministic heuristic.
+
+    Latin / whitespace-delimited text is counted by words (``words /
+    WORDS_PER_TOKEN`` — the project's long-standing ratio). CJK characters are
+    counted directly against ``CJK_CHARS_PER_TOKEN`` because they carry little
+    or no whitespace; without this a space-less Chinese/Japanese book estimates
+    at a few tokens and the cost pre-flight under-reports by ~1000x. Kept
+    dependency-free on purpose so the same book always yields the same number.
+    """
+    if not text:
+        return 0
+    cjk = len(_CJK_RE.findall(text))
+    if not cjk:
+        return int(len(text.split()) / WORDS_PER_TOKEN)
+    latin_words = len(_CJK_RE.sub(" ", text).split())
+    return int(latin_words / WORDS_PER_TOKEN + cjk / CJK_CHARS_PER_TOKEN)
 
 
 # Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
@@ -250,22 +277,38 @@ def _chapter_number(line: str) -> int | None:
 
 
 def detect_structure(text: str) -> dict:
-    """Detect chapter count and table of contents presence.
+    """Detect chapter count, table-of-contents presence, and chapter spans.
 
     Scans the whole text (not just the head) and counts DISTINCT chapter numbers
     from explicit "Chapter N"/"Capítulo N" headings, rejecting prose
     cross-references and numbered list items. Counting distinct numbers means a
     ToC entry and its body heading are not double-counted.
-    """
-    lines = text.splitlines()
 
+    Additionally emits ``chapters``: an ordered list of
+    ``{number, title, line_start, line_end, char_start, char_end}`` spans for the
+    *body* heading of each detected chapter, so the generation step can slice
+    each chapter deterministically from ``full_text.txt`` (via a bounded Read or
+    byte slice) instead of re-deriving offsets by hand. When a chapter number
+    appears more than once — typically once in the table of contents and again
+    as the body heading — the LAST occurrence wins, because the body heading
+    almost always follows the ToC.
+    """
     headings = []
     numbers = set()
-    for line in lines:
-        num = _chapter_number(line)
+    # number -> (title, char_start, line_start); last occurrence wins.
+    last_by_number: dict[int, tuple[str, int, int]] = {}
+
+    offset = 0
+    for line_no, line in enumerate(text.splitlines(keepends=True), start=1):
+        stripped = line.rstrip("\r\n")
+        num = _chapter_number(stripped)
         if num is not None:
+            title = stripped.strip()
             numbers.add(num)
-            headings.append(line.strip())
+            headings.append(title)
+            last_by_number[num] = (title, offset, line_no)
+        offset += len(line)
+
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
     # "Chapter N" headings were found, so books with real chapters are unaffected.
@@ -273,12 +316,29 @@ def detect_structure(text: str) -> dict:
         numeric_count if numeric_count > 0 else _structural_chapter_count(text)
     )
 
+    # Build ordered body-heading spans; fill each end from the next span's start.
+    spans = [
+        {"number": n, "title": t, "line_start": ln, "char_start": cs}
+        for n, (t, cs, ln) in last_by_number.items()
+    ]
+    spans.sort(key=lambda s: s["char_start"])
+    total_chars = len(text)
+    total_lines = text.count("\n") + 1 if text else 0
+    for i, span in enumerate(spans):
+        if i + 1 < len(spans):
+            span["char_end"] = spans[i + 1]["char_start"]
+            span["line_end"] = spans[i + 1]["line_start"] - 1
+        else:
+            span["char_end"] = total_chars
+            span["line_end"] = total_lines
+
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
 
     return {
         "chapters_detected": chapters_detected,
         "chapter_headings_sample": headings[:10],
+        "chapters": spans,
         "has_toc": has_toc,
     }
 
@@ -366,7 +426,7 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
     return unique_paths
 
 
-def extract_single_file(input_path: Path, extraction_mode: str, install_mode: str) -> dict:
+def extract_single_file(input_path: Path, extraction_mode: str, install_mode: str, ocr_enabled: bool = False) -> dict:
     """Extract text and metadata from a single file path."""
     input_str = str(input_path)
     
@@ -487,6 +547,28 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                         
         pages = count_pages(input_str)
         pages_label = "pages"
+        # Image-only / scanned-PDF guard. Some extractors return only whitespace
+        # for a scanned page, so the chain above "succeeds" with no real text and
+        # the failure is silent. Detect that and either OCR (opt-in) or fail with
+        # an actionable message instead of emitting an empty skill.
+        if (not text or not text.strip()) or looks_image_only(text, pages):
+            if ocr_enabled:
+                print("PDF text layer is empty/sparse — running OCR (this can take a while)...", flush=True)
+                ocr_text = extract_with_ocr(input_str)
+                if ocr_text and ocr_text.strip():
+                    text = ocr_text
+                    method = "ocr"
+                else:
+                    raise ExtractionError(
+                        f"OCR produced no text for '{input_path.name}'. Install an OCR tool "
+                        "(ocrmypdf + poppler-utils, or docling) and retry."
+                    )
+            else:
+                raise ExtractionError(
+                    f"'{input_path.name}' looks image-only/scanned: {pages} page(s) but only "
+                    f"~{len((text or '').strip())} extractable characters. Re-run with --ocr "
+                    "to OCR it (needs ocrmypdf + poppler-utils, or docling)."
+                )
     elif ext in TEXT_EXTENSIONS:
         print(f"Extracting text document: {input_str}")
         text = read_text_file(input_str)
@@ -545,9 +627,29 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     }
 
 
+def _banner_enabled() -> bool:
+    """Whether to print the decorative attribution banner.
+
+    The banner is written to stderr, which a calling agent captures into its
+    context — so for non-interactive (agent / pipeline) runs it is pure noise,
+    ironic for a tool whose whole pitch is token frugality. Show it only when
+    stderr is an interactive TTY, or when explicitly forced with ``--banner`` /
+    ``BOOK_SKILL_BANNER=1``. Suppress with ``--no-banner`` / ``BOOK_SKILL_BANNER=0``.
+    """
+    argv = sys.argv[1:]
+    env = os.environ.get("BOOK_SKILL_BANNER", "").strip().lower()
+    if "--no-banner" in argv or env in {"0", "false", "no", "off"}:
+        return False
+    if "--banner" in argv or env in {"1", "true", "yes", "on"}:
+        return True
+    try:
+        return sys.stderr.isatty()
+    except Exception:
+        return False
+
+
 def print_banner() -> None:
-    """Print the attribution banner. Done here (not only in SKILL.md) so it
-    shows on every run regardless of how the agent invokes extraction."""
+    """Print the attribution banner (gated by _banner_enabled)."""
     banner = Path(__file__).resolve().parent.parent / "scripts" / "banner.txt"
     try:
         sys.stderr.write(banner.read_text(encoding="utf-8") + "\n")
@@ -556,7 +658,8 @@ def print_banner() -> None:
 
 
 def main():
-    print_banner()
+    if _banner_enabled():
+        print_banner()
 
     if "--check" in sys.argv[1:]:
         sys.exit(run_dependency_check())
@@ -568,6 +671,10 @@ def main():
         sys.exit(1)
         
     raw_input_paths, extraction_mode, install_mode = parse_arguments(sys.argv)
+
+    ocr_enabled = ("--ocr" in sys.argv[1:]) or os.environ.get(
+        "BOOK_SKILL_OCR", ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
     
     if not raw_input_paths:
         print("ERROR: No input document, folder, or glob pattern specified.", file=sys.stderr)
@@ -587,7 +694,7 @@ def main():
     
     for file_path in input_files:
         try:
-            res = extract_single_file(file_path, extraction_mode, install_mode)
+            res = extract_single_file(file_path, extraction_mode, install_mode, ocr_enabled)
         except ExtractionError as exc:
             print(f"WARNING: Skipping {file_path.name}: {exc}", file=sys.stderr)
             errors.append((file_path, str(exc)))

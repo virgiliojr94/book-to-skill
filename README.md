@@ -376,7 +376,10 @@ Copy this into your Claude Code session:
 Install book-to-skill: https://raw.githubusercontent.com/virgiliojr94/book-to-skill/master/SKILL.md
 ```
 
-Or manually using standard `git clone` (ensures modular engine files are fetched correctly):
+On first run this bootstraps the full engine automatically — if only `SKILL.md` was
+saved, it clones the repo into `~/.cache/book-to-skill` and runs from there. To fetch
+everything up front instead (or if `git`/network won't be available at run time),
+install with standard `git clone` (recommended, and required for offline use):
 
 ```bash
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill

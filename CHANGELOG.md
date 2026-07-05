@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SKILL.md self-bootstraps** — if the engine isn't found on disk (e.g. only
+  `SKILL.md` was saved from the raw-URL install), Step 2 now clones the repo into
+  `~/.cache/book-to-skill` and runs from there, with an actionable `git clone`
+  message when git/network is unavailable. The `git clone` install is unchanged.
+- **Chapter spans in `metadata.json`** — `detect_structure` now emits a `chapters`
+  list (`number`, `title`, `line_start`, `line_end`, `char_start`, `char_end`) for
+  each detected chapter's body heading, so generation slices each chapter from
+  known offsets instead of re-scanning for headings. SKILL.md Step 7 updated to use them.
+- **`--ocr` / `BOOK_SKILL_OCR=1`** — opt-in OCR for image-only/scanned PDFs
+  (ocrmypdf -> pdftotext, else Docling OCR). Scanned PDFs that previously produced
+  an empty skill now either OCR or fail with an actionable message.
+- **`tools/verify_fidelity.py`** — deterministic post-generation faithfulness check:
+  flags every bolded framework/term the skill asserts that does not appear in the
+  source text. Wired into SKILL.md Step 10 (runs before cleanup).
+
+### Changed
+- **CJK-aware token estimate** — `estimate_tokens` now counts CJK codepoints
+  directly (`CJK_CHARS_PER_TOKEN`) instead of whitespace words, fixing a ~1000x
+  undercount on Chinese/Japanese books in the cost pre-flight. Stays deterministic
+  and dependency-free (Latin behavior unchanged).
+- **Attribution banner is gated** — printed only for interactive (TTY) runs, or
+  when forced with `--banner` / `BOOK_SKILL_BANNER=1`; suppressed for agent/pipeline
+  runs so it stops adding noise to the caller's context.
+- **Cost pre-flight no longer hardcodes model prices** — SKILL.md reports token
+  counts and instructs applying the user's current per-1M-token rate.
+
+### Fixed
+- **Untracked a committed `__pycache__/*.pyc`** that slipped in before `.gitignore`
+  covered it.
+
 ### Documentation
 - Clarified the two install paths so they are not confused: **`git clone` into a
   skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
