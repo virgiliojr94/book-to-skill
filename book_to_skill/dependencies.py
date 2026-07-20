@@ -100,7 +100,9 @@ def install_python_packages(packages: list[str]) -> bool:
 
 
 def normalize_install_mode(argv: list[str]) -> str:
-    mode = os.environ.get("BOOK_SKILL_INSTALL_MISSING", "ask").lower()
+    # Installing packages changes the caller's environment.  Keep that action
+    # opt-in even in an interactive terminal; the fallback path remains safe.
+    mode = os.environ.get("BOOK_SKILL_INSTALL_MISSING", "no").lower()
     if "--no-install-missing" in argv:
         return "no"
     if "--install-missing" in argv:
@@ -113,7 +115,7 @@ def normalize_install_mode(argv: list[str]) -> str:
         return "yes"
     if mode in {"0", "false", "n", "no", "fallback", "skip"}:
         return "no"
-    return "ask"
+    return "no"
 
 
 def offer_dependency_install(
@@ -136,14 +138,13 @@ def offer_dependency_install(
     should_install = False
     if install_mode == "yes":
         should_install = True
-    elif install_mode == "ask" and sys.stdin.isatty():
-        answer = input("Missing package(s) detected. Do you want to install? y=install, n=fallback: ").strip().lower()
-        should_install = answer in {"y", "yes", "install"}
+    elif install_mode == "ask":
+        print("Automatic installation is disabled; rerun with --install-missing yes to install.")
     else:
         if fallback:
-            print("Non-interactive mode or install disabled; using fallback.")
+            print("Installation disabled; using fallback.")
         else:
-            print("Non-interactive mode or install disabled; installation skipped.")
+            print("Installation disabled; installation skipped.")
 
     if not should_install:
         if fallback:

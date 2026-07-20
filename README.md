@@ -400,8 +400,12 @@ for that).
 ```bash
 pip install "book-to-skill[pdf,epub,docx]"   # engine + optional extractors
 book-to-skill ~/path/to/book.pdf --mode text  # or: python -m book_to_skill ...
+book-to-skill ~/path/to/book.pdf --redact-paths  # omit local paths from output
 book-to-skill --check                          # report which extractors are installed
 ```
+
+Each extraction also writes `manifest.json`, including the tool version, run
+parameters, and SHA-256 hashes of source files and generated outputs.
 
 ---
 
