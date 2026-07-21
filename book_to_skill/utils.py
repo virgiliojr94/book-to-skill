@@ -56,7 +56,7 @@ def estimate_tokens(text: str) -> int:
 # the longer words match in full. Captures the number (bounded to 1..99 — drops
 # years like "2025.") and whatever follows it on the line, so we can reject prose.
 _EXPLICIT_CHAPTER = re.compile(
-    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(\d{1,2})\b(?P<rest>.*)$",
+    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDM]{1,7}))\b(?P<rest>.*)$",
     re.IGNORECASE,
 )
 # A heading's number is followed by end-of-line, punctuation (“. : - —“), or a
@@ -92,6 +92,16 @@ _CN_NUM_CLASS = "〇零一二两三四五六七八九十百千"
 _FW_DIGITS = "０-９"
 _CN_CHAPTER = re.compile(rf"^\s*第\s*([0-9{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[章回卷节篇讲]")
 _MD_CN_HEADING = re.compile(rf"^#{{1,6}}\s+第?\s*([{_FW_DIGITS}{_CN_NUM_CLASS}]+)\s*[·、.:：章回卷节篇讲]")
+
+# Thai chapter headings: "บทที่ 3", "บทที่ ๑๒", "ตอนที่ ๘๗", "ภาคที่ 2".
+# Thai digits (U+0E50-U+0E59) are positional like Arabic — unlike the Chinese
+# numerals above they need no unit composition, only a digit remap. Optional
+# Markdown "#" prefix so "## บทที่ ๑" is recognized in converted ebooks.
+_TH_DIGITS = "๐-๙"
+_TH_DIGIT_MAP = str.maketrans("๐๑๒๓๔๕๖๗๘๙", "0123456789")
+_TH_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?(?:บทที่|ตอนที่|ภาคที่|บท|ตอน|ภาค)\s*([0-9{_TH_DIGITS}]+)\b"
+)
 
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
@@ -239,13 +249,18 @@ def _chapter_number(line: str) -> int | None:
         return None
     m = _EXPLICIT_CHAPTER.match(s)
     if m and _HEADING_TAIL.match(m.group("rest")):
-        return int(m.group(1))
+        if m.group(1):
+            return int(m.group(1))
+        return _roman_to_int(m.group("roman").upper())
     rm = _ROMAN_HEAD.match(s)
     if rm:
         return _roman_to_int(rm.group(1))
     cm = _CN_CHAPTER.match(s) or _MD_CN_HEADING.match(s)
     if cm:
         return _cn_numeral_to_int(cm.group(1))
+    tm = _TH_CHAPTER.match(s)
+    if tm:
+        return int(tm.group(1).translate(_TH_DIGIT_MAP))
     return None
 
 
