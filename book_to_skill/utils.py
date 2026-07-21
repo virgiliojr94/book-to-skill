@@ -1,21 +1,30 @@
 from __future__ import annotations
 
 import glob
+import hashlib
 import json
 import os
 import re
 import sys
 import shutil
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from book_to_skill.exceptions import ExtractionError
+from book_to_skill.output import atomic_write_text
 
 from book_to_skill.config import (
     OUTPUT_DIR,
     OUTPUT_TEXT,
     OUTPUT_META,
+    OUTPUT_MANIFEST,
+    TOOL_VERSION,
     WORDS_PER_TOKEN,
+    MAX_INPUT_FILE_SIZE,
+    MAX_INPUT_FILES,
+    MAX_EXTRACTED_TEXT_CHARS,
+    MAX_CONSOLIDATED_TEXT_CHARS,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
     HTML_EXTENSIONS,
@@ -43,11 +52,21 @@ from book_to_skill.parsers.epub import (
     extract_with_ebooklib,
     extract_with_zipfile,
     count_epub_chapters,
+    validate_epub_safety,
 )
 
 
 def estimate_tokens(text: str) -> int:
     return int(len(text.split()) / WORDS_PER_TOKEN)
+
+
+def sha256_file(path: Path) -> str:
+    """Return a SHA-256 digest without loading the entire file into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 # Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
@@ -318,6 +337,11 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
     return input_paths, extraction_mode, install_mode
 
 
+def redact_paths_enabled(argv: list[str]) -> bool:
+    """Return whether output must omit local source paths."""
+    return "--redact-paths" in argv
+
+
 def resolve_input_files(paths: list[str]) -> list[Path]:
     """Resolve paths including files, directories, and glob patterns to Path objects.
 
@@ -334,6 +358,8 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
             expanded = []
             for match in glob_matches:
                 p = Path(match)
+                if p.is_symlink():
+                    continue
                 if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS:
                     expanded.append(p.resolve())
             expanded.sort(key=lambda x: str(x).lower())
@@ -346,6 +372,8 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
                 for root, _, files in os.walk(p):
                     for file in files:
                         file_path = Path(root) / file
+                        if file_path.is_symlink():
+                            continue
                         if file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
                             dir_files.append(file_path.resolve())
                 dir_files.sort(key=lambda x: str(x).lower())
@@ -363,6 +391,12 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
             seen.add(resolved_path)
             unique_paths.append(resolved_path)
 
+    if len(unique_paths) > MAX_INPUT_FILES:
+        raise ExtractionError(
+            f"Too many input files ({len(unique_paths):,}). Maximum allowed "
+            f"is {MAX_INPUT_FILES:,}; split the extraction into smaller batches."
+        )
+
     return unique_paths
 
 
@@ -372,6 +406,13 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     
     if not input_path.exists():
         raise ExtractionError(f"File not found: {input_str}")
+
+    input_size = input_path.stat().st_size
+    if input_size > MAX_INPUT_FILE_SIZE:
+        raise ExtractionError(
+            f"Input file is too large ({input_size:,} bytes). Maximum allowed "
+            f"size is {MAX_INPUT_FILE_SIZE:,} bytes."
+        )
         
     ext = input_path.suffix.lower()
     document_format = ext.lstrip(".")
@@ -420,6 +461,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     pages_label = "sections"
     
     if ext == ".epub":
+        validate_epub_safety(input_str)
         print(f"Extracting EPUB: {input_str}")
         text = extract_with_ebooklib(input_str)
         if text and text.strip():
@@ -524,12 +566,19 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         pages = 0
         pages_label = "sections"
         
+    if len(text) > MAX_EXTRACTED_TEXT_CHARS:
+        raise ExtractionError(
+            f"Extracted text is too large ({len(text):,} characters). Maximum "
+            f"allowed size is {MAX_EXTRACTED_TEXT_CHARS:,} characters."
+        )
+
     tokens = estimate_tokens(text)
     structure = detect_structure(text)
     file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
     
     return {
         "source_file": str(input_path.resolve()),
+        "source_sha256": sha256_file(input_path),
         "filename": input_path.name,
         "format": document_format,
         "extraction_method": method,
@@ -562,18 +611,23 @@ def main():
         sys.exit(run_dependency_check())
 
     if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
+        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing yes|no]", file=sys.stderr)
         print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
         print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
         sys.exit(1)
         
     raw_input_paths, extraction_mode, install_mode = parse_arguments(sys.argv)
+    redact_paths = redact_paths_enabled(sys.argv)
     
     if not raw_input_paths:
         print("ERROR: No input document, folder, or glob pattern specified.", file=sys.stderr)
         sys.exit(1)
         
-    input_files = resolve_input_files(raw_input_paths)
+    try:
+        input_files = resolve_input_files(raw_input_paths)
+    except ExtractionError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
     
     if not input_files:
         print(f"ERROR: No supported files found matching: {', '.join(raw_input_paths)}", file=sys.stderr)
@@ -595,7 +649,8 @@ def main():
         extracted_sources.append(res)
         
         # Format the text with a clear boundary
-        separator = f"\n\n{'=' * 80}\nSOURCE: {res['filename']} (Path: {res['source_file']})\n{'=' * 80}\n\n"
+        source_path = "[redacted]" if redact_paths else res["source_file"]
+        separator = f"\n\n{'=' * 80}\nSOURCE: {res['filename']} (Path: {source_path})\n{'=' * 80}\n\n"
         combined_texts.append(separator + res["text"])
     
     if not extracted_sources:
@@ -606,9 +661,17 @@ def main():
         
     # Combine texts
     consolidated_text = "".join(combined_texts).strip()
+    if len(consolidated_text) > MAX_CONSOLIDATED_TEXT_CHARS:
+        print(
+            f"ERROR: Consolidated text is too large ({len(consolidated_text):,} "
+            f"characters). Maximum allowed size is "
+            f"{MAX_CONSOLIDATED_TEXT_CHARS:,} characters.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     
     # Write combined text
-    OUTPUT_TEXT.write_text(consolidated_text, encoding="utf-8")
+    atomic_write_text(OUTPUT_TEXT, consolidated_text)
     
     # Consolidate metadata
     total_file_size_mb = sum(src["file_size_mb"] for src in extracted_sources)
@@ -621,7 +684,11 @@ def main():
     consolidated_structure = detect_structure(consolidated_text)
     
     metadata = {
-        "source_file": "Consolidated from multiple sources" if len(extracted_sources) > 1 else extracted_sources[0]["source_file"],
+        "source_file": (
+            "Consolidated from multiple sources"
+            if len(extracted_sources) > 1
+            else ("[redacted]" if redact_paths else extracted_sources[0]["source_file"])
+        ),
         "filename": "multi-source" if len(extracted_sources) > 1 else extracted_sources[0]["filename"],
         "format": "mixed" if len(extracted_sources) > 1 else extracted_sources[0]["format"],
         "extraction_method": "multi-method" if len(extracted_sources) > 1 else extracted_sources[0]["extraction_method"],
@@ -632,11 +699,12 @@ def main():
         "words": total_words,
         "estimated_tokens": total_tokens,
         "estimated_tokens_human": f"~{total_tokens // 1000}K",
-        "output_text": str(OUTPUT_TEXT),
+        "output_text": "[redacted]" if redact_paths else str(OUTPUT_TEXT),
         "total_sources": len(extracted_sources),
         "sources": [
             {
-                "source_file": src["source_file"],
+                "source_file": "[redacted]" if redact_paths else src["source_file"],
+                "source_sha256": src["source_sha256"],
                 "filename": src["filename"],
                 "format": src["format"],
                 "extraction_method": src["extraction_method"],
@@ -654,7 +722,36 @@ def main():
         **consolidated_structure,
     }
     
-    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+    atomic_write_text(
+        OUTPUT_META,
+        json.dumps(metadata, indent=2, ensure_ascii=False),
+    )
+
+    manifest = {
+        "schema_version": 1,
+        "tool": {"name": "book-to-skill", "version": TOOL_VERSION},
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "parameters": {
+            "extraction_mode": extraction_mode,
+            "redact_paths": redact_paths,
+        },
+        "sources": [
+            {
+                "filename": src["filename"],
+                "sha256": src["source_sha256"],
+                "format": src["format"],
+            }
+            for src in extracted_sources
+        ],
+        "outputs": {
+            "full_text.txt": sha256_file(OUTPUT_TEXT),
+            "metadata.json": sha256_file(OUTPUT_META),
+        },
+    }
+    atomic_write_text(
+        OUTPUT_MANIFEST,
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+    )
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
@@ -672,6 +769,7 @@ def main():
         )
     print(f"\n   Text -> {OUTPUT_TEXT}")
     print(f"   Meta -> {OUTPUT_META}")
+    print(f"   Manifest -> {OUTPUT_MANIFEST}")
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:

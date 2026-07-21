@@ -3,6 +3,7 @@ from __future__ import annotations
 import zipfile
 import sys
 from book_to_skill.exceptions import ExtractionError
+from book_to_skill.zip_safety import validate_zip_archive
 
 
 def extract_docx_with_python_docx(docx_path: str) -> str | None:
@@ -72,6 +73,7 @@ def validate_docx_xml_safety(docx_path: str) -> None:
     """Scan all XML files in the DOCX zip archive to prevent XML Entity Expansion (Billion Laughs) and XXE injections."""
     try:
         with zipfile.ZipFile(docx_path) as zf:
+            validate_zip_archive(zf, "DOCX")
             for name in zf.namelist():
                 if name.endswith(".xml") or name.endswith(".rels"):
                     xml_bytes = zf.read(name)

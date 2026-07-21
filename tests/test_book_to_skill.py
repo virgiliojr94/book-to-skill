@@ -27,7 +27,9 @@ from book_to_skill.exceptions import ExtractionError
 from book_to_skill.utils import (
     resolve_input_files,
     extract_single_file,
+    sha256_file,
     parse_arguments,
+    redact_paths_enabled,
     estimate_tokens,
     detect_structure,
     _cn_numeral_to_int,
@@ -39,11 +41,78 @@ from book_to_skill.parsers.text import read_text_file
 from book_to_skill.parsers.docx import extract_docx_with_zipfile
 from book_to_skill.parsers.rtf import strip_rtf_fallback
 from book_to_skill.parsers.epub import extract_with_zipfile
+from book_to_skill.output import atomic_write_text
+from book_to_skill.zip_safety import validate_zip_archive
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Helpers – fixture creation
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_atomic_write_text_replaces_existing_file(tmp_path: Path):
+    """A successful write replaces, rather than appends to, prior output."""
+    destination = tmp_path / "result.txt"
+    destination.write_text("old output", encoding="utf-8")
+
+    atomic_write_text(destination, "new output")
+
+    assert destination.read_text(encoding="utf-8") == "new output"
+    assert not list(tmp_path.glob(".result.txt.*.tmp"))
+
+
+def test_default_workspaces_are_unique_across_config_imports(monkeypatch):
+    """The default workspace must not reuse the legacy shared temp directory."""
+    import importlib
+
+    monkeypatch.delenv("BOOK_SKILL_WORKDIR", raising=False)
+    config = importlib.import_module("book_to_skill.config")
+    first = importlib.reload(config).OUTPUT_DIR
+    second = importlib.reload(config).OUTPUT_DIR
+
+    assert first != second
+    assert first.name.startswith("book-to-skill-")
+    assert second.name.startswith("book-to-skill-")
+
+
+def test_zip_safety_rejects_a_highly_compressed_member(tmp_path: Path):
+    """ZIP-based formats must reject a decompression bomb before reading it."""
+    archive_path = tmp_path / "bomb.zip"
+    with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("payload.xml", b"A" * (1024 * 1024))
+
+    with zipfile.ZipFile(archive_path) as archive:
+        with pytest.raises(ExtractionError, match="compression ratio"):
+            validate_zip_archive(archive, "test archive")
+
+
+def test_docx_safety_rejects_zip_bomb(tmp_path: Path):
+    """The DOCX validation runs ZIP resource checks before XML parsing."""
+    from book_to_skill.parsers.docx import validate_docx_xml_safety
+
+    docx_path = tmp_path / "bomb.docx"
+    with zipfile.ZipFile(docx_path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("word/document.xml", b"A" * (1024 * 1024))
+
+    with pytest.raises(ExtractionError, match="compression ratio"):
+        validate_docx_xml_safety(str(docx_path))
+
+
+def test_extraction_rejects_oversized_input_before_processing(tmp_path: Path, monkeypatch):
+    source = _make_text_file(tmp_path / "large.txt", "too big")
+    monkeypatch.setattr("book_to_skill.utils.MAX_INPUT_FILE_SIZE", 1)
+
+    with pytest.raises(ExtractionError, match="Input file is too large"):
+        extract_single_file(source, "text", "no")
+
+
+def test_extraction_rejects_oversized_extracted_text(tmp_path: Path, monkeypatch):
+    source = _make_text_file(tmp_path / "small.txt", "small")
+    monkeypatch.setattr("book_to_skill.utils.MAX_EXTRACTED_TEXT_CHARS", 4)
+    monkeypatch.setattr("book_to_skill.utils.read_text_file", lambda _: "too long")
+
+    with pytest.raises(ExtractionError, match="Extracted text is too large"):
+        extract_single_file(source, "text", "no")
 
 def _make_text_file(path: Path, content: str = "Hello world from test file.") -> Path:
     """Create a plain-text .txt file."""
@@ -351,20 +420,46 @@ class TestBatchResilience:
         # So we patch the OUTPUT_* in utils directly
         out_text = out_dir / "full_text.txt"
         out_meta = out_dir / "metadata.json"
+        out_manifest = out_dir / "manifest.json"
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_text)
         monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_meta)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_MANIFEST", out_manifest)
         monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
 
         main()
 
         assert out_text.exists(), "full_text.txt should be created"
         assert out_meta.exists(), "metadata.json should be created"
+        assert out_manifest.exists(), "manifest.json should be created"
         text = out_text.read_text(encoding="utf-8")
         assert "Partial success content" in text
 
         meta = json.loads(out_meta.read_text(encoding="utf-8"))
         assert meta["total_sources"] == 1
+        manifest = json.loads(out_manifest.read_text(encoding="utf-8"))
+        assert manifest["sources"][0]["sha256"] == sha256_file(good)
+        assert manifest["outputs"]["full_text.txt"] == sha256_file(out_text)
+
+    def test_main_redacts_source_paths(self, tmp_path, monkeypatch):
+        source = _make_text_file(tmp_path / "private.txt", "Private content.")
+        out_dir = tmp_path / "output"
+        monkeypatch.setattr(
+            "sys.argv", ["extract.py", str(source), "--redact-paths", "--install-missing", "no"]
+        )
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_dir / "full_text.txt")
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_dir / "metadata.json")
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_MANIFEST", out_dir / "manifest.json")
+        monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *args: None)
+
+        main()
+
+        assert str(source.resolve()) not in (out_dir / "full_text.txt").read_text(encoding="utf-8")
+        metadata = json.loads((out_dir / "metadata.json").read_text(encoding="utf-8"))
+        assert metadata["source_file"] == "[redacted]"
+        assert metadata["sources"][0]["source_file"] == "[redacted]"
+        assert metadata["output_text"] == "[redacted]"
 
     def test_extraction_error_is_not_system_exit(self):
         """ExtractionError should NOT be a subclass of SystemExit."""
@@ -525,6 +620,10 @@ class TestParseArguments:
             ["extract.py", "a.pdf", "--mode", "invalid"]
         )
         assert mode == "text"
+
+    def test_redact_paths_flag(self):
+        assert redact_paths_enabled(["extract.py", "book.pdf", "--redact-paths"])
+        assert not redact_paths_enabled(["extract.py", "book.pdf"])
 
 
 class TestEstimateTokens:
@@ -917,6 +1016,26 @@ class TestResolveInputFiles:
         assert "readme.txt" in names
         assert "photo.jpg" not in names
 
+    def test_rejects_excessive_input_file_count(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("book_to_skill.utils.MAX_INPUT_FILES", 2)
+        files = [_make_text_file(tmp_path / f"book-{number}.txt") for number in range(3)]
+
+        with pytest.raises(ExtractionError, match="Too many input files"):
+            resolve_input_files([str(path) for path in files])
+
+    def test_directory_expansion_skips_symlinked_files(self, tmp_path):
+        source = _make_text_file(tmp_path / "outside.txt", "outside")
+        directory = tmp_path / "documents"
+        directory.mkdir()
+        _make_text_file(directory / "inside.txt", "inside")
+        linked = directory / "linked.txt"
+        try:
+            linked.symlink_to(source)
+        except OSError:
+            pytest.skip("Symbolic links are unavailable in this environment")
+
+        assert [path.name for path in resolve_input_files([str(directory)])] == ["inside.txt"]
+
 
 class TestDependencyCheck:
     """Tests for the --check preflight (run_dependency_check)."""
@@ -965,6 +1084,21 @@ class TestDependencyCheck:
         # the PDF (text-heavy) group line should be followed by a "ready" status
         pdf_block = out.split("PDF (text-heavy)", 1)[1].split("PDF (technical", 1)[0]
         assert "ready" in pdf_block
+
+    def test_missing_package_installation_is_opt_in(self, monkeypatch):
+        from book_to_skill.dependencies import normalize_install_mode, offer_dependency_install
+
+        monkeypatch.delenv("BOOK_SKILL_INSTALL_MISSING", raising=False)
+        assert normalize_install_mode(["extract.py", "book.pdf"]) == "no"
+        assert normalize_install_mode(["extract.py", "--install-missing", "yes"]) == "yes"
+
+        with mock.patch("book_to_skill.dependencies.missing_python_packages", return_value=["example"]), \
+             mock.patch("book_to_skill.dependencies.install_python_packages") as install:
+            offer_dependency_install(
+                feature="Example", module_names=["example"], fallback="a fallback", install_mode="ask"
+            )
+
+        install.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

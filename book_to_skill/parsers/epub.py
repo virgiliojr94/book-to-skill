@@ -4,7 +4,18 @@ import posixpath
 import re
 import zipfile
 import sys
+from book_to_skill.exceptions import ExtractionError
 from book_to_skill.parsers.html import _HTMLTextExtractor
+from book_to_skill.zip_safety import validate_zip_archive
+
+
+def validate_epub_safety(epub_path: str) -> None:
+    """Validate an EPUB archive before a third-party reader processes it."""
+    try:
+        with zipfile.ZipFile(epub_path) as archive:
+            validate_zip_archive(archive, "EPUB")
+    except zipfile.BadZipFile as exc:
+        raise ExtractionError(f"Invalid EPUB file: {exc}") from exc
 
 
 def extract_with_ebooklib(epub_path: str) -> str | None:
