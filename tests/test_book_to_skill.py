@@ -64,9 +64,9 @@ def test_atomic_write_text_replaces_existing_file(tmp_path: Path):
 def test_default_workspaces_are_unique_across_config_imports(monkeypatch):
     """The default workspace must not reuse the legacy shared temp directory."""
     import importlib
-    import book_to_skill.config as config
 
     monkeypatch.delenv("BOOK_SKILL_WORKDIR", raising=False)
+    config = importlib.import_module("book_to_skill.config")
     first = importlib.reload(config).OUTPUT_DIR
     second = importlib.reload(config).OUTPUT_DIR
 
