@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   screen instead of being buried mid-page.
 
 ### Security
+- **Invisible-Unicode extraction hardening** — every parser result now removes
+  zero-width U+200B/U+200C/U+200D/U+FEFF characters and the Unicode tag block
+  U+E0000-U+E007F before metrics or `full_text.txt` are produced, reports the
+  removal count, and rejects sources containing no visible content after the scrub.
 - **DOCX XXE / Billion Laughs hardening** — the DOCX extractor now scans the
   archive and rejects any XML part that declares a DTD or entities before
   parsing, blocking XML external-entity and entity-expansion attacks (#53, #54).

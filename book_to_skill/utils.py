@@ -44,6 +44,7 @@ from book_to_skill.parsers.epub import (
     extract_with_zipfile,
     count_epub_chapters,
 )
+from book_to_skill.sanitize import sanitize_extracted_text
 
 
 def estimate_tokens(text: str) -> int:
@@ -523,7 +524,20 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         method = "ebook-convert"
         pages = 0
         pages_label = "sections"
-        
+
+    text, removed_invisible = sanitize_extracted_text(text)
+    if removed_invisible:
+        print(
+            f"  [security] removed {removed_invisible} invisible Unicode "
+            f"code point(s) from {input_path.name}",
+            file=sys.stderr,
+        )
+    if not text.strip():
+        raise ExtractionError(
+            f"Extracted text from {input_path.name} contained no visible content "
+            "after Unicode sanitization."
+        )
+
     tokens = estimate_tokens(text)
     structure = detect_structure(text)
     file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
