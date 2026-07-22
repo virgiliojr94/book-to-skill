@@ -518,6 +518,19 @@ or ask the agent directly.
 
 ---
 
+## Step 9.5 — Scan the generated skill
+
+Before reporting success, loading the skill in another session, or publishing it, run the advisory security scan:
+
+```bash
+SKILL_CONVERTER_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+"$PYTHON_BIN" "$SKILL_CONVERTER_ROOT/tools/scan_generated_skill.py" "$SKILLS_HOME/<skill_name>"
+```
+
+If the scanner exits non-zero, stop and ask a human to review its file/line findings. Do not silently rewrite the generated files, and do not load or publish the skill until the findings are resolved or explicitly accepted.
+
+---
+
 ## Step 10 — Cleanup and report
 
 ```bash
@@ -617,8 +630,8 @@ Update the master skill file `$SKILLS_HOME/<skill_name>/SKILL.md`:
 - **Chapter Index**: Append the new chapters to the index table, linking to the newly created files.
 - **Topic Index**: Merge the new topics alphabetically. If an existing topic is also covered in the new chapters, append the new chapter links to its line (e.g. `- **Topic** → ch05, ch13`).
 
-### 6. Cleanup and Proceed to Step 10
-Once the files are successfully written and merged, skip to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.
+### 6. Scan, Cleanup, and Report
+Once the files are successfully written and merged, run **Step 9.5**, then proceed to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.
 
 ---
 

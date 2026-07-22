@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   screen instead of being buried mid-page.
 
 ### Security
+- **Generated-skill prompt-injection scan** — a dependency-free advisory scanner
+  flags instruction-override phrases, model control tags, invisible Unicode,
+  generated frontmatter that widens authority, and exfiltration-shaped content
+  before a generated skill is accepted or published. Findings identify only the
+  rule and file/line location and never echo attacker-controlled text (#73).
 - **DOCX XXE / Billion Laughs hardening** — the DOCX extractor now scans the
   archive and rejects any XML part that declares a DTD or entities before
   parsing, blocking XML external-entity and entity-expansion attacks (#53, #54).
