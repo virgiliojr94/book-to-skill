@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Thai chapter headings** — `บทที่ N`, `ตอนที่ N` and `ภาคที่ N` are now detected as
+  chapter boundaries, with Thai numerals (๐–๙) as well as Arabic digits. Thai-language
+  books previously had no heading detection at all and fell back to length-based
+  splitting. Ordinary words that begin with a chapter word (`บทความ`, `ตอนนี้`) are not
+  treated as headings.
+
 ### Documentation
 - Clarified the two install paths so they are not confused: **`git clone` into a
   skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
@@ -23,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generated frontmatter that widens authority, and exfiltration-shaped content
   before a generated skill is accepted or published. Findings identify only the
   rule and file/line location and never echo attacker-controlled text (#73).
+- **Invisible-Unicode extraction hardening** — every parser result now removes
+  zero-width U+200B/U+200C/U+200D/U+FEFF characters and the Unicode tag block
+  U+E0000-U+E007F before metrics or `full_text.txt` are produced, reports the
+  removal count, and rejects sources containing no visible content after the scrub.
 - **DOCX XXE / Billion Laughs hardening** — the DOCX extractor now scans the
   archive and rejects any XML part that declares a DTD or entities before
   parsing, blocking XML external-entity and entity-expansion attacks (#53, #54).
@@ -40,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).
 
 ### Fixed
+- **`Chapter I.` — a chapter word followed by a Roman numeral — is now detected.** It
+  matched neither existing pattern (`_EXPLICIT_CHAPTER` required Arabic digits after the
+  chapter word; `_ROMAN_HEAD` required the numeral to start the line), so books using
+  this common form segmented on footnote cross-references instead of chapters. Measured
+  on Project Gutenberg #132 (*The Art of War*, Giles translation): 2 detected "chapters",
+  both footnote citations, become the 13 real headings.
 - PDF text extracted via `pdftotext` is now decoded as UTF-8 rather than the
   process locale encoding, so accented characters and punctuation are no longer
   mojibake on non-UTF-8 locales (e.g. Windows).
