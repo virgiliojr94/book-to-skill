@@ -14,6 +14,7 @@ from typing import Iterable, Sequence
 MAX_SKILL_FILES = 1_000
 MAX_FILE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_BYTES = 20 * 1024 * 1024
+SUPPORTING_FILENAMES = ("glossary.md", "patterns.md", "cheatsheet.md")
 
 _INVISIBLE_CODEPOINTS = {
     0x200B,  # zero width space
@@ -124,6 +125,15 @@ def _collect_skill_files(skill_dir: Path) -> list[Path]:
         raise ScanError("SKILL.md is missing or is a symbolic link")
 
     candidates = {master}
+    for filename in SUPPORTING_FILENAMES:
+        supporting_file = root / filename
+        if supporting_file.is_symlink():
+            raise ScanError(f"{filename} must be a real file, not a symbolic link")
+        if supporting_file.exists():
+            if not supporting_file.is_file():
+                raise ScanError(f"{filename} must be a real file")
+            candidates.add(supporting_file)
+
     chapters = root / "chapters"
     if chapters.exists():
         if chapters.is_symlink() or not chapters.is_dir():
@@ -256,6 +266,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 f"[{finding.rule_id}] {finding.message}"
             )
         print("Review the generated files before loading, installing, or publishing them.")
+        print(
+            "Rules are intentionally broad and may match legitimate AI/LLM or "
+            "systems-topic text; review each finding in context."
+        )
         print("No files were modified by this scan.")
         return 1
 
