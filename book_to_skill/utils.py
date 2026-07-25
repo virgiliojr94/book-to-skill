@@ -679,6 +679,32 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     }
 
 
+def prepare_output_dir(path: Path) -> None:
+    """Create the work directory, guarding against two shared-tmp risks:
+    a pre-planted symlink at a predictable path, and reusing a directory
+    another user already owns (either could expose or tamper with the
+    extracted document text, which may be sensitive).
+    """
+    if path.is_symlink():
+        raise ExtractionError(
+            f"Refusing to use {path}: it is a symbolic link, not a real "
+            "directory. Remove it or set BOOK_SKILL_WORKDIR to a private path."
+        )
+    if path.exists():
+        if not path.is_dir():
+            raise ExtractionError(f"Refusing to use {path}: it exists and is not a directory.")
+        if hasattr(os, "getuid"):
+            owner_uid = path.stat().st_uid
+            if owner_uid != os.getuid():
+                raise ExtractionError(
+                    f"Refusing to use {path}: it is owned by a different user "
+                    f"(uid {owner_uid}). Set BOOK_SKILL_WORKDIR to a private directory."
+                )
+            os.chmod(path, 0o700)
+    else:
+        path.mkdir(parents=True, mode=0o700)
+
+
 def print_banner() -> None:
     """Print the attribution banner. Done here (not only in SKILL.md) so it
     shows on every run regardless of how the agent invokes extraction."""
@@ -729,7 +755,7 @@ def main():
         print(f"ERROR: No supported files found matching: {', '.join(raw_input_paths)}", file=sys.stderr)
         sys.exit(1)
         
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    prepare_output_dir(OUTPUT_DIR)
     
     extracted_sources = []
     combined_texts = []
