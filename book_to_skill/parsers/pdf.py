@@ -79,6 +79,44 @@ def extract_with_docling(pdf_path: str) -> str | None:
         return None
 
 
+def extract_with_pdfplumber(pdf_path: str) -> str | None:
+    """pdfplumber decodes many subsetted / non-Latin (e.g. Cyrillic) fonts that
+    pdftotext and pypdf silently drop to punctuation. Slower, but correct."""
+    try:
+        import pdfplumber
+        parts = []
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                try:
+                    parts.append(page.extract_text() or "")
+                except Exception:
+                    parts.append("")
+        return "\n".join(parts)
+    except ImportError:
+        return None
+    except Exception as e:
+        print(f"  [warn] extract_with_pdfplumber failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return None
+
+
+def alpha_ratio(text: str) -> float:
+    """Fraction of alphabetic chars among non-whitespace chars. Real prose is
+    letter-dominated (~0.5-0.95); a font-drop failure leaves mostly punctuation
+    (~0.0-0.15)."""
+    nonspace = [c for c in text if not c.isspace()]
+    if not nonspace:
+        return 0.0
+    return sum(c.isalpha() for c in nonspace) / len(nonspace)
+
+
+def looks_corrupt(text: str, threshold: float = 0.35) -> bool:
+    """True when an extractor returned non-empty text that is punctuation-
+    dominated — the classic pdftotext glyph-drop on subsetted fonts (a Cyrillic
+    PDF reads as ', . , ,'). Calibrated on real garbage (~0.02-0.11) vs clean
+    text (~0.51-0.96)."""
+    return bool(text) and len(text.strip()) > 200 and alpha_ratio(text) < threshold
+
+
 def count_pages(pdf_path: str) -> int:
     # Try pdfinfo first
     if shutil.which("pdfinfo"):

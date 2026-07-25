@@ -14,11 +14,11 @@ from book_to_skill.config import PYTHON_DEPENDENCIES, HTML_EXTENSIONS
 DEPENDENCY_GROUPS = [
     {
         "label": "PDF (text-heavy)",
-        "modules": ["pypdf", "pdfminer"],
+        "modules": ["pdfplumber", "pypdf", "pdfminer"],
         "any_of_modules": True,
         "any_tool_suffices": True,
         "system": [("pdftotext", "poppler-utils", "sudo apt install poppler-utils")],
-        "note": "any one of pdftotext / pypdf / pdfminer is enough",
+        "note": "any one is enough; pdfplumber best for Cyrillic / non-Latin fonts that pdftotext drops",
     },
     {
         "label": "PDF (technical: tables, code, formulas)",
@@ -172,10 +172,21 @@ def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> N
             install_mode=install_mode,
         )
 
+    if ext == ".pdf":
+        # pdfplumber decodes subsetted / non-Latin (e.g. Cyrillic) fonts that
+        # pdftotext silently drops to punctuation — the corruption gate falls
+        # through to it, so it must be installable even when pdftotext is present.
+        offer_dependency_install(
+            feature="Reliable PDF text extraction (Cyrillic / non-Latin fonts)",
+            module_names=["pdfplumber"],
+            fallback="pdftotext/pypdf/pdfminer (may drop non-Latin glyphs)",
+            install_mode=install_mode,
+        )
+
     if ext == ".pdf" and not shutil.which("pdftotext"):
         offer_dependency_install(
             feature="PDF text extraction",
-            module_names=["pypdf", "pdfminer"],
+            module_names=["pdfplumber", "pypdf", "pdfminer"],
             fallback="any installed Python PDF parser; extraction fails if none are available",
             install_mode=install_mode,
         )

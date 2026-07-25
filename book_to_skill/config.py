@@ -25,6 +25,7 @@ SUPPORTED_EXTENSIONS = {
 
 PYTHON_DEPENDENCIES = {
     "docling": "docling",
+    "pdfplumber": "pdfplumber",
     "pypdf": "pypdf",
     "pdfminer": "pdfminer.six",
     "ebooklib": "ebooklib",

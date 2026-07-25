@@ -35,8 +35,11 @@ from book_to_skill.parsers.calibre import extract_with_ebook_convert
 from book_to_skill.parsers.pdf import (
     extract_with_docling,
     extract_with_pdftotext,
+    extract_with_pdfplumber,
     extract_with_pypdf,
     extract_with_pdfminer,
+    alpha_ratio,
+    looks_corrupt,
     count_pages,
 )
 from book_to_skill.parsers.epub import (
@@ -461,44 +464,65 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         if extraction_mode == "technical":
             print("Mode: technical — using Docling (layout-aware)...", end=" ", flush=True)
             text = extract_with_docling(input_str)
-            if text:
+            if text and not looks_corrupt(text):
                 method = "docling"
                 print("OK")
             else:
-                print("not available, falling back to pdftotext")
-                extraction_mode = "text"
-                
-        if extraction_mode == "text" or not text:
-            print("Mode: text — using pdftotext...")
-            print("Trying pdftotext...", end=" ", flush=True)
-            text = extract_with_pdftotext(input_str)
-            
-            if text:
-                method = "pdftotext"
-                print("OK")
-            else:
-                print("not available")
-                print("Trying pypdf...", end=" ", flush=True)
-                text = extract_with_pypdf(input_str)
                 if text:
-                    method = "pypdf"
-                    print("OK")
+                    print("output looks corrupt (font/glyph drop) — falling back to text mode")
                 else:
+                    print("not available, falling back to text mode")
+                extraction_mode = "text"
+                text = None
+
+        if extraction_mode == "text" or not text:
+            # First extractor whose output is non-empty AND not corrupt wins.
+            # pdftotext is fast but silently drops subsetted / non-Latin glyphs
+            # (e.g. Cyrillic) to punctuation — the gate rejects that garbage and
+            # falls through to pdfplumber, which decodes those fonts correctly.
+            # See parsers.pdf.looks_corrupt.
+            print("Mode: text — trying extractors (pdftotext → pdfplumber → pypdf → pdfminer)...")
+            candidates = [
+                ("pdftotext", extract_with_pdftotext),
+                ("pdfplumber", extract_with_pdfplumber),
+                ("pypdf", extract_with_pypdf),
+                ("pdfminer", extract_with_pdfminer),
+            ]
+            text, method = None, None
+            best_text, best_method, best_ratio = None, None, -1.0
+            for name, fn in candidates:
+                print(f"Trying {name}...", end=" ", flush=True)
+                out = fn(input_str)
+                if not out or not out.strip():
                     print("not available")
-                    print("Trying pdfminer.six...", end=" ", flush=True)
-                    text = extract_with_pdfminer(input_str)
-                    if text:
-                        method = "pdfminer"
-                        print("OK")
-                    else:
-                        print("FAILED")
-                        raise ExtractionError(
-                            "Could not extract text from PDF.\n"
-                            "Install one of: poppler-utils (pdftotext), pypdf, or pdfminer.six\n"
-                            "  sudo apt install poppler-utils\n"
-                            "  pip3 install pypdf\n"
-                            "  pip3 install pdfminer.six"
-                        )
+                    continue
+                if looks_corrupt(out):
+                    print(f"corrupt (alpha_ratio={alpha_ratio(out):.2f}, glyph drop) — skipping")
+                    ratio = alpha_ratio(out)
+                    if ratio > best_ratio:
+                        best_text, best_method, best_ratio = out, name, ratio
+                    continue
+                print("OK")
+                text, method = out, name
+                break
+
+            if not text:
+                if best_text:
+                    # Every extractor looked corrupt (an unusual scan/font) — keep
+                    # the least-bad rather than hard-fail a partly-readable PDF.
+                    print(f"[warn] all extractors looked corrupt; using best-effort {best_method} "
+                          f"(alpha_ratio={best_ratio:.2f})")
+                    text, method = best_text, best_method
+                else:
+                    print("FAILED")
+                    raise ExtractionError(
+                        "Could not extract text from PDF.\n"
+                        "Install one of: poppler-utils (pdftotext), pdfplumber, pypdf, or pdfminer.six\n"
+                        "  sudo apt install poppler-utils\n"
+                        "  pip3 install pdfplumber   # best for Cyrillic / non-Latin fonts\n"
+                        "  pip3 install pypdf\n"
+                        "  pip3 install pdfminer.six"
+                    )
 
                         
         pages = count_pages(input_str)
