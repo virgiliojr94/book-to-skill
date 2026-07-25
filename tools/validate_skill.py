@@ -2,13 +2,15 @@
 """Audit a SKILL.md against Agent Skills rules for a chosen host (lens).
 
 Severity:
-  ERROR  -> breaks/degrades the skill on the chosen host (fails CI)
+  ERROR  -> violates the portable skill contract or breaks/degrades the skill
+            on the chosen host (fails CI)
   WARN   -> the host ignores it, or it's a soft guideline (does not fail CI)
 
 Lenses:
   claude   — Claude Code rules (default; back-compat)
   copilot  — GitHub Copilot CLI rules
   amp      — Sourcegraph Amp rules
+  grok     — Grok Build rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
@@ -22,8 +24,9 @@ Refs:
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
   Amp        https://ampcode.com/manual#skills
+  Grok       https://docs.x.ai/build/features/skills-plugins-marketplaces
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp] [path/to/SKILL.md]
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|grok] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -53,6 +56,26 @@ COPILOT_CLI_TOOLS = {"shell", "bash", "write"}
 # Amp accepts Claude's tool names plus its own `shell_command` shorthand.
 AMP_TOOLS = CLAUDE_CODE_TOOLS | {"shell_command"}
 
+# Grok exposes native snake_case tools and resolves Claude-compatible aliases.
+# `allowed-tools` is currently descriptive in Grok rather than an enforced
+# permission boundary, so omissions and unknown external/MCP tools remain WARNs.
+GROK_TOOLS = {
+    "run_terminal_command", "run_terminal_cmd", "read_file", "search_replace",
+    "write", "grep", "list_dir", "web_fetch", "web_search", "lsp",
+    "ask_user_question", "todo_write", "task", "spawn_subagent",
+    "enter_plan_mode", "exit_plan_mode", "get_task_output",
+    "get_terminal_command_output", "kill_task", "kill_terminal_command",
+    "wait_tasks", "monitor", "image_gen", "image_edit", "deploy_app",
+    "image_to_video", "reference_to_video", "scheduler_create",
+    "scheduler_delete", "scheduler_list", "skill", "search_tool",
+    "Bash", "Read", "Write", "Edit", "MultiEdit", "NotebookEdit",
+    "PowerShell", "Grep", "Glob", "LS", "LSP", "WebSearch", "WebFetch",
+    "DeployApp", "TodoWrite", "AskUserQuestion", "TaskOutput", "BashOutput",
+    "BashOutputTool", "AgentOutputTool", "TaskStop", "KillShell", "KillBash",
+    "Skill", "ToolSearch", "Agent", "Task", "EnterPlanMode", "ExitPlanMode",
+    "CronCreate", "CronDelete", "CronList", "ListMcpResourcesTool",
+}
+
 LENSES = {
     "claude": {
         "label": "Claude Code",
@@ -60,7 +83,10 @@ LENSES = {
         "recognized_keys": {"name", "description", "allowed-tools", "license"},
         "reserved_name_words": {"anthropic", "claude"},
         "bash_tool_names": {"Bash"},
+        "case_sensitive_tools": True,
+        "missing_shell_severity": "error",
         "unknown_tool_severity": "error",
+        "unknown_tool_note": "not recognized by Claude Code",
     },
     "copilot": {
         "label": "GitHub Copilot CLI",
@@ -68,8 +94,11 @@ LENSES = {
         "recognized_keys": {"name", "description", "allowed-tools", "license"},
         "reserved_name_words": set(),
         "bash_tool_names": {"shell", "bash"},
+        "case_sensitive_tools": True,
+        "missing_shell_severity": "error",
         # Unknown tokens are likely MCP server names — Copilot accepts them.
         "unknown_tool_severity": "warn",
+        "unknown_tool_note": "may be free-form MCP-server names",
     },
     "amp": {
         "label": "Amp",
@@ -80,7 +109,32 @@ LENSES = {
         },
         "reserved_name_words": set(),
         "bash_tool_names": {"shell_command", "Bash"},
+        "case_sensitive_tools": True,
+        "missing_shell_severity": "error",
         "unknown_tool_severity": "warn",
+        "unknown_tool_note": "may refer to external tools",
+    },
+    "grok": {
+        "label": "Grok Build",
+        "tools": GROK_TOOLS,
+        "recognized_keys": {
+            "name", "description", "when-to-use", "when_to_use",
+            "allowed-tools", "argument-hint", "user-invocable",
+            "disable-model-invocation", "model", "effort", "license",
+            "compatibility", "metadata", "paths",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": {"run_terminal_command", "run_terminal_cmd", "Bash"},
+        # Grok's own docs use lowercase tool examples, while its Claude aliases
+        # are capitalized. Advisory validation accepts either casing.
+        "case_sensitive_tools": False,
+        "missing_shell_severity": "warn",
+        "missing_shell_note": (
+            "Grok Build currently treats this field as declarative, so the "
+            "declaration does not describe the tools used"
+        ),
+        "unknown_tool_severity": "warn",
+        "unknown_tool_note": "may refer to external or MCP tools",
     },
 }
 
@@ -124,6 +178,33 @@ def tool_base(entry):
     return entry.split("(", 1)[0].strip()
 
 
+def split_tool_list(value):
+    """Split comma/space-delimited tools, preserving separators inside ()."""
+    items, current, depth = [], [], 0
+    for char in value:
+        if char == "(":
+            depth += 1
+            current.append(char)
+        elif char == ")":
+            depth -= 1
+            current.append(char)
+        elif depth <= 0 and (char == "," or char.isspace()):
+            item = "".join(current).strip()
+            if item:
+                items.append(item)
+            current = []
+        else:
+            current.append(char)
+    item = "".join(current).strip()
+    if item:
+        items.append(item)
+    return items
+
+
+def normalized_tool_name(name, rules):
+    return name if rules["case_sensitive_tools"] else name.casefold()
+
+
 def audit(path, lens="claude"):
     rules = LENSES[lens]
     label = rules["label"]
@@ -157,32 +238,41 @@ def audit(path, lens="claude"):
     if not tools:
         inline = get_scalar(fm, "allowed-tools")
         if inline:
-            tools = inline.split()
-    if tools:  # a restriction is declared -> the host enforces it
-        bases = {tool_base(t) for t in tools}
-        known = {b for b in bases if b in rules["tools"]}
-        unknown = [t for t in tools if tool_base(t) not in rules["tools"]]
+            tools = split_tool_list(inline)
+    if tools:
+        bases = {normalized_tool_name(tool_base(t), rules) for t in tools}
+        known_tools = {
+            normalized_tool_name(tool, rules) for tool in rules["tools"]
+        }
+        shell_tools = {
+            normalized_tool_name(tool, rules)
+            for tool in rules["bash_tool_names"]
+        }
+        known = bases & known_tools
+        unknown = [
+            t for t in tools
+            if normalized_tool_name(tool_base(t), rules) not in known_tools
+        ]
         uses_bash = bool(re.search(r"```bash", body)) or "python3 " in body
-        if uses_bash and not (bases & rules["bash_tool_names"]):
+        if uses_bash and not (bases & shell_tools):
             bash_names = " or ".join(f"'{n}'" for n in sorted(rules["bash_tool_names"]))
-            errors.append(
-                f"allowed-tools declares a restriction but omits {bash_names}, yet the "
-                f"skill runs bash/python3 — under {label} those steps would be blocked"
-            )
+            if rules["missing_shell_severity"] == "error":
+                errors.append(
+                    f"allowed-tools declares a restriction but omits {bash_names}, yet the "
+                    f"skill runs bash/python3 — under {label} those steps would be blocked"
+                )
+            else:
+                warns.append(
+                    f"allowed-tools omits {bash_names}, yet the skill runs bash/python3; "
+                    f"{rules['missing_shell_note']}"
+                )
         if not known and rules["tools"]:
-            # Claude: hard error (none of the listed tools are recognized).
-            # Copilot/Amp: tokens are likely MCP names — handled by the warn path.
             if rules["unknown_tool_severity"] == "error":
                 errors.append(f"allowed-tools: no recognized {label} tool in the list")
         if unknown:
             msg = (f"allowed-tools: {unknown} are not {label} built-in tool names "
-                   f"(treated as MCP-server names by Copilot, ignored by Claude)")
-            if rules["unknown_tool_severity"] == "error":
-                # Already covered by the 'no recognized tool' error if list is all-unknown;
-                # otherwise it's a soft note.
-                warns.append(msg)
-            else:
-                warns.append(msg)
+                   f"({rules['unknown_tool_note']})")
+            warns.append(msg)
 
     for k in top_level_keys(fm):
         if k not in rules["recognized_keys"]:
@@ -217,4 +307,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
