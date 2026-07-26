@@ -1308,3 +1308,44 @@ class TestPdftotextEncoding:
         assert pdf_parser.extract_with_pdftotext("x.pdf") == "Café — naïve"
         assert captured.get("encoding") == "utf-8"
         assert captured.get("errors") == "replace"
+
+
+class TestPdftotextCleanup:
+    """clean_pdftotext strips repeated headers/footers/page numbers and dehyphenates."""
+
+    def _pages(self, *pages):
+        return "\f".join(pages)
+
+    def test_repeated_header_and_edge_page_numbers_removed(self):
+        raw = self._pages(
+            *(f"BOOK TITLE\nReal content on page {n}.\n{n}" for n in (1, 2, 3))
+        )
+        out = pdf_parser.clean_pdftotext(raw)
+        assert "BOOK TITLE" not in out
+        assert not any(ln.strip() in {"1", "2", "3"} for ln in out.splitlines())
+        assert "Real content on page 1." in out
+
+    def test_hyphenated_wrap_is_rejoined(self):
+        raw = self._pages(*(f"H\nabout informa-\ntion here\n{n}" for n in (1, 2, 3)))
+        out = pdf_parser.clean_pdftotext(raw)
+        assert "information" in out
+        assert "informa-" not in out
+
+    def test_token_count_drops(self):
+        raw = self._pages(*(f"RUNNING HEAD\nbody text page {n}\n{n}" for n in (1, 2, 3)))
+        out = pdf_parser.clean_pdftotext(raw)
+        assert len(out.split()) < len(raw.split())
+
+    def test_mid_page_bare_number_is_kept(self):
+        # A bare number that is NOT at a page edge must survive.
+        raw = self._pages(*(f"HDR\nthe answer is 42\ntrailing\n{n}" for n in (1, 2, 3)))
+        out = pdf_parser.clean_pdftotext(raw)
+        assert "42" in out
+        assert "HDR" not in out
+
+    def test_single_page_keeps_content(self):
+        # < 3 pages: no header/footer removal, only dehyphenation.
+        out = pdf_parser.clean_pdftotext("Title\nword-\nwrap\n1")
+        assert "wordwrap" in out
+        assert "Title" in out
+        assert "1" in out

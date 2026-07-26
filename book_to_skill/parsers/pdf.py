@@ -1,9 +1,50 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
+from collections import Counter
+
+_PDF_PAGE_NUM = re.compile(r"^\s*(\d{1,4}|[ivxlcdm]{1,7})\s*$", re.IGNORECASE)
+_PDF_HYPHEN_WRAP = re.compile(r"(\w)-\n(\w)")
+
+
+def clean_pdftotext(text: str) -> str:
+    """Clean pdftotext '-layout' output (pages are form-feed delimited): drop
+    repeated running headers/footers and edge page numbers, and join words split
+    across a line by a hyphen."""
+    pages = text.split("\f")
+    if len(pages) >= 3:
+        # A top/bottom line repeated on > half the pages is boilerplate.
+        edge = Counter()
+        for p in pages:
+            nb = [ln.strip() for ln in p.splitlines() if ln.strip()]
+            if nb:
+                edge[nb[0]] += 1
+                edge[nb[-1]] += 1
+        boiler = {ln for ln, c in edge.items() if c > len(pages) / 2}
+        kept = []
+        for p in pages:
+            lines = p.splitlines()
+            nb_idx = [i for i, ln in enumerate(lines) if ln.strip()]
+            first = nb_idx[0] if nb_idx else None
+            last = nb_idx[-1] if nb_idx else None
+            for i, ln in enumerate(lines):
+                s = ln.strip()
+                if s in boiler:
+                    continue
+                # Drop a bare page number only at a page edge (varies per page).
+                if i in (first, last) and _PDF_PAGE_NUM.match(s):
+                    continue
+                kept.append(ln)
+        text = "\n".join(kept)
+    else:
+        text = text.replace("\f", "\n")
+    # ponytail: naive dehyphenation; may join a genuinely-hyphenated wrapped
+    # compound ("well-\nknown" -> "wellknown"). Dictionary-aware split if it bites.
+    return _PDF_HYPHEN_WRAP.sub(r"\1\2", text)
 
 
 def extract_with_pdftotext(pdf_path: str) -> str | None:
@@ -17,7 +58,7 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
             encoding="utf-8", errors="replace",
         )
         if result.returncode == 0 and result.stdout.strip():
-            return result.stdout
+            return clean_pdftotext(result.stdout)
     except Exception as e:
         print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None

@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The `pdf` extra now installs `pypdf` instead of the deprecated `PyPDF2`**
   (`pip install book-to-skill[pdf]`). `pypdf` is the maintained successor;
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).
+- PDF text from `pdftotext` is now cleaned before use: hyphenated line-wraps are
+  rejoined (`informa-\ntion` → `information`) and repeated running
+  headers/footers and per-page page numbers are stripped. Fewer tokens and
+  cleaner input for chapter detection; conservative (edges only, ≥3 pages, so
+  mid-page content is never removed).
 
 ### Fixed
 - PDF text extracted via `pdftotext` is now decoded as UTF-8 rather than the
