@@ -85,18 +85,21 @@ jobs:
         run: zizmor .github/workflows/ || true
 
   validate-skill:
-    name: validate SKILL.md (Claude Code rules)
+    name: validate SKILL.md (${{ matrix.lens }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lens: [claude, codex, copilot, amp]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.12"
-      - name: Audit SKILL.md against Claude Code skill rules
-        # Fails on Claude-breaking issues (missing name/description, oversized
-        # description, a tool restriction that omits Bash while the skill shells
-        # out). Cross-agent metadata Claude ignores is reported as WARN only.
-        run: python3 tools/validate_skill.py SKILL.md
+      - name: Audit SKILL.md against host skill rules
+        # This gate checks the portable frontmatter contract and selected host
+        # rules. Focused unit tests exercise lens-specific allowed-tools behavior.
+        run: python3 tools/validate_skill.py --lens "${{ matrix.lens }}" SKILL.md
 
   dependency-review:
     name: dependency review (PR)

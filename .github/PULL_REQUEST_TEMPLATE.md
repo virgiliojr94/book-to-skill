@@ -58,7 +58,7 @@ Closes #<!-- issue number, or "n/a" with a one-line reason if there is no issue 
 - [ ] Tests added/updated for behavior changes
 - [ ] `pytest -q` is green on a clean checkout
 - [ ] `ruff check .` is clean
-- [ ] `python3 tools/validate_skill.py SKILL.md` passes (if `SKILL.md` changed)
+- [ ] `for lens in claude codex copilot amp; do python3 tools/validate_skill.py --lens "$lens" SKILL.md; done` passes (if `SKILL.md` changed)
 - [ ] `CHANGELOG.md` updated under `## [Unreleased]`
 - [ ] No raw book text shipped; no net `SKILL.md` bloat without justification
 

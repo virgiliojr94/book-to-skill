@@ -45,20 +45,35 @@ Turn any book or document into a structured, on-demand agent skill — named fra
 
     ---
 
-    One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, and Amp through the
-    open Agent Skills standard.
+    One `SKILL.md` runs on OpenAI Codex, Claude Code, GitHub Copilot CLI, and Amp
+    through the open Agent Skills standard.
 
 </div>
 
 ## Install
 
-**As an agent skill** (gives you the `/book-to-skill` command in Claude Code, Copilot CLI, Amp):
+**As an agent skill** (`/book-to-skill` in Claude Code, Copilot CLI, or Amp;
+`$book-to-skill` in Codex):
 
 ```bash
+# OpenAI Codex (also shared with Copilot CLI and Amp)
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+# Claude Code
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
-# then, in your agent session:
-/book-to-skill /path/to/book.pdf [skill-name]
 ```
+
+Then invoke the skill inside the agent, not in your shell:
+
+```text
+# Claude Code, Copilot CLI, or Amp
+/book-to-skill /path/to/book.pdf [skill-name]
+# OpenAI Codex
+$book-to-skill /path/to/book.pdf [skill-name]
+```
+
+Codex also discovers project skills from `.agents/skills` between the current
+directory and repository root. It detects changes automatically; use `/skills`
+or type `$book-to-skill`, and restart Codex if the skill does not appear.
 
 **As a standalone CLI** (just the text extractor, optional):
 

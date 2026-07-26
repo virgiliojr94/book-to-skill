@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **OpenAI Codex as a first-class target** — personal and repository
+  `.agents/skills` discovery plus the `/etc/codex/skills` administrator scope,
+  `$skill-name` invocation guidance, minimal `agents/openai.yaml` interface metadata, a
+  `validate_skill.py --lens codex` compatibility audit, focused tests, and
+  four-host CI validation. The Codex lens treats `allowed-tools` as ignored
+  metadata rather than a permission boundary, matching `codex-cli 0.142.4`.
 - **Thai chapter headings** — `บทที่ N`, `ตอนที่ N` and `ภาคที่ N` are now detected as
   chapter boundaries, with Thai numerals (๐–๙) as well as Arabic digits. Thai-language
   books previously had no heading detection at all and fell back to length-based
@@ -16,10 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Clarified the two install paths so they are not confused: **`git clone` into a
-  skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
-  CLI / Amp), while **`pip install book-to-skill`** installs only the standalone
-  extraction CLI and does not register the skill. README and the docs landing now
-  show both explicitly.
+  skills folder** registers the agent skill (`$book-to-skill` in Codex and
+  `/book-to-skill` in Claude Code / Copilot CLI / Amp), while
+  **`pip install book-to-skill`** installs only the standalone extraction CLI
+  and does not register the skill. README and the docs landing show both
+  explicitly.
 - README now leads with the measured headline (24×–51× fewer tokens than a
   context-dump) and a 3-step "how it works", so the value lands in the first
   screen instead of being buried mid-page.

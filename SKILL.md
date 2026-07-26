@@ -1,17 +1,21 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through OpenAI Codex, GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
 
 <!--
 Cross-agent notes (informational; ignored by host agents):
-  - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
-    .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
-    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
+  - Compatible skill roots: Codex (~/.agents/skills, /etc/codex/skills, and
+    .agents/skills from the current directory through the repository root),
+    GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills, .github/skills,
+    .claude/skills, .agents/skills), Amp (~/.agents/skills,
+    ~/.config/agents/skills, ~/.config/amp/skills, .agents/skills), and Claude
+    Code (~/.claude/skills).
   - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
     `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
-    adds `shell_command`. The skill needs shell (to run extract.py) and file
-    read/write — each host will prompt for those on first use.
+    adds `shell_command`, and Codex 0.142.4 ignores this field. The skill needs
+    shell (to run extract.py) and file read/write — each host applies its own
+    runtime tool, sandbox, and approval policy.
   - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug]
 -->
 
@@ -21,7 +25,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Codex, GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -64,16 +68,21 @@ Four paths available. Route based on what the user asks:
 
 ## Skill Locations
 
-This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
+This converter can run from multiple skill systems. Discovery roots and their
+precedence are host-specific:
 
-1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
-2. Cross-agent personal skills (Copilot + Amp): `~/.agents/skills/`
-3. Claude Code personal skills: `~/.claude/skills/`
-4. Project-local Copilot skills: `.github/skills/`
-5. Project-local Claude skills: `.claude/skills/`
-6. Project-local Amp / Copilot skills: `.agents/skills/`
-7. Amp global skills: `~/.config/agents/skills/`
-8. Amp legacy global skills: `~/.config/amp/skills/`
+- **OpenAI Codex:** `.agents/skills/` from the current directory through the
+  repository root, then `~/.agents/skills/`, then `/etc/codex/skills/`
+- **GitHub Copilot CLI:** `~/.copilot/skills/`, `~/.agents/skills/`,
+  `.github/skills/`, `.claude/skills/`, then `.agents/skills/`
+- **Amp:** `~/.agents/skills/`, `~/.config/agents/skills/`,
+  `~/.config/amp/skills/`, then `.agents/skills/`
+- **Claude Code:** `~/.claude/skills/`, then `.claude/skills/`
+
+The Step 2 helper lookup mirrors the active host's trust order: Codex uses its
+project-before-user precedence, while the existing Claude, Copilot, and Amp
+paths retain their personal-before-project behavior. The Codex administrator
+root is always a last-resort fallback.
 
 For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
 
@@ -126,25 +135,86 @@ Store the answer as `BOOK_TYPE`:
 
 ## Step 2 — Extract text from the source documents
 
-Run the extraction script, passing the input paths:
+Set `HOST_AGENT` to `codex`, `copilot`, `amp`, or `claude` for the agent running
+this skill. Then run the extraction script, passing the input paths:
 
 ```bash
+HOST_AGENT="${HOST_AGENT:-<codex|copilot|amp|claude>}"
+case "$HOST_AGENT" in
+  codex|copilot|amp|claude) ;;
+  *)
+    echo "Set HOST_AGENT to codex, copilot, amp, or claude" >&2
+    exit 1
+    ;;
+esac
+
 SCRIPT_PATH=""
-for candidate in \
-  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
-  ".github/skills/book-to-skill/scripts/extract.py" \
-  ".claude/skills/book-to-skill/scripts/extract.py" \
-  ".agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
-do
-  if [ -f "$candidate" ]; then
-    SCRIPT_PATH="$candidate"
-    break
+find_codex_project_helper() {
+  SEARCH_DIR="$(pwd -P)"
+  SEARCH_ROOT="$SEARCH_DIR"
+  if command -v git >/dev/null 2>&1; then
+    DETECTED_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || :)"
+    if [ -n "$DETECTED_ROOT" ]; then
+      RESOLVED_ROOT="$(cd "$DETECTED_ROOT" 2>/dev/null && pwd -P)" || RESOLVED_ROOT=""
+      # Keep SEARCH_ROOT at the physical CWD when Git returns an unusable path.
+      # That fails closed to CWD-only lookup instead of walking past the repo.
+      if [ -n "$RESOLVED_ROOT" ]; then
+        SEARCH_ROOT="$RESOLVED_ROOT"
+      fi
+    fi
   fi
-done
+  while [ -n "$SEARCH_DIR" ]; do
+    candidate="$SEARCH_DIR/.agents/skills/book-to-skill/scripts/extract.py"
+    if [ -f "$candidate" ]; then
+      SCRIPT_PATH="$candidate"
+      return
+    fi
+    [ "$SEARCH_DIR" = "$SEARCH_ROOT" ] && return
+    PARENT_DIR="$(dirname "$SEARCH_DIR")"
+    [ "$PARENT_DIR" = "$SEARCH_DIR" ] && return
+    SEARCH_DIR="$PARENT_DIR"
+  done
+}
+
+select_first_helper() {
+  for candidate in "$@"; do
+    if [ -f "$candidate" ]; then
+      SCRIPT_PATH="$candidate"
+      return
+    fi
+  done
+}
+
+# Each host follows its own discovery order. In particular, only Codex allows a
+# repository helper to precede the corresponding personal installation.
+case "$HOST_AGENT" in
+codex)
+  find_codex_project_helper
+  [ -n "$SCRIPT_PATH" ] || select_first_helper \
+    "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
+    "/etc/codex/skills/book-to-skill/scripts/extract.py"
+  ;;
+copilot)
+  select_first_helper \
+    "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
+    "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
+    ".github/skills/book-to-skill/scripts/extract.py" \
+    ".claude/skills/book-to-skill/scripts/extract.py" \
+    ".agents/skills/book-to-skill/scripts/extract.py"
+  ;;
+amp)
+  select_first_helper \
+    "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
+    "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
+    "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py" \
+    ".agents/skills/book-to-skill/scripts/extract.py"
+  ;;
+claude)
+  select_first_helper \
+    "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
+    ".claude/skills/book-to-skill/scripts/extract.py"
+  ;;
+esac
 
 if [ -z "$SCRIPT_PATH" ]; then
   echo "Could not find scripts/extract.py for book-to-skill" >&2
@@ -307,12 +377,13 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 | **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **OpenAI Codex** | `~/.agents/skills` | `.agents/skills` at the appropriate CWD-to-repo-root scope |
 
 Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
+4. If you cannot identify the host, ask: "Which agent are you running this in — OpenAI Codex, GitHub Copilot CLI, Amp, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -329,6 +400,9 @@ If the user selects **Update / Fold-in**, proceed immediately to the **Update / 
 ```bash
 mkdir -p "$SKILLS_HOME/<skill_name>/chapters"
 ```
+
+Do not copy this converter's `agents/openai.yaml` into a generated skill; that
+metadata identifies `book-to-skill`, not the generated book knowledge.
 
 ---
 
@@ -575,7 +649,9 @@ Usage:
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
 
-Reload (if your agent doesn't auto-detect new skills):
+Discovery refresh / verification:
+  OpenAI Codex:       auto-detects changes; run /skills or type $<skill_name>
+                      to mention it explicitly; restart Codex if it is absent
   GitHub Copilot CLI:  /skills reload
   Claude Code:         restart the session
   Amp:                 restart the session

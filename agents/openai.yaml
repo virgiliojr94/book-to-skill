@@ -1,0 +1,4 @@
+interface:
+  display_name: "Book to Skill"
+  short_description: "Turn documents into reusable agent skills"
+  default_prompt: "Use $book-to-skill to convert a document into a structured, reusable agent skill."

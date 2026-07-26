@@ -5,7 +5,7 @@
 <h1 align="center">book-to-skill</h1>
 
 <p align="center">
-  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in GitHub Copilot CLI, Amp, or Claude Code.</strong>
+  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in OpenAI Codex, GitHub Copilot CLI, Amp, or Claude Code.</strong>
 </p>
 
 <p align="center">
@@ -45,9 +45,9 @@
 
 **How it works, in 3 steps:**
 
-1. **Point** it at a file, folder, or glob — `/book-to-skill ./my-book.pdf`
+1. **Point** it at a file, folder, or glob — `/book-to-skill ./my-book.pdf` (Codex: `$book-to-skill ./my-book.pdf`)
 2. **It distills** the book into a skill — frameworks, decision rules, anti-patterns, and per-chapter files. Structure, not a summary.
-3. **Your agent loads it on demand** — ask `/my-book replication` and it reads the right chapter and answers from the real content, no hallucination.
+3. **Your agent loads it on demand** — ask `/my-book replication` (Codex: `$my-book replication`) and it reads the right chapter and answers from the real content, no hallucination.
 
 ---
 
@@ -62,15 +62,15 @@ The usual workarounds don't help:
 
 **book-to-skill solves this by turning the book into a structured skill your agent loads on demand.**
 
-Once installed, you just type `/your-book-slug replication` and the agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
+Once installed, invoke `/your-book-slug replication` (or `$your-book-slug replication` in Codex) and the agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
 
-Works with any host that supports the open [Agent Skills](https://github.com/agentskills/agentskills) standard — GitHub Copilot CLI, Amp, and Claude Code all read the same `SKILL.md` format.
+Works with any host that supports the open [Agent Skills](https://github.com/agentskills/agentskills) standard — OpenAI Codex, GitHub Copilot CLI, Amp, and Claude Code all read the same `SKILL.md` format.
 
 ---
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code):
+Running `/book-to-skill your-book.pdf` (Codex: `$book-to-skill your-book.pdf`) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Codex, Amp, or a cross-agent install, `~/.claude/skills/<slug>/` for Claude Code):
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -103,6 +103,10 @@ If you re-open a document often enough to wish you'd memorized it, it's a candid
 /book-to-skill <path-to-document-folder-or-glob>... [skill-name-slug]
 ```
 
+Codex CLI and the Codex IDE extension use `$book-to-skill` instead. The examples
+below use the slash form; replace the leading `/book-to-skill` with
+`$book-to-skill` when running them in Codex.
+
 Supported document formats: PDF, EPUB, DOCX, TXT, Markdown, reStructuredText, AsciiDoc, HTML, RTF, MOBI/AZW/AZW3.
 
 **Examples:**
@@ -130,7 +134,11 @@ After the skill is created, use it like any other agent skill:
 /designing-data-intensive-apps "what chapters do you have?"
 ```
 
-In GitHub Copilot CLI you may need to run `/skills reload` after the file is written so the new skill appears in `/skills list`. Claude Code and Amp pick it up on the next session.
+In Codex, use `$designing-data-intensive-apps` instead of the slash form; Codex
+detects skill changes automatically, and `/skills` opens the selector. Restart
+Codex if the skill does not appear. In GitHub Copilot CLI you may need to run
+`/skills reload` after the file is written so the new skill appears in
+`/skills list`. Claude Code and Amp pick it up on the next session.
 
 ---
 
@@ -190,7 +198,7 @@ scripts/extract.py <paths…> --mode <technical|text>
      └── /tmp/book_skill_work/metadata.json   (aggregated stats + per-source array)
                │
                ▼
-          Claude analyzes structure
+          Agent analyzes structure
           (title, author, chapters, ToC — spanning all sources)
           ── or, if targeting an existing skill: folds new content in (Mode 4)
                │
@@ -203,7 +211,7 @@ scripts/extract.py <paths…> --mode <technical|text>
                ▼
           Skill written to one of:
             ~/.copilot/skills/<slug>/   (GitHub Copilot CLI)
-            ~/.agents/skills/<slug>/    (Copilot CLI or Amp, cross-agent)
+            ~/.agents/skills/<slug>/    (Codex, Copilot CLI, or Amp)
             ~/.claude/skills/<slug>/    (Claude Code)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
@@ -237,7 +245,7 @@ PDF every session.
 1. **Density over completeness** — a 1,000-token summary beats a 10,000-token excerpt
 2. **Practitioner voice** — "Use X when Y", not "The book explains X"
 3. **Front-loaded SKILL.md** — compaction keeps the first ~5,000 tokens; the most important content comes first
-4. **On-demand chapters** — the topic index tells Claude which file to read; chapters load only when needed
+4. **On-demand chapters** — the topic index tells the agent which file to read; chapters load only when needed
 5. **Never raw text** — always synthesize, summarize, extract signal from the source
 
 </details>
@@ -350,10 +358,24 @@ book-to-skill is built for a different job: you want to go deep on a specific to
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
-> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, or Amp) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
+> - **As an agent skill** (`/book-to-skill` in Claude Code, Copilot CLI, or Amp; `$book-to-skill` in Codex) → **`git clone` into your skills folder** (below). This registers the skill and its full convert-a-book flow.
 > - **As a standalone CLI** (just the text extractor) → `pip install book-to-skill`, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
+
+**OpenAI Codex** (personal skill):
+
+```bash
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+```
+
+Codex discovers personal skills from `~/.agents/skills` and project skills from
+`.agents/skills` in the current directory and every ancestor through the
+repository root. It detects changes automatically; run `/skills` or type
+`$book-to-skill` to invoke the converter explicitly, and restart Codex if the
+skill is absent. These details follow the official
+[Codex skill documentation](https://learn.chatgpt.com/docs/build-skills.md) and
+were verified with `codex-cli 0.142.4`.
 
 **GitHub Copilot CLI** (personal skill):
 
@@ -364,11 +386,8 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.copilot/skills/bo
 /skills info book-to-skill
 ```
 
-Or the cross-agent path that Copilot CLI and Amp both discover:
-
-```bash
-git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
-```
+The Codex destination above, `~/.agents/skills/book-to-skill`, is also the
+cross-agent path that Copilot CLI and Amp discover.
 
 **Claude Code**:
 
@@ -384,12 +403,16 @@ Or manually using standard `git clone` (ensures modular engine files are fetched
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 ```
 
-Then in any agent session:
+Then invoke it in your agent session:
 
-```bash
+```text
+# Claude Code, Copilot CLI, or Amp
 /book-to-skill ~/path/to/your-book.pdf
-# or
 /book-to-skill ~/path/to/your-book.epub
+
+# OpenAI Codex CLI or IDE extension
+$book-to-skill ~/path/to/your-book.pdf
+$book-to-skill ~/path/to/your-book.epub
 ```
 
 ### Standalone CLI (pip)
@@ -397,7 +420,7 @@ Then in any agent session:
 `pip install book-to-skill` is a **separate, optional** path. It installs only the
 text-extraction engine as a CLI, for scripting or to grab the optional extractors;
 it does **not** register the `/book-to-skill` agent skill (use the `git clone` above
-for that).
+for that; Codex uses `$book-to-skill`).
 
 ```bash
 pip install "book-to-skill[pdf,epub,docx]"   # engine + optional extractors
@@ -412,6 +435,8 @@ book-to-skill --check                          # report which extractors are ins
 ```
 book-to-skill/
 ├── SKILL.md              # Skill definition + step-by-step instructions (the generator spec)
+├── agents/
+│   └── openai.yaml       # Codex/ChatGPT interface metadata
 ├── scripts/
 │   ├── extract.py        # Thin entrypoint wrapper
 │   └── extractor/        # Modular extraction package
@@ -422,8 +447,8 @@ book-to-skill/
 │       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
 ├── tools/
 │   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
-│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp)
-├── tests/                # pytest suite (extraction, detection, discovery tax)
+│   └── validate_skill.py # host-rule audit (--lens claude|codex|copilot|amp)
+├── tests/                # pytest suite (extraction, detection, host validation, discovery tax)
 ├── docs/
 │   ├── PERFORMANCE.md    # measured benchmarks, discovery tax, cost
 │   └── ARCHITECTURE.md   # pipeline + component map
