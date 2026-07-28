@@ -1,17 +1,21 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Grok Build, GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
 
 <!--
 Cross-agent notes (informational; ignored by host agents):
-  - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
-    .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
-    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
+  - Compatible skill roots: Grok Build (~/.grok/skills, .grok/skills, and
+    .agents/skills at each tier), GitHub Copilot CLI (~/.copilot/skills,
+    ~/.agents/skills, .github/skills, .claude/skills, .agents/skills), Amp
+    (.agents/skills, ~/.config/agents/skills, ~/.config/amp/skills), and Claude
+    Code (~/.claude/skills). Grok scans Claude roots by default, but that
+    compatibility can be disabled.
   - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
-    `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
-    adds `shell_command`. The skill needs shell (to run extract.py) and file
-    read/write — each host will prompt for those on first use.
+    `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`,
+    Amp adds `shell_command`, and Grok uses native snake_case names while also
+    resolving Claude aliases. The skill needs shell (to run extract.py) and
+    file read/write — each host applies its own permission policy.
   - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug]
 -->
 
@@ -21,7 +25,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format Grok Build, GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -64,16 +68,20 @@ Four paths available. Route based on what the user asks:
 
 ## Skill Locations
 
-This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
+This converter can run from multiple skill systems. These are supported
+destinations, grouped by host rather than listed as one global precedence:
 
-1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
-2. Cross-agent personal skills (Copilot + Amp): `~/.agents/skills/`
-3. Claude Code personal skills: `~/.claude/skills/`
-4. Project-local Copilot skills: `.github/skills/`
-5. Project-local Claude skills: `.claude/skills/`
-6. Project-local Amp / Copilot skills: `.agents/skills/`
-7. Amp global skills: `~/.config/agents/skills/`
-8. Amp legacy global skills: `~/.config/amp/skills/`
+- Grok Build native skills: `~/.grok/skills/`, `.grok/skills/`
+- GitHub Copilot CLI skills: `~/.copilot/skills/`, `.github/skills/`
+- Cross-agent skills (Grok + Copilot + Amp): `~/.agents/skills/`, `.agents/skills/`
+- Claude Code skills: `~/.claude/skills/`, `.claude/skills/`
+- Amp global skills: `~/.config/agents/skills/`, `~/.config/amp/skills/`
+
+Each host applies its own discovery precedence. Grok ranks skills by scope
+(current directory, then repository, then user), scans `.agents/skills/`
+alongside `.grok/skills/` at each tier, and scans Claude skill roots by default
+unless Claude compatibility is disabled. Do not infer host precedence from the
+list above.
 
 For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
 
@@ -131,12 +139,14 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
-  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
+  ".grok/skills/book-to-skill/scripts/extract.py" \
   ".github/skills/book-to-skill/scripts/extract.py" \
   ".claude/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
+  "$HOME/.grok/skills/book-to-skill/scripts/extract.py" \
+  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
+  "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
+  "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
 do
@@ -300,19 +310,28 @@ Otherwise, propose two options and let the user choose:
 
 Default to author-concept format if the book has a strong methodological identity.
 
-Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem for existing skill homes and pick by **the host the user is running in**:
+Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem
+for existing skill homes and pick by **the host the user is running in**. The
+arrows below express recommended write destinations, not the host's complete
+discovery precedence:
 
-| Host agent | Personal skill root (probe in order) | Project-local root |
+| Host agent | Suggested personal destination | Suggested project destination |
 |---|---|---|
 | **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **Grok Build** | `~/.grok/skills` → `~/.agents/skills` | `.grok/skills` → `.agents/skills` |
+
+Grok also scans Claude skill roots by default, but users can disable that
+compatibility with Grok configuration or `GROK_CLAUDE_SKILLS_ENABLED=false`;
+prefer the native or shared destinations above for a Grok-specific install.
 
 Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
-2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
-3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
+2. If **more than one** exists, ask which destination to use and remember the choice for the session.
+3. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
+4. If the user explicitly asked for project-local output, prefer the project-local row.
+5. If you cannot identify the host, ask: "Which agent are you running this in — Grok Build, GitHub Copilot CLI, Amp, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -575,10 +594,12 @@ Usage:
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
 
-Reload (if your agent doesn't auto-detect new skills):
+Discovery refresh / verification:
   GitHub Copilot CLI:  /skills reload
   Claude Code:         restart the session
   Amp:                 restart the session
+  Grok Build:          auto-reloads within seconds; /skills opens the skill
+                       viewer, and `grok inspect --json` shows the resolved source path
 
 Share this skill (Copilot ecosystem, optional):
   gh skill publish $SKILLS_HOME/<skill_name>

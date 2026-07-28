@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Grok Build as a first-class target** — native `.grok/skills` discovery,
+  shared `.agents/skills` guidance, automatic-reload and inspection instructions,
+  a `validate_skill.py --lens grok` compatibility audit, focused validator tests,
+  and cross-host CI validation. The validator models Grok's declarative
+  `allowed-tools` behavior without treating it as an enforced permission boundary,
+  and the docs explain that Claude compatibility is configurable.
 - **Thai chapter headings** — `บทที่ N`, `ตอนที่ N` and `ภาคที่ N` are now detected as
   chapter boundaries, with Thai numerals (๐–๙) as well as Arabic digits. Thai-language
   books previously had no heading detection at all and fell back to length-based
@@ -16,10 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Clarified the two install paths so they are not confused: **`git clone` into a
-  skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
-  CLI / Amp), while **`pip install book-to-skill`** installs only the standalone
-  extraction CLI and does not register the skill. README and the docs landing now
-  show both explicitly.
+  skills folder** registers the `/book-to-skill` agent skill (Grok Build / Claude
+  Code / Copilot CLI / Amp), while **`pip install book-to-skill`** installs only
+  the standalone extraction CLI and does not register the skill. README and the
+  docs landing now show both explicitly.
 - README now leads with the measured headline (24×–51× fewer tokens than a
   context-dump) and a 3-step "how it works", so the value lands in the first
   screen instead of being buried mid-page.

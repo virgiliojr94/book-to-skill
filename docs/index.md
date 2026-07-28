@@ -45,17 +45,27 @@ Turn any book or document into a structured, on-demand agent skill — named fra
 
     ---
 
-    One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, and Amp through the
-    open Agent Skills standard.
+    One `SKILL.md` runs on Grok Build, Claude Code, GitHub Copilot CLI, and Amp
+    through the open Agent Skills standard.
 
 </div>
 
 ## Install
 
-**As an agent skill** (gives you the `/book-to-skill` command in Claude Code, Copilot CLI, Amp):
+**As an agent skill** (gives you the `/book-to-skill` command in Grok Build,
+Claude Code, Copilot CLI, or Amp):
 
 ```bash
+# Choose the destination for your host:
+# Grok Build
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.grok/skills/book-to-skill
+# Claude Code
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
+# GitHub Copilot CLI
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.copilot/skills/book-to-skill
+# Grok Build, Copilot CLI, or Amp (shared path)
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+
 # then, in your agent session:
 /book-to-skill /path/to/book.pdf [skill-name]
 ```
