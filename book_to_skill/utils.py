@@ -646,8 +646,11 @@ def main():
     total_words = len(consolidated_text.split())
     total_tokens = estimate_tokens(consolidated_text)
     
-    # Detect structure on consolidated text
-    consolidated_structure = detect_structure(consolidated_text)
+    # Detect structure from source content only. The generated SOURCE banners in
+    # full_text.txt use rows of "=", which can otherwise become phantom setext
+    # headings and make the result depend on the source-path length.
+    structure_text = "\n\n".join(src["text"] for src in extracted_sources)
+    consolidated_structure = detect_structure(structure_text)
     
     metadata = {
         "source_file": "Consolidated from multiple sources" if len(extracted_sources) > 1 else extracted_sources[0]["source_file"],

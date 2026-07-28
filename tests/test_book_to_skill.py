@@ -366,6 +366,49 @@ class TestBatchResilience:
         meta = json.loads(out_meta.read_text(encoding="utf-8"))
         assert meta["total_sources"] == 1
 
+    @pytest.mark.parametrize(
+        "reported_source",
+        ["/x/sample.md", "/deep/" + ("nested/" * 12) + "sample.md"],
+    )
+    def test_source_banner_does_not_change_structural_chapter_count(
+        self, tmp_path, monkeypatch, reported_source
+    ):
+        """The generated SOURCE banner must not become a phantom setext heading."""
+        source = _make_md_file(
+            tmp_path / "sample.md",
+            "# The Pragmatic Widget\n\n"
+            "## Foundations\n\nBody.\n\n"
+            "## Design Rules\n\nBody.\n\n"
+            "## Trade-offs\n\nBody.\n\n"
+            "## Operating Model\n\nBody.\n\n"
+            "## Closing\n\nBody.\n",
+        )
+        out_dir = tmp_path / "output"
+        out_text = out_dir / "full_text.txt"
+        out_meta = out_dir / "metadata.json"
+        real_extract = extract_single_file
+
+        def extract_with_reported_source(*args, **kwargs):
+            result = real_extract(*args, **kwargs)
+            result["source_file"] = reported_source
+            return result
+
+        monkeypatch.setattr("sys.argv", ["extract.py", str(source), "--install-missing", "no"])
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_text)
+        monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_meta)
+        monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
+        monkeypatch.setattr(
+            "book_to_skill.utils.extract_single_file", extract_with_reported_source
+        )
+
+        main()
+
+        metadata = json.loads(out_meta.read_text(encoding="utf-8"))
+        assert metadata["sources"][0]["chapters_detected"] == 5
+        assert metadata["chapters_detected"] == 5
+        assert "SOURCE: sample.md" in out_text.read_text(encoding="utf-8")
+
     def test_extraction_error_is_not_system_exit(self):
         """ExtractionError should NOT be a subclass of SystemExit."""
         assert not issubclass(ExtractionError, SystemExit)

@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PyPDF2` is end-of-life and no longer receives security fixes (#54).
 
 ### Fixed
+- Consolidated chapter detection now analyzes extracted source text without the generated
+  `SOURCE:` boundary banners, preventing those banners from becoming phantom setext headings
+  and collapsing `chapters_detected` to 2 for short source paths (#81).
 - **`Chapter I.` — a chapter word followed by a Roman numeral — is now detected.** It
   matched neither existing pattern (`_EXPLICIT_CHAPTER` required Arabic digits after the
   chapter word; `_ROMAN_HEAD` required the numeral to start the line), so books using
