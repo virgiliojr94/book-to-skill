@@ -13,6 +13,7 @@ INVISIBLE_CODEPOINTS = (
     "\u200b"
     "\u200c"
     "\u200d"
+    "\u2060"
     "\ufeff"
     "\U000e0000"
     "\U000e0069"

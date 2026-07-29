@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before a generated skill is accepted or published. Findings identify only the
   rule and file/line location and never echo attacker-controlled text (#73).
 - **Invisible-Unicode extraction hardening** — every parser result now removes
-  zero-width U+200B/U+200C/U+200D/U+FEFF characters and the Unicode tag block
+  zero-width U+200B/U+200C/U+200D/U+2060/U+FEFF characters and the Unicode tag block
   U+E0000-U+E007F before metrics or `full_text.txt` are produced, reports the
   removal count, and rejects sources containing no visible content after the scrub.
 - **DOCX XXE / Billion Laughs hardening** — the DOCX extractor now scans the

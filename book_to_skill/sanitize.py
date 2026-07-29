@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-_ZERO_WIDTH_CODEPOINTS = frozenset({0x200B, 0x200C, 0x200D, 0xFEFF})
+_ZERO_WIDTH_CODEPOINTS = frozenset({0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF})
 _TAG_BLOCK_START = 0xE0000
 _TAG_BLOCK_END = 0xE007F
 
