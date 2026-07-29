@@ -104,6 +104,22 @@ _TH_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?(?:บทที่|ตอนที่|ภาคที่|บท|ตอน|ภาค)\s*([0-9{_TH_DIGITS}]+)\b"
 )
 
+# Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
+# 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
+# subsection), with an optional "의N" branch suffix that Korean statutes use for
+# inserted chapters (제6장의2). Modern Korean numbers chapters with Arabic digits,
+# so unlike the Chinese branch no numeral composition is needed. Optional Markdown
+# "#" prefix so "## 제1장" is recognized in converted ebooks.
+#
+# The trailing group is the Korean analogue of _HEADING_TAIL: Korean has no letter
+# case, so the existing "capitalized title word" test does not transfer.
+# Requiring end-of-line, punctuation, or whitespace-then-content is what separates
+# a heading from a prose cross-reference, because Korean particles attach directly
+# to the noun ("제5장에서", "제2장의") with no intervening space.
+_KO_CHAPTER = re.compile(
+    r"^\s*(?:#{1,6}\s+)?제\s*(\d+)\s*[장편절관](?:\s*의\s*\d+)?(?:\s*$|[.:\-]|\s+\S)"
+)
+
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
 _TOC_HEADERS = (
@@ -242,8 +258,9 @@ def _chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading.
 
     Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
-    ("I: Loomings", "II. The Carpet-Bag") and Chinese ("第三章 …", "## 一 · …",
-    "## 第一讲") heading styles.
+    ("I: Loomings", "II. The Carpet-Bag"), Chinese ("第三章 …", "## 一 · …",
+    "## 第一讲"), Thai ("บทที่ 3", "## บทที่ ๑"), and Korean ("제1장 총칙",
+    "## 제4장 근로시간과 휴식") heading styles.
     """
     s = line.strip()
     if len(s) > 80:
@@ -262,6 +279,9 @@ def _chapter_number(line: str) -> int | None:
     tm = _TH_CHAPTER.match(s)
     if tm:
         return int(tm.group(1).translate(_TH_DIGIT_MAP))
+    km = _KO_CHAPTER.match(s)
+    if km:
+        return int(km.group(1))
     return None
 
 
