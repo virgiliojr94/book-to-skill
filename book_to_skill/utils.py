@@ -66,10 +66,10 @@ _EXPLICIT_CHAPTER = re.compile(
 # The uppercase class is À-Þ so titles starting with Ü/Û (common in German, e.g. “Überblick”) are recognized.
 _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Þ0-9\"“(]")
 
-# Roman-numeral chapter heading: "I: Loomings", "II. The Carpet-Bag".
-# Requires a separator (":" or ".") and a Capitalized title after it, so a bare
+# Roman-numeral chapter heading: "I: Loomings", "i: Loomings", "II. The Carpet-Bag".
+# Requires a separator (":" or ".") and a title word after it, so a bare
 # "I" or "V." (a page divider / list marker) is not mistaken for a chapter.
-_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Þ\"“(]")
+_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDMivxlcdm]+)\s*[:.]\s+[A-Za-zÀ-Þ\"“(]")
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
 # Chinese chapter headings. Two common styles:
@@ -242,7 +242,7 @@ def _chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading.
 
     Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
-    ("I: Loomings", "II. The Carpet-Bag") and Chinese ("第三章 …", "## 一 · …",
+    ("I: Loomings", "i: Loomings", "II. The Carpet-Bag") and Chinese ("第三章 …", "## 一 · …",
     "## 第一讲") heading styles.
     """
     s = line.strip()
@@ -322,6 +322,7 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
         elif arg == "--no-install-missing":
             i += 1
         elif arg.startswith("-"):
+            print(f"WARNING: Unknown flag '{arg}' — ignoring it.", file=sys.stderr)
             i += 1
         else:
             input_paths.append(arg)

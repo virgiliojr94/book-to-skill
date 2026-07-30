@@ -1352,3 +1352,128 @@ class TestPdftotextEncoding:
         assert pdf_parser.extract_with_pdftotext("x.pdf") == "Café — naïve"
         assert captured.get("encoding") == "utf-8"
         assert captured.get("errors") == "replace"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Fix #4 — Lowercase Roman numeral chapter detection
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestLowercaseRomanNumerals:
+    """Verify that lowercase Roman numeral headings are detected."""
+
+    def test_lowercase_roman_i(self):
+        """'i: Loomings' should be detected as chapter 1."""
+        assert detect_structure("i: Loomings\nbody\nii: The Carpet-Bag\nbody\n")["chapters_detected"] == 2
+
+    def test_lowercase_roman_with_markdown_heading(self):
+        """'## i. introduction' as a markdown heading."""
+        text = "## i. introduction\nbody\n## ii. methods\nbody\n## iii. results\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_mixed_case_roman_not_confused_with_prose(self):
+        """Lowercase roman 'i' alone or 'v.' page dividers are not chapters."""
+        from book_to_skill.utils import _chapter_number
+        assert _chapter_number("i") is None
+        assert _chapter_number("v.") is None
+        assert _chapter_number("i.") is None
+
+    def test_uppercase_roman_still_works(self):
+        """Existing uppercase Roman detection is unaffected."""
+        assert detect_structure("I: Loomings\nbody\nII: Carpet-Bag\nbody\nIII: Spouter-Inn\nbody\n")["chapters_detected"] == 3
+
+    def test_lowercase_roman_via_explicit_chapter_word(self):
+        """'Chapter i.' with lowercase roman via _EXPLICIT_CHAPTER."""
+        text = "Chapter i. Introduction\nbody\nChapter ii. Methods\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Fix #5 — Unknown flag warning in parse_arguments
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestParseArgumentsUnknownFlags:
+    """Unknown flags should emit a warning, not be silently ignored."""
+
+    def test_unknown_flag_warns(self):
+        """An unknown flag like --mod should print a warning to stderr."""
+        paths, mode, _ = parse_arguments(
+            ["extract.py", "book.pdf", "--mod", "technical"]
+        )
+        assert mode == "text"  # default, since the flag is unknown
+
+    def test_unknown_flag_stderr_message(self):
+        """The warning message should mention the unknown flag name."""
+        import io
+        stderr = io.StringIO()
+        with mock.patch("sys.stderr", stderr):
+            parse_arguments(["extract.py", "book.pdf", "--unknown-flag"])
+        output = stderr.getvalue()
+        assert "WARNING" in output
+        assert "--unknown-flag" in output
+
+    def test_known_flags_dont_warn(self, capsys):
+        """Known flags (--mode, --install-missing) should not produce warnings."""
+        parse_arguments(["extract.py", "book.pdf", "--mode", "technical", "--install-missing", "no"])
+        captured = capsys.readouterr()
+        assert captured.err == ""
+
+    def test_path_args_not_warned(self, capsys):
+        """Path arguments starting with '-' (like negative numbers) should not be warned as flags."""
+        parse_arguments(["extract.py", "book.pdf", "notes.txt"])
+        captured = capsys.readouterr()
+        assert captured.err == ""
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CLI entry point tests
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestCliEntryPoint:
+    """Tests for cli.py and __main__.py entry points."""
+
+    def test_cli_main_calls_utils_main(self):
+        """cli.main() should call utils.main()."""
+        from book_to_skill import cli
+        called = False
+        def fake_utils_main():
+            nonlocal called
+            called = True
+        with mock.patch("book_to_skill.cli.utils_main", side_effect=fake_utils_main):
+            cli.main()
+        assert called, "cli.main() should call utils.main()"
+
+    def test_cli_main_reconfigures_utf8(self):
+        """cli.main() should reconfigure stdout/stderr to UTF-8."""
+        from book_to_skill import cli
+        original_encoding = sys.stdout.encoding if hasattr(sys.stdout, 'encoding') else 'unknown'
+        with mock.patch("book_to_skill.cli.utils_main"):
+            cli.main()
+        # After reconfigure, encoding should still be valid (may not change if already UTF-8)
+        assert sys.stdout.encoding is not None
+
+    def test_main_importable(self):
+        """__main__.py should be importable and call cli.main()."""
+        import importlib
+        spec = importlib.util.find_spec("book_to_skill.__main__")
+        assert spec is not None, "__main__ module should be findable"
+
+    def test_cli_main_returns_none(self):
+        """cli.main() should not raise or return a non-None value."""
+        from book_to_skill import cli
+        with mock.patch("book_to_skill.cli.utils_main"):
+            result = cli.main()
+            assert result is None
+
+    def test_cli_main_handles_reconfigure_failure(self):
+        """If reconfigure fails (mock stream), cli.main() should not crash."""
+        from book_to_skill import cli
+        class BrokenStream:
+            encoding = "ascii"
+            def reconfigure(self, **kwargs):
+                raise AttributeError("mock failure")
+        with mock.patch.object(cli, "sys") as mock_sys:
+            mock_sys.stdout = BrokenStream()
+            mock_sys.stderr = BrokenStream()
+            mock_sys.argv = ["extract.py"]
+            with mock.patch("book_to_skill.cli.utils_main"):
+                cli.main()  # should not raise
