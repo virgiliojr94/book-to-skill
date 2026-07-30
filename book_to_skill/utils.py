@@ -117,7 +117,7 @@ _TH_CHAPTER = re.compile(
 # a heading from a prose cross-reference, because Korean particles attach directly
 # to the noun ("제5장에서", "제2장의") with no intervening space.
 _KO_CHAPTER = re.compile(
-    r"^\s*(?:#{1,6}\s+)?제\s*(\d+)\s*[장편절관](?:\s*의\s*\d+)?(?:\s*$|[.:\-]|\s+\S)"
+    r"^\s*(?:#{1,6}\s+)?제\s*([0-9]+)\s*[장편절관](?:\s*의\s*[0-9]+)?(?:\s*$|[.:\-]|\s+\S)"
 )
 
 # Table-of-contents header lines across common languages. Anchored to a whole
