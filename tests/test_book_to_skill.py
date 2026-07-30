@@ -1533,3 +1533,40 @@ class TestLowercaseRomanNumerals:
         from book_to_skill.utils import _chapter_number
         assert _chapter_number("## vi: the editor") is not None  # legitimate Roman
         assert _chapter_number("## vi. editor") is not None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Fix #5 — Unknown flag warning in parse_arguments
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestParseArgumentsUnknownFlags:
+    """Unknown flags should emit a warning, not be silently ignored."""
+
+    def test_unknown_flag_warns(self):
+        """An unknown flag like --mod should print a warning to stderr."""
+        paths, mode, _ = parse_arguments(
+            ["extract.py", "book.pdf", "--mod", "technical"]
+        )
+        assert mode == "text"  # default, since the flag is unknown
+
+    def test_unknown_flag_stderr_message(self):
+        """The warning message should mention the unknown flag name."""
+        import io
+        stderr = io.StringIO()
+        with mock.patch("sys.stderr", stderr):
+            parse_arguments(["extract.py", "book.pdf", "--unknown-flag"])
+        output = stderr.getvalue()
+        assert "WARNING" in output
+        assert "--unknown-flag" in output
+
+    def test_known_flags_dont_warn(self, capsys):
+        """Known flags (--mode, --install-missing) should not produce warnings."""
+        parse_arguments(["extract.py", "book.pdf", "--mode", "technical", "--install-missing", "no"])
+        captured = capsys.readouterr()
+        assert captured.err == ""
+
+    def test_path_args_not_warned(self, capsys):
+        """Path arguments starting with '-' (like negative numbers) should not be warned as flags."""
+        parse_arguments(["extract.py", "book.pdf", "notes.txt"])
+        captured = capsys.readouterr()
+        assert captured.err == ""

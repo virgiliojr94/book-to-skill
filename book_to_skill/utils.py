@@ -346,6 +346,7 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
         elif arg == "--no-install-missing":
             i += 1
         elif arg.startswith("-"):
+            print(f"WARNING: Unknown flag '{arg}' — ignoring it.", file=sys.stderr)
             i += 1
         else:
             input_paths.append(arg)
