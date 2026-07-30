@@ -1482,3 +1482,54 @@ class TestPdftotextCleanup:
         assert "wordwrap" in out
         assert "Title" in out
         assert "1" in out
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Fix #4 — Lowercase Roman numeral chapter detection
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestLowercaseRomanNumerals:
+    """Verify that lowercase Roman numeral headings are detected."""
+
+    def test_lowercase_roman_requires_heading_context(self):
+        """Bare 'i: Loomings' at line start is NOT detected (FP guard)."""
+        assert detect_structure("i: Loomings\nbody\nii: The Carpet-Bag\nbody\n")["chapters_detected"] == 0
+
+    def test_lowercase_roman_with_markdown_heading(self):
+        """'## i. introduction' as a markdown heading is detected."""
+        text = "## i. introduction\nbody\n## ii. methods\nbody\n## iii. results\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_bare_lowercase_not_confused_with_prose(self):
+        """Lowercase roman 'i' alone or 'v.' page dividers are not chapters."""
+        from book_to_skill.utils import _chapter_number
+        assert _chapter_number("i") is None
+        assert _chapter_number("v.") is None
+        assert _chapter_number("i.") is None
+        assert _chapter_number("vi: the vim editor") is None
+        assert _chapter_number("cli: a reference") is None
+        assert _chapter_number("civ: a history") is None
+
+    def test_uppercase_roman_still_works(self):
+        """Existing uppercase Roman detection is unaffected."""
+        assert detect_structure("I: Loomings\nbody\nII: Carpet-Bag\nbody\nIII: Spouter-Inn\nbody\n")["chapters_detected"] == 3
+
+    def test_lowercase_roman_via_explicit_chapter_word(self):
+        """'Chapter i.' with lowercase roman via _EXPLICIT_CHAPTER."""
+        text = "Chapter i. Introduction\nbody\nChapter ii. Methods\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_roman_word_false_positives_rejected(self):
+        """Words that happen to be valid Roman numerals ('vi', 'cli', 'civ')
+        are NOT detected as chapters when they appear bare at line start."""
+        assert detect_structure("vi: the vim editor\nbody\n")["chapters_detected"] == 0
+        assert detect_structure("cli: command line reference\nbody\n")["chapters_detected"] == 0
+        assert detect_structure("civ: a civilization primer\nbody\n")["chapters_detected"] == 0
+        assert detect_structure("li: a list item\nbody\n")["chapters_detected"] == 0
+
+    def test_roman_word_false_positives_in_markdown_heading(self):
+        """Even in markdown headings, short lowercase-Roman words that are
+        real words ('vi', 'cli') should be validated via round-trip."""
+        from book_to_skill.utils import _chapter_number
+        assert _chapter_number("## vi: the editor") is not None  # legitimate Roman
+        assert _chapter_number("## vi. editor") is not None

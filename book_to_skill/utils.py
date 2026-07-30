@@ -57,7 +57,7 @@ def estimate_tokens(text: str) -> int:
 # the longer words match in full. Captures the number (bounded to 1..99 — drops
 # years like "2025.") and whatever follows it on the line, so we can reject prose.
 _EXPLICIT_CHAPTER = re.compile(
-    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDM]{1,7}))\b(?P<rest>.*)$",
+    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDMivxlcdm]{1,7}))\b(?P<rest>.*)$",
     re.IGNORECASE,
 )
 # A heading's number is followed by end-of-line, punctuation (“. : - —“), or a
@@ -67,9 +67,12 @@ _EXPLICIT_CHAPTER = re.compile(
 _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Þ0-9\"“(]")
 
 # Roman-numeral chapter heading: "I: Loomings", "II. The Carpet-Bag".
-# Requires a separator (":" or ".") and a Capitalized title after it, so a bare
-# "I" or "V." (a page divider / list marker) is not mistaken for a chapter.
-_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Þ\"“(]")
+# Uppercase alone at line start is safe — no common English word is a valid
+# uppercase Roman numeral.  Lowercase ("i: Loomings") is only accepted inside
+# a markdown heading ("## i. introduction") to avoid false positives from
+# words that happen to be valid Roman numerals ("vi: the editor" → 6).
+_ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Þ0-9\"“(]")
+_LC_MD_ROMAN = re.compile(r"^\s*#{1,6}\s+([ivxlcdm]+)\s*[:.]\s+[A-Za-zÀ-Þ\"“(]")
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
 # Chinese chapter headings. Two common styles:
@@ -258,9 +261,10 @@ def _chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading.
 
     Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
-    ("I: Loomings", "II. The Carpet-Bag"), Chinese ("第三章 …", "## 一 · …",
-    "## 第一讲"), Thai ("บทที่ 3", "## บทที่ ๑"), and Korean ("제1장 총칙",
-    "## 제4장 근로시간과 휴식") heading styles.
+    ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
+    Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
+    "## บทที่ ๑"), and Korean ("제1장 총칙", "## 제4장 근로시간과 휴식")
+    heading styles.
     """
     s = line.strip()
     if len(s) > 80:
@@ -270,7 +274,7 @@ def _chapter_number(line: str) -> int | None:
         if m.group(1):
             return int(m.group(1))
         return _roman_to_int(m.group("roman").upper())
-    rm = _ROMAN_HEAD.match(s)
+    rm = _ROMAN_HEAD.match(s) or _LC_MD_ROMAN.match(s)
     if rm:
         return _roman_to_int(rm.group(1))
     cm = _CN_CHAPTER.match(s) or _MD_CN_HEADING.match(s)
