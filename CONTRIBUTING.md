@@ -30,7 +30,9 @@ Run the checks the CI runs before opening a PR:
 ```bash
 ruff check .
 pytest -q
-python3 tools/validate_skill.py SKILL.md
+for lens in claude codex copilot amp; do
+  python3 tools/validate_skill.py --lens "$lens" SKILL.md
+done
 ```
 
 ## Pull requests
@@ -40,7 +42,7 @@ python3 tools/validate_skill.py SKILL.md
   `chore:`, `test:`, `ci:` … (e.g. `fix(extractor): scan full text`).
 - Add or update tests for any behavior change.
 - Update `CHANGELOG.md` under an `## [Unreleased]` section.
-- CI must be green (lint, test matrix py3.10–3.13, smoke, SKILL.md validation).
+- CI must be green (lint, test matrix py3.9–3.13, smoke, SKILL.md validation).
 
 ## Releases
 

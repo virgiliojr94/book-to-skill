@@ -7,14 +7,14 @@ Severity:
 
 Lenses:
   claude   — Claude Code rules (default; back-compat)
+  codex    — OpenAI Codex rules
   copilot  — GitHub Copilot CLI rules
   amp      — Sourcegraph Amp rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
-only universally-required fields. Lenses differ on which `allowed-tools` names
-are recognized and which extra frontmatter keys are accepted vs. silently
-ignored.
+only universally-required fields. Lenses differ on which extra frontmatter
+keys are accepted and whether `allowed-tools` is enforced or ignored.
 
 Refs:
   Claude     https://code.claude.com/docs/en/skills
@@ -22,8 +22,13 @@ Refs:
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
   Amp        https://ampcode.com/manual#skills
+  Codex      https://learn.chatgpt.com/docs/build-skills.md
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp] [path/to/SKILL.md]
+Codex behavior is pinned to codex-cli 0.142.4. Its loader does not enforce
+`allowed-tools`; runtime tool availability, sandboxing, and approval policy
+remain authoritative.
+
+Usage: python3 tools/validate_skill.py [--lens claude|codex|copilot|amp] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -60,6 +65,7 @@ LENSES = {
         "recognized_keys": {"name", "description", "allowed-tools", "license"},
         "reserved_name_words": {"anthropic", "claude"},
         "bash_tool_names": {"Bash"},
+        "analyze_allowed_tools": True,
         "unknown_tool_severity": "error",
     },
     "copilot": {
@@ -68,6 +74,7 @@ LENSES = {
         "recognized_keys": {"name", "description", "allowed-tools", "license"},
         "reserved_name_words": set(),
         "bash_tool_names": {"shell", "bash"},
+        "analyze_allowed_tools": True,
         # Unknown tokens are likely MCP server names — Copilot accepts them.
         "unknown_tool_severity": "warn",
     },
@@ -80,6 +87,25 @@ LENSES = {
         },
         "reserved_name_words": set(),
         "bash_tool_names": {"shell_command", "Bash"},
+        "analyze_allowed_tools": True,
+        "unknown_tool_severity": "warn",
+    },
+    "codex": {
+        "label": "OpenAI Codex",
+        "tools": set(),
+        # OpenAI's portable skill validator accepts these fields. The current
+        # Codex loader consumes name, description, and metadata while safely
+        # ignoring the remaining portable metadata.
+        "recognized_keys": {
+            "name", "description", "license", "allowed-tools", "metadata",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": set(),
+        "analyze_allowed_tools": False,
+        "allowed_tools_note": (
+            "accepted as portable metadata but not enforced by OpenAI Codex "
+            "0.142.4; runtime tools, sandboxing, and approval policy still apply"
+        ),
         "unknown_tool_severity": "warn",
     },
 }
@@ -158,30 +184,38 @@ def audit(path, lens="claude"):
         inline = get_scalar(fm, "allowed-tools")
         if inline:
             tools = inline.split()
-    if tools:  # a restriction is declared -> the host enforces it
-        bases = {tool_base(t) for t in tools}
-        known = {b for b in bases if b in rules["tools"]}
-        unknown = [t for t in tools if tool_base(t) not in rules["tools"]]
-        uses_bash = bool(re.search(r"```bash", body)) or "python3 " in body
-        if uses_bash and not (bases & rules["bash_tool_names"]):
-            bash_names = " or ".join(f"'{n}'" for n in sorted(rules["bash_tool_names"]))
-            errors.append(
-                f"allowed-tools declares a restriction but omits {bash_names}, yet the "
-                f"skill runs bash/python3 — under {label} those steps would be blocked"
-            )
-        if not known and rules["tools"]:
-            # Claude: hard error (none of the listed tools are recognized).
-            # Copilot/Amp: tokens are likely MCP names — handled by the warn path.
-            if rules["unknown_tool_severity"] == "error":
-                errors.append(f"allowed-tools: no recognized {label} tool in the list")
-        if unknown:
-            msg = (f"allowed-tools: {unknown} are not {label} built-in tool names "
-                   f"(treated as MCP-server names by Copilot, ignored by Claude)")
-            if rules["unknown_tool_severity"] == "error":
-                # Already covered by the 'no recognized tool' error if list is all-unknown;
-                # otherwise it's a soft note.
-                warns.append(msg)
-            else:
+    if tools:
+        if not rules["analyze_allowed_tools"]:
+            # Codex does not interpret this field as a permission grant. Host
+            # tool checks here would create false policy errors and misdescribe
+            # the sandbox that actually governs execution.
+            warns.append(f"allowed-tools: {rules['allowed_tools_note']}")
+        else:
+            bases = {tool_base(t) for t in tools}
+            known = {b for b in bases if b in rules["tools"]}
+            unknown = [t for t in tools if tool_base(t) not in rules["tools"]]
+            uses_bash = bool(re.search(r"```bash", body)) or "python3 " in body
+            if uses_bash and not (bases & rules["bash_tool_names"]):
+                bash_names = " or ".join(
+                    f"'{n}'" for n in sorted(rules["bash_tool_names"])
+                )
+                errors.append(
+                    f"allowed-tools declares a restriction but omits {bash_names}, "
+                    f"yet the skill runs bash/python3 — under {label} those steps "
+                    "would be blocked"
+                )
+            if not known and rules["tools"]:
+                # Claude: hard error (none of the listed tools are recognized).
+                # Copilot/Amp: tokens are likely MCP names — handled below.
+                if rules["unknown_tool_severity"] == "error":
+                    errors.append(
+                        f"allowed-tools: no recognized {label} tool in the list"
+                    )
+            if unknown:
+                msg = (
+                    f"allowed-tools: {unknown} are not {label} built-in tool names "
+                    "(treated as MCP-server names by Copilot, ignored by Claude)"
+                )
                 warns.append(msg)
 
     for k in top_level_keys(fm):
@@ -217,4 +251,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
