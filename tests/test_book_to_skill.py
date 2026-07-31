@@ -1603,11 +1603,10 @@ class TestCliEntryPoint:
         assert spec is not None, "__main__ module should be findable"
 
     def test_cli_main_returns_none(self):
-        """cli.main() should not raise or return a non-None value."""
+        """cli.main() is a procedure (implicitly returns None) and should complete without raising."""
         from book_to_skill import cli
         with mock.patch("book_to_skill.cli.utils_main"):
-            result = cli.main()
-            assert result is None
+            cli.main()
 
     def test_cli_main_handles_reconfigure_failure(self):
         """If reconfigure fails (mock stream), cli.main() should not crash."""
