@@ -947,6 +947,69 @@ class TestDetectStructure:
         assert detect_structure(text)["chapters_detected"] == 2
 
 
+class TestMarkdownPrefixedLatinChapters:
+    """Issue #91 — _chapter_number() must see chapter headings behind a
+    Markdown/AsciiDoc prefix ("## Chapter 1"). Previously the Latin/Thai/Korean
+    matchers anchored on the line start, so --mode technical books (Docling
+    emits headings as Markdown) fell through to the structural fallback and
+    inflated chapters_detected."""
+
+    def test_md_prefixed_latin_chapter_word(self):
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("## Chapter 1") == 1
+        assert _chapter_number("## CHAPTER 5") == 5
+        assert _chapter_number("## Chapter 1 Interaction Design") == 1
+        assert _chapter_number("## Capítulo 5") == 5
+        assert _chapter_number("## Chapitre 2") == 2
+        assert _chapter_number("## Kapitel 3") == 3
+
+    def test_asciidoc_prefixed_chapter_word(self):
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("== Chapter 1") == 1
+        assert _chapter_number("=== Chapter 2") == 2
+
+    def test_md_prefixed_roman_numeral(self):
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("## I. Loomings") == 1
+        assert _chapter_number("## III: The Spouter-Inn") == 3
+
+    def test_issue91_repro_matches_plain_text_count(self):
+        # The exact reproduction from #91: 35 real chapters plus 35 subsection
+        # headings. With the fix, the numeric path wins and the structural
+        # fallback no longer inflates the count to 36.
+        md = "\n".join(f"## Chapter {i}\n## Some Section\nbody\n" for i in range(1, 36))
+        plain = "\n".join(f"Chapter {i}\nbody\n" for i in range(1, 36))
+        assert detect_structure(md)["chapters_detected"] == 35
+        assert detect_structure(plain)["chapters_detected"] == 35
+        # The numeric path also fills the heading sample — an empty sample is a
+        # reliable tell that the structural fallback was used instead.
+        sample = detect_structure(md)["chapter_headings_sample"]
+        assert sample and sample[0] == "## Chapter 1"
+
+    def test_md_prefixed_lowercase_roman_still_works(self):
+        # "## i. introduction" is trusted as a heading (markdown context);
+        # unchanged from before the fix.
+        text = "## i. introduction\nbody\n## ii. methods\nbody\n## iii. results\nbody\n"
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_md_prefixed_non_chapter_headings_still_rejected(self):
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("## Some Section") is None
+        assert _chapter_number("## 5 Setup") is None
+        assert _chapter_number("## Acknowledgment") is None
+        assert _chapter_number("## 2025 Goals") is None
+
+    def test_md_prefixed_cjk_unchanged(self):
+        # CJK matchers already tolerated the prefix inline; behavior is
+        # byte-for-byte unchanged.
+        assert detect_structure("## 第一讲\n正文\n## 第二讲\n正文\n")["chapters_detected"] == 2
+        assert detect_structure("## 一 · 缘起\n正文\n## 二 · 主体\n正文\n")["chapters_detected"] == 2
+
+
 class TestTextExtraction:
     """Tests for plain-text file extraction."""
 
