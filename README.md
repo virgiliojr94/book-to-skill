@@ -30,6 +30,7 @@
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-the-discovery-loop-tax">Discovery Loop Tax</a> ·
   <a href="#-faq">FAQ</a> ·
+  <a href="#-related-projects">Related projects</a> ·
   <a href="#-install">Install</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="docs/PERFORMANCE.md">Performance</a> ·
@@ -342,6 +343,12 @@ It also shines for books Claude doesn't know at all: niche technical references,
 Absolutely true — if your workflow is "I have 80 separate books and I want to search across all of them," NotebookLM is the right tool.
 
 book-to-skill is built for a different job: you want to go deep on a specific topic or library, having multiple related documents (papers, chapters, notes) folded into a single unified skill, and even updating it over time as new material arrives! This integrates your customized knowledge base right into your coding or writing workflow, rather than in a separate browser tab.
+
+---
+
+## 🔗 Related projects
+
+- **[video-to-skill](https://github.com/Lum1104/video-to-skill)** — an independently maintained project inspired by book-to-skill that creates evidence-grounded agent skills from videos, playlists, courses, and local media.
 
 ---
 

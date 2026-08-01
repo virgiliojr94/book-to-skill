@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   treated as headings.
 
 ### Documentation
+- Added the independently maintained
+  [video-to-skill](https://github.com/Lum1104/video-to-skill) project to the
+  README's related projects section.
 - Clarified the two install paths so they are not confused: **`git clone` into a
   skills folder** registers the `/book-to-skill` agent skill (Claude Code / Copilot
   CLI / Amp), while **`pip install book-to-skill`** installs only the standalone
