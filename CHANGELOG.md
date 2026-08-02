@@ -5,6 +5,17 @@ All notable changes to **book-to-skill** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+- **Stale tracked bytecode** — `scripts/__pycache__/extract.cpython-313.pyc` was committed
+  alongside the EPUB-support change and has been tracked ever since, despite `.gitignore`
+  listing both `*.pyc` and `__pycache__/` (ignore rules do not untrack already-committed
+  files). The file was inert — its timestamp-based header records a 11,321-byte source while
+  `scripts/extract.py` is now 871 bytes, so Python always invalidated it and recompiled — but
+  committed bytecode is not reviewable in a diff. A regression test now fails if any `.pyc`
+  or `__pycache__/` path is tracked.
+
 ## [1.3.0] - 2026-07-30
 
 ### Added
