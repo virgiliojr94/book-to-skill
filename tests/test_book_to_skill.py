@@ -1536,6 +1536,38 @@ class TestLowercaseRomanNumerals:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  CLI help entry point
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestCliHelp:
+    """The documented help flags should print usage and exit successfully."""
+
+    @pytest.mark.parametrize("flag", ["--help", "-h"])
+    def test_help_flag_prints_console_script_usage(self, flag, monkeypatch, capsys):
+        monkeypatch.setattr("sys.argv", ["book-to-skill", flag])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        captured = capsys.readouterr()
+        assert exc_info.value.code == 0
+        assert "Usage: book-to-skill" in captured.err
+        assert "extract.py" not in captured.err
+        assert "Unknown flag" not in captured.err
+
+    def test_no_arguments_keeps_error_exit_with_same_usage(self, monkeypatch, capsys):
+        monkeypatch.setattr("sys.argv", ["book-to-skill"])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        captured = capsys.readouterr()
+        assert exc_info.value.code == 1
+        assert "Usage: book-to-skill" in captured.err
+        assert "extract.py" not in captured.err
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  Fix #5 — Unknown flag warning in parse_arguments
 # ═══════════════════════════════════════════════════════════════════════════
 

@@ -634,16 +634,32 @@ def print_banner() -> None:
         pass  # best-effort: never block extraction on the banner
 
 
+def print_usage() -> None:
+    """Print standalone CLI usage."""
+    print(
+        "Usage: book-to-skill <path-to-document-folder-or-glob>... "
+        "[--mode technical|text] [--install-missing ask|yes|no]",
+        file=sys.stderr,
+    )
+    print(
+        "       book-to-skill --check    # report which extractors are installed",
+        file=sys.stderr,
+    )
+    print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
+
+
 def main():
     print_banner()
+
+    if any(arg in {"-h", "--help"} for arg in sys.argv[1:]):
+        print_usage()
+        sys.exit(0)
 
     if "--check" in sys.argv[1:]:
         sys.exit(run_dependency_check())
 
     if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
-        print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
-        print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
+        print_usage()
         sys.exit(1)
         
     raw_input_paths, extraction_mode, install_mode = parse_arguments(sys.argv)
