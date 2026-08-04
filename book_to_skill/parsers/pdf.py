@@ -75,7 +75,9 @@ def extract_with_pypdf(pdf_path: str) -> str | None:
                     text_parts.append(page.extract_text() or "")
                 except Exception:
                     text_parts.append("")
-        return "\n".join(text_parts)
+        # Join pages with a form feed so clean_pdftotext can strip repeated
+        # per-page headers/footers, not just dehyphenate.
+        return clean_pdftotext("\f".join(text_parts))
     except ImportError:
         return None
     except Exception as e:
@@ -86,7 +88,8 @@ def extract_with_pypdf(pdf_path: str) -> str | None:
 def extract_with_pdfminer(pdf_path: str) -> str | None:
     try:
         from pdfminer.high_level import extract_text
-        return extract_text(pdf_path)
+        text = extract_text(pdf_path)  # already form-feed delimited per page
+        return clean_pdftotext(text) if text else text
     except ImportError:
         return None
     except Exception as e:
