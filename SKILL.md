@@ -78,7 +78,7 @@ This converter can run from multiple skill systems. When looking for this conver
 9. Hermes Agent personal skills: `$HERMES_HOME/skills/` (defaults to `~/.hermes/skills/`)
 10. Hermes Agent project skills: `.hermes/skills/` or `.agents/skills/`
 
-For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
+For **generated** book skills, prefer the user-level cross-agent root `~/.agents/skills/` — one physical copy serves every supported host. Copilot CLI and Amp discover it natively; Claude Code needs a symlink from `~/.claude/skills/<slug>` (created in Step 10, see Step 5 for the rules). Pick a host-private or project-local root only when the user asks for one.
 
 ---
 
@@ -338,26 +338,28 @@ Otherwise, propose two options and let the user choose:
 
 Default to author-concept format if the book has a strong methodological identity.
 
-Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem for existing skill homes and pick by **the host the user is running in**:
+Choose the destination skill root (`SKILLS_HOME`). For **personal** (user-level) installs, default to the cross-agent root `~/.agents/skills` — one physical copy that every host except Hermes Agent reaches, natively or through a symlink:
 
-| Host agent | Personal skill root (probe in order) | Project-local root |
+| Host agent | Personal skill root | Project-local root |
 |---|---|---|
-| **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
-| **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
-| **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **GitHub Copilot CLI** | `~/.agents/skills` (discovered natively) | `.github/skills` → `.claude/skills` → `.agents/skills` |
+| **Amp** | `~/.agents/skills` (discovered natively) | `.agents/skills` |
 | **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
 | **Hermes Agent** | `$HERMES_HOME/skills/<category>` (defaults to `~/.hermes/skills/<category>`) | `.hermes/skills/<category>` → `.agents/skills` |
+| **Claude Code** | `~/.agents/skills` + symlink from `~/.claude/skills/<skill_name>` | `.claude/skills` |
 
-For Hermes Agent, use the active profile's `HERMES_HOME` and choose a category that matches the generated skill's subject. Do not construct profile paths manually. If the user selects a project-local Hermes root, run `hermes skills trust <project-root>` after generation and verify discovery with `hermes skills list`; project skills remain unavailable until the project is trusted.
+Hermes Agent is the one host that keeps its own personal root: it partitions personal skills by category and does not scan the cross-agent root. Use the active profile's `HERMES_HOME` and choose a category that matches the generated skill's subject. Do not construct profile paths manually. If the user selects a project-local Hermes root, run `hermes skills trust <project-root>` after generation and verify discovery with `hermes skills list`; project skills remain unavailable until the project is trusted.
 
 Selection rules:
-1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
-2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
-3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
+1. Personal install: set `SKILLS_HOME` to `~/.agents/skills` (create the directory if missing).
+2. **Claude Code does not scan `~/.agents/skills`** — after generation completes, Step 10 links the skill in with `ln -sfn "$HOME/.agents/skills/<skill_name>" "$HOME/.claude/skills/<skill_name>"`.
+3. **Hermes Agent personal installs use the Hermes row above**, not the cross-agent root, and take no symlink.
+4. If the user explicitly asks for a host-private root (`~/.copilot/skills`, `~/.claude/skills`, `~/.config/agents/skills`, `~/.config/amp/skills`), honor it and skip the symlink.
+5. If the user explicitly asked for project-local output, use the project-local row for their host.
+6. If the choice requires knowing the host (project-local output, the Hermes personal root, or the Claude Code symlink) and you cannot identify it, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, Claude Code, or Hermes Agent?"
 
-Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
-If it does, prompt the user to choose:
+Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists. On Claude Code, also check whether `~/.claude/skills/<skill_name>` exists as a **real directory** (not a symlink) — a previous install may live there; if so, offer to migrate it (move the directory into `~/.agents/skills/` and replace the original path with the symlink) before continuing.
+If the skill already exists, prompt the user to choose:
 1. **Update / Fold-in** (Mode 4) — integrate new files/content into the existing skill components.
 2. **Overwrite** — delete and regenerate the skill from scratch.
 3. **Rename** — append `-2` or use a different custom slug.
@@ -576,6 +578,17 @@ If the scanner exits non-zero, stop and ask a human to review its file/line find
 
 ## Step 10 — Cleanup and report
 
+If the host is Claude Code and `SKILLS_HOME` is `~/.agents/skills` (the default personal install), expose the skill to Claude Code with a symlink — Claude Code only scans `~/.claude/skills`:
+
+```bash
+mkdir -p "$HOME/.claude/skills"
+ln -sfn "$HOME/.agents/skills/<skill_name>" "$HOME/.claude/skills/<skill_name>"
+```
+
+Skip this when the user chose a host-private or project-local root (Step 5, rules 3-4).
+
+Then clean up the extraction workdir:
+
 ```bash
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
@@ -634,6 +647,9 @@ Usage:
   Ask for <skill_name>                  → load core frameworks
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
+
+Discoverable by: Copilot CLI, Amp (natively)
+  Claude Code: via symlink ~/.claude/skills/<skill_name> → $SKILLS_HOME/<skill_name>
 
 Reload (if your agent doesn't auto-detect new skills):
   GitHub Copilot CLI:  /skills reload

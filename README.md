@@ -73,7 +73,7 @@ Works with any host that supports the open [Agent Skills](https://github.com/age
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code, or `$HERMES_HOME/skills/<category>/<slug>/` for Hermes Agent):
+Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in the user-level cross-agent skills directory `~/.agents/skills/<slug>/` — one copy that Copilot CLI, Amp, and Codex discover natively, and that Claude Code reaches through a symlink the converter drops at `~/.claude/skills/<slug>/`. Hermes Agent partitions its personal skills by category and does not scan the cross-agent root, so a Hermes install lands in `$HERMES_HOME/skills/<category>/<slug>/` instead (host-private and project-local destinations remain available on request):
 
 | File | Purpose | Size |
 |------|---------|------|
