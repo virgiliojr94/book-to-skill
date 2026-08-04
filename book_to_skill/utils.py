@@ -736,7 +736,14 @@ def main():
         **consolidated_structure,
     }
     
-    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+    # encoding="utf-8" is required, not cosmetic: the payload is dumped with
+    # ensure_ascii=False, so any non-ASCII chapter heading, filename or path
+    # reaches the encoder verbatim. Without it, write_text() falls back to the
+    # locale encoding and raises UnicodeEncodeError on a Windows cp1252 host or
+    # under LC_ALL=C — after every source has already been extracted.
+    OUTPUT_META.write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
