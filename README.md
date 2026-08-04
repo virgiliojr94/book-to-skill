@@ -50,6 +50,8 @@
 
 ## 🤔 Why
 
+<img align="right" width="200" src="docs/assets/booklin.png" alt="Booklin — the book-to-skill mascot, a purple wizard holding a book">
+
 You buy a great technical book. You read it once. Three months later you can't remember chapter 7 existed.
 
 The usual workarounds don't help:
