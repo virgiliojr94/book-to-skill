@@ -1688,3 +1688,36 @@ class TestCjkTokenEstimate:
 
     def test_empty_is_zero(self):
         assert estimate_tokens("") == 0
+
+
+class TestPdfLibsCleanup:
+    """extract_with_pypdf / extract_with_pdfminer also clean their output."""
+
+    def test_pypdf_output_is_cleaned(self, monkeypatch):
+        pages = [f"HEAD\nsome informa-\ntion page {n}\n{n}" for n in (1, 2, 3)]
+
+        class _Page:
+            def __init__(self, t): self._t = t
+            def extract_text(self): return self._t
+
+        class _Reader:
+            def __init__(self, f): self.pages = [_Page(p) for p in pages]
+
+        import types
+        fake = types.SimpleNamespace(PdfReader=_Reader)
+        monkeypatch.setitem(sys.modules, "pypdf", fake)
+        monkeypatch.setattr("builtins.open", lambda *a, **k: mock.MagicMock())
+
+        out = pdf_parser.extract_with_pypdf("x.pdf")
+        assert "information" in out          # dehyphenated
+        assert "HEAD" not in out             # repeated header stripped
+
+    def test_pdfminer_output_is_cleaned(self, monkeypatch):
+        raw = "\f".join(f"HEAD\ncon-\ntent page {n}\n{n}" for n in (1, 2, 3))
+        import types
+        fake = types.SimpleNamespace(extract_text=lambda path: raw)
+        monkeypatch.setitem(sys.modules, "pdfminer.high_level", fake)
+
+        out = pdf_parser.extract_with_pdfminer("x.pdf")
+        assert "content" in out
+        assert "HEAD" not in out
