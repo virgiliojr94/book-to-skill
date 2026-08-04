@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CJK-aware token estimate** — `estimate_tokens` now counts CJK codepoints
+  directly (against `CJK_CHARS_PER_TOKEN`) instead of whitespace-delimited words,
+  fixing a ~1000× undercount for space-less Chinese/Japanese books in the cost
+  pre-flight. Latin behavior is unchanged and the estimate stays deterministic
+  and dependency-free (rescued from #70).
+
 ### Removed
 - **Stale tracked bytecode** — `scripts/__pycache__/extract.cpython-313.pyc` was committed
   alongside the EPUB-support change and has been tracked ever since, despite `.gitignore`

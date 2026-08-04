@@ -1570,3 +1570,26 @@ class TestParseArgumentsUnknownFlags:
         parse_arguments(["extract.py", "book.pdf", "notes.txt"])
         captured = capsys.readouterr()
         assert captured.err == ""
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CJK-aware token estimate (rescued from #70)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestCjkTokenEstimate:
+    """estimate_tokens counts CJK codepoints directly, not whitespace words."""
+
+    def test_latin_estimate_unchanged(self):
+        # The project's long-standing pinned ratio: 100 words -> 133 tokens.
+        assert estimate_tokens(" ".join(["word"] * 100)) == 133
+
+    def test_cjk_is_not_undercounted(self):
+        # 1500 space-less Chinese chars must estimate ~1000 tokens, not ~1.
+        assert estimate_tokens("中" * 1500) == 1000
+
+    def test_mixed_latin_and_cjk(self):
+        # Latin words + CJK chars are both counted.
+        assert estimate_tokens("hello 世界 " * 100) > 100
+
+    def test_empty_is_zero(self):
+        assert estimate_tokens("") == 0

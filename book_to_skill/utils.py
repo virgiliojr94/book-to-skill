@@ -16,6 +16,7 @@ from book_to_skill.config import (
     OUTPUT_TEXT,
     OUTPUT_META,
     WORDS_PER_TOKEN,
+    CJK_CHARS_PER_TOKEN,
     SUPPORTED_EXTENSIONS,
     TEXT_EXTENSIONS,
     HTML_EXTENSIONS,
@@ -47,8 +48,32 @@ from book_to_skill.parsers.epub import (
 from book_to_skill.sanitize import sanitize_extracted_text
 
 
+# CJK codepoints: ideographs + extensions, kana, hangul, CJK punctuation, and
+# fullwidth forms. These are not whitespace-delimited, so counting "words" on a
+# Chinese/Japanese book collapses it to a handful of tokens; count them directly.
+_CJK_RE = re.compile(
+    r"[　-〿぀-ヿ㐀-䶿一-鿿"
+    r"가-힣豈-﫿＀-￯]"
+)
+
+
 def estimate_tokens(text: str) -> int:
-    return int(len(text.split()) / WORDS_PER_TOKEN)
+    """Estimate the token count of ``text`` with a deterministic heuristic.
+
+    Latin / whitespace-delimited text is counted by words (``words /
+    WORDS_PER_TOKEN`` — the project's long-standing ratio). CJK characters are
+    counted directly against ``CJK_CHARS_PER_TOKEN`` because they carry little
+    or no whitespace; without this a space-less Chinese/Japanese book estimates
+    at a few tokens and the cost pre-flight under-reports by ~1000x. Kept
+    dependency-free on purpose so the same book always yields the same number.
+    """
+    if not text:
+        return 0
+    cjk = len(_CJK_RE.findall(text))
+    if not cjk:
+        return int(len(text.split()) / WORDS_PER_TOKEN)
+    latin_words = len(_CJK_RE.sub(" ", text).split())
+    return int(latin_words / WORDS_PER_TOKEN + cjk / CJK_CHARS_PER_TOKEN)
 
 
 # Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
