@@ -73,6 +73,8 @@ Turn any book or document into a structured, on-demand agent skill — named fra
 **As an agent skill** (gives you the `/book-to-skill` command in Claude Code, Copilot CLI, Amp):
 
 ```bash
+npx skills add virgiliojr94/book-to-skill
+# or manually:
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 # then, in your agent session:
 /book-to-skill /path/to/book.pdf [skill-name]
