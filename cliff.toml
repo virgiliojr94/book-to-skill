@@ -1,0 +1,57 @@
+# git-cliff configuration — generates CHANGELOG.md from Conventional Commit
+# messages so PRs never edit the changelog by hand (no more merge-conflict churn
+# on a shared [Unreleased] section). Keep a Changelog style; grouped by type.
+# Regenerate at release time:  git-cliff --tag vX.Y.Z -o CHANGELOG.md
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to **book-to-skill** are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This file is generated from Conventional Commit messages by
+[git-cliff](https://github.com/orhun/git-cliff) — do not edit it by hand.
+"""
+body = """
+{% if version %}\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## [Unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}\
+- {{ commit.message | upper_first }}{% if commit.remote.pr_number %} (#{{ commit.remote.pr_number }}){% endif %}
+{% endfor %}\
+{% endfor %}\n
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9]*"
+topo_order = false
+sort_commits = "oldest"
+
+# Map Conventional Commit types to Keep a Changelog sections.
+commit_parsers = [
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^perf", group = "Changed" },
+  { message = "^refactor", group = "Changed" },
+  { message = "^docs", group = "Documentation" },
+  { message = "^sec", group = "Security" },
+  { message = "^.*: *sec", group = "Security" },
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^chore\\(deps\\)", skip = true },
+  { message = "^chore", group = "Miscellaneous" },
+  { message = "^ci", skip = true },
+  { message = "^test", skip = true },
+  { body = ".*security", group = "Security" },
+]

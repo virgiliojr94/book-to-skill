@@ -59,7 +59,7 @@ Closes #<!-- issue number, or "n/a" with a one-line reason if there is no issue 
 - [ ] `pytest -q` is green on a clean checkout
 - [ ] `ruff check .` is clean
 - [ ] `python3 tools/validate_skill.py SKILL.md` passes (if `SKILL.md` changed)
-- [ ] `CHANGELOG.md` updated under `## [Unreleased]`
+- [ ] PR title follows Conventional Commits (`fix:`, `feat:`, `docs:`… — it becomes the changelog entry; do NOT edit `CHANGELOG.md` by hand)
 - [ ] No raw book text shipped; no net `SKILL.md` bloat without justification
 
 ## Breaking changes & back-compat (Optional)
