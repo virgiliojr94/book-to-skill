@@ -45,6 +45,7 @@ from book_to_skill.parsers.epub import (
     extract_with_zipfile,
     count_epub_chapters,
 )
+from book_to_skill.roman import int_to_roman, roman_to_int
 from book_to_skill.sanitize import sanitize_extracted_text
 
 
@@ -259,32 +260,11 @@ def _cn_numeral_to_int(s: str) -> int | None:
     return total if 1 <= total <= 999 else None
 
 
-def _int_to_roman(n: int) -> str:
-    table = [(1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"),
-             (90, "XC"), (50, "L"), (40, "XL"), (10, "X"), (9, "IX"),
-             (5, "V"), (4, "IV"), (1, "I")]
-    out = []
-    for val, sym in table:
-        while n >= val:
-            out.append(sym)
-            n -= val
-    return "".join(out)
-
-
-def _roman_to_int(s: str) -> int | None:
-    """Convert a Roman numeral to int, returning None if it isn't canonical."""
-    s = s.upper()
-    total = prev = 0
-    for ch in reversed(s):
-        v = _ROMAN_VALUES.get(ch)
-        if v is None:
-            return None
-        total += -v if v < prev else v
-        prev = max(prev, v)
-    if total == 0 or total > 200:
-        return None
-    # Reject non-canonical forms ("IIII", "VV") by round-tripping.
-    return total if _int_to_roman(total) == s else None
+# Moved to book_to_skill.roman so parsers.pdf can validate page numbers with the
+# same canonical parser (utils imports parsers.pdf, so pdf cannot import utils).
+# Aliases kept so the existing call sites below read unchanged.
+_int_to_roman = int_to_roman
+_roman_to_int = roman_to_int
 
 
 def _match_chapter_number(line: str) -> int | None:

@@ -7,8 +7,25 @@ import subprocess
 import sys
 from collections import Counter
 
-_PDF_PAGE_NUM = re.compile(r"^\s*(\d{1,4}|[ivxlcdm]{1,7})\s*$", re.IGNORECASE)
+from book_to_skill.roman import roman_to_int
+
+_PDF_ARABIC_PAGE_NUM = re.compile(r"^\s*\d{1,4}\s*$")
+_PDF_ROMAN_PAGE_NUM = re.compile(r"^\s*([ivxlcdm]{1,7})\s*$", re.IGNORECASE)
 _PDF_HYPHEN_WRAP = re.compile(r"(\w)-\n(\w)")
+
+
+def _is_page_number(line: str) -> bool:
+    """True if the line consists only of a page number.
+
+    The Roman branch is validated as a *canonical* numeral rather than "a run of
+    the letters IVXLCDM", because ordinary English words are made of those
+    letters too — "civil", "dim", "did", "lid", "vim" and "mild" all satisfied
+    the character-class test and were silently deleted from page edges.
+    """
+    if _PDF_ARABIC_PAGE_NUM.match(line):
+        return True
+    match = _PDF_ROMAN_PAGE_NUM.match(line)
+    return bool(match) and roman_to_int(match.group(1)) is not None
 
 
 def clean_pdftotext(text: str) -> str:
@@ -23,7 +40,11 @@ def clean_pdftotext(text: str) -> str:
             nb = [ln.strip() for ln in p.splitlines() if ln.strip()]
             if nb:
                 edge[nb[0]] += 1
-                edge[nb[-1]] += 1
+                # On a single-line page the first and last line are the same
+                # line; counting it twice would let one page contribute two
+                # votes toward the "> half the pages" boilerplate threshold.
+                if len(nb) > 1:
+                    edge[nb[-1]] += 1
         boiler = {ln for ln, c in edge.items() if c > len(pages) / 2}
         kept = []
         for p in pages:
@@ -32,12 +53,16 @@ def clean_pdftotext(text: str) -> str:
             first = nb_idx[0] if nb_idx else None
             last = nb_idx[-1] if nb_idx else None
             for i, ln in enumerate(lines):
-                s = ln.strip()
-                if s in boiler:
-                    continue
-                # Drop a bare page number only at a page edge (varies per page).
-                if i in (first, last) and _PDF_PAGE_NUM.match(s):
-                    continue
+                # Running headers/footers and page numbers only ever occur at a
+                # page edge — which is also the only place `boiler` was
+                # collected from. Restricting removal to the edges stops a
+                # running header that happens to equal a real heading (common
+                # when the header repeats the chapter title) from also deleting
+                # that heading where it legitimately appears in the body.
+                if i in (first, last):
+                    s = ln.strip()
+                    if s in boiler or _is_page_number(s):
+                        continue
                 kept.append(ln)
         text = "\n".join(kept)
     else:
