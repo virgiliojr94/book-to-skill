@@ -742,6 +742,16 @@ def main():
     # headings and make the result depend on the source-path length.
     structure_text = "\n\n".join(src["text"] for src in extracted_sources)
     consolidated_structure = detect_structure(structure_text)
+    # has_toc is a per-source property, so it has to be combined per source
+    # rather than re-derived from the corpus. detect_structure only scans the
+    # first ~30k chars, because a table of contents sits in a book's front
+    # matter -- but on a consolidated corpus that window covers only the FIRST
+    # source, so a ToC in any later book was invisible and the answer flipped on
+    # input order alone. Each per-source result already scanned its own front
+    # matter, so OR them.
+    consolidated_structure["has_toc"] = any(
+        src["has_toc"] for src in extracted_sources
+    )
     
     metadata = {
         "source_file": "Consolidated from multiple sources" if len(extracted_sources) > 1 else extracted_sources[0]["source_file"],
