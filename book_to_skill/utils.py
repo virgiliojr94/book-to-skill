@@ -152,14 +152,16 @@ _KO_CHAPTER = re.compile(
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
 _TOC_HEADERS = (
     "table of contents", "contents", "índice", "sumário",   # EN / ES / PT
-    "目录", "目錄", "目次",                                   # Chinese / Japanese
     "table des matières",                                   # French
     "inhaltsverzeichnis",                                   # German
     "indice", "sommario",                                   # Italian (no accent — distinct from índice above)
     "inhoudsopgave",                                        # Dutch
 )
+_TOC_CJK_PATTERN = r"目[ \t\u3000]*(?:录|錄|次)"
 _TOC_PATTERN = re.compile(
-    r"^\s*(?:" + "|".join(re.escape(h) for h in _TOC_HEADERS) + r")\s*$",
+    r"^\s*(?:"
+    + "|".join([*(re.escape(h) for h in _TOC_HEADERS), _TOC_CJK_PATTERN])
+    + r")\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 
