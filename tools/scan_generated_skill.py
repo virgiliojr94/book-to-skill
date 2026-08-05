@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -106,6 +107,43 @@ def _frontmatter_line_numbers(lines: Sequence[str]) -> set[int]:
     return set()
 
 
+def _walk_markdown(directory: Path) -> list[Path]:
+    """Collect ``*.md`` under ``directory`` at any depth, ignoring symlinks.
+
+    ``os.walk(followlinks=False)`` rather than ``Path.rglob``: before Python 3.13
+    ``rglob`` descends into symlinked directories, which would let a generated
+    skill walk the scanner outside its own tree. Symlinked *files* are left in
+    the list and rejected later by :func:`_read_skill_files`, so a planted
+    symlink is reported as an error rather than silently skipped.
+    """
+    found: list[Path] = []
+    for walk_root, _dirnames, filenames in os.walk(directory, followlinks=False):
+        for filename in filenames:
+            if filename.lower().endswith(".md"):
+                found.append(Path(walk_root) / filename)
+    return found
+
+
+def unscanned_markdown(path: Path) -> list[str]:
+    """Markdown files present in the skill directory but outside the scan scope.
+
+    The scope is deliberately bounded to what book-to-skill generates (SKILL.md,
+    the supporting files, and ``chapters/``), so unrelated notes in the directory
+    are not scanned and cannot raise false findings. The risk is the *reporting*:
+    printing "scan passed" while files the agent will happily read went unopened
+    is a false assurance. Listing them keeps the bounded scope honest.
+    """
+    requested = path.expanduser()
+    root = (requested.parent if requested.name.lower() == "skill.md" else requested)
+    root = root.resolve(strict=True)
+    scanned = set(_collect_skill_files(requested))
+    return sorted(
+        candidate.relative_to(root).as_posix()
+        for candidate in _walk_markdown(root)
+        if candidate not in scanned
+    )
+
+
 def _collect_skill_files(skill_dir: Path) -> list[Path]:
     requested = skill_dir.expanduser()
     if requested.name.lower() == "skill.md" and requested.is_file():
@@ -137,7 +175,7 @@ def _collect_skill_files(skill_dir: Path) -> list[Path]:
     if chapters.exists():
         if chapters.is_symlink() or not chapters.is_dir():
             raise ScanError("chapters must be a real directory, not a symbolic link")
-        candidates.update(chapters.glob("*.md"))
+        candidates.update(_walk_markdown(chapters))
 
     files = sorted(candidates, key=lambda path: path.relative_to(root).as_posix().lower())
     if len(files) > MAX_SKILL_FILES:
@@ -253,9 +291,25 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         findings = scan_generated_skill(Path(args.path))
+        skipped = unscanned_markdown(Path(args.path))
     except ScanError as exc:
         print(f"ERROR generated-skill scan incomplete: {exc}", file=sys.stderr)
         return 2
+
+    if skipped:
+        # Advisory only, and deliberately not a Finding: the bounded scope is
+        # intentional, so these files must not change the exit code. But the
+        # user has to know the "passed" line below does not cover them.
+        print(
+            f"Note: {len(skipped)} Markdown file(s) in the skill directory are "
+            "outside the generated-skill scope and were NOT scanned:"
+        )
+        for relative in skipped:
+            print(f"  SKIP {_terminal_safe(relative)}")
+        print(
+            "  Scope is SKILL.md, glossary/patterns/cheatsheet, and chapters/. "
+            "Move generated content there to have it scanned."
+        )
 
     if findings:
         print(f"Generated-skill scan found {len(findings)} advisory finding(s):")
@@ -272,7 +326,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("No files were modified by this scan.")
         return 1
 
-    print("Generated-skill scan passed: no known injection or authority patterns found.")
+    scope = " in the scanned scope" if skipped else ""
+    print(
+        f"Generated-skill scan passed: no known injection or authority patterns "
+        f"found{scope}."
+    )
     return 0
 
 
