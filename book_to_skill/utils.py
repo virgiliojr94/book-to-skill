@@ -736,7 +736,7 @@ def main():
         **consolidated_structure,
     }
     
-    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
