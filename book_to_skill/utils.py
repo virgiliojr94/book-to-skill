@@ -100,6 +100,11 @@ _ROMAN_HEAD = re.compile(r"^\s*([IVXLCDM]+)\s*[:.]\s+[A-ZÀ-Þ0-9\"“(]")
 _LC_MD_ROMAN = re.compile(r"^\s*#{1,6}\s+([ivxlcdm]+)\s*[:.]\s+[A-Za-zÀ-Þ\"“(]")
 _ROMAN_VALUES = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 
+# Optional Markdown / AsciiDoc heading prefix ("## Chapter 1", "== Section").
+# Stripped in _chapter_number() as a second pass so the CJK/Thai/Korean
+# matchers (which already tolerate the prefix inline) are untouched. (Issue #91)
+_MD_HEADING_PREFIX = re.compile(r"^(#{1,6}|={1,6})\s+")
+
 # Chinese chapter headings. Two common styles:
 #   1. explicit "第N章" / "第 3 回" / "第十二节" / "第一讲" — 第 + numeral + a
 #      chapter classifier (章回卷节篇讲);
@@ -282,15 +287,9 @@ def _roman_to_int(s: str) -> int | None:
     return total if _int_to_roman(total) == s else None
 
 
-def _chapter_number(line: str) -> int | None:
-    """Return the chapter number if the line is a genuine chapter heading.
-
-    Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
-    ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
-    Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
-    "## บทที่ ๑"), and Korean ("제1장 총칙", "## 제4장 근로시간과 휴식")
-    heading styles.
-    """
+def _match_chapter_number(line: str) -> int | None:
+    """Return the chapter number if the line is a genuine chapter heading,
+    with no Markdown/AsciiDoc heading prefix (the caller strips it first)."""
     s = line.strip()
     if len(s) > 80:
         return None
@@ -311,6 +310,32 @@ def _chapter_number(line: str) -> int | None:
     km = _KO_CHAPTER.match(s)
     if km:
         return int(km.group(1))
+    return None
+
+
+def _chapter_number(line: str) -> int | None:
+    """Return the chapter number if the line is a genuine chapter heading.
+
+    Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
+    ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
+    Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
+    "## บทที่ ๑"), and Korean ("제1장 총칙", "## 제4장 근로시간과 휴식")
+    heading styles — each optionally preceded by a Markdown/AsciiDoc heading
+    marker ("## Chapter 1" is a chapter heading just like "Chapter 1").
+    """
+    match = _match_chapter_number(line)
+    if match is not None:
+        return match
+    # Second pass: a Markdown/AsciiDoc heading prefix ("## Chapter 1",
+    # "== Section") hides the heading from the matchers above — the CJK
+    # matchers tolerate the prefix inline but the Latin/Thai/Korean ones anchor
+    # on the line start. Strip the prefix and retry so --mode technical
+    # (Docling emits headings as Markdown) detects the same chapters as
+    # plain-text extraction. (Issue #91)
+    s = line.strip()
+    md = _MD_HEADING_PREFIX.match(s)
+    if md:
+        return _match_chapter_number(s[md.end():])
     return None
 
 
@@ -634,16 +659,32 @@ def print_banner() -> None:
         pass  # best-effort: never block extraction on the banner
 
 
+def print_usage() -> None:
+    """Print standalone CLI usage."""
+    print(
+        "Usage: book-to-skill <path-to-document-folder-or-glob>... "
+        "[--mode technical|text] [--install-missing ask|yes|no]",
+        file=sys.stderr,
+    )
+    print(
+        "       book-to-skill --check    # report which extractors are installed",
+        file=sys.stderr,
+    )
+    print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
+
+
 def main():
     print_banner()
+
+    if any(arg in {"-h", "--help"} for arg in sys.argv[1:]):
+        print_usage()
+        sys.exit(0)
 
     if "--check" in sys.argv[1:]:
         sys.exit(run_dependency_check())
 
     if len(sys.argv) < 2:
-        print("Usage: extract.py <path-to-document-folder-or-glob>... [--mode technical|text] [--install-missing ask|yes|no]", file=sys.stderr)
-        print("       extract.py --check    # report which extractors are installed", file=sys.stderr)
-        print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
+        print_usage()
         sys.exit(1)
         
     raw_input_paths, extraction_mode, install_mode = parse_arguments(sys.argv)
@@ -736,7 +777,14 @@ def main():
         **consolidated_structure,
     }
     
-    OUTPUT_META.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    # encoding="utf-8" is required, not cosmetic: the payload is dumped with
+    # ensure_ascii=False, so any non-ASCII chapter heading, filename or path
+    # reaches the encoder verbatim. Without it, write_text() falls back to the
+    # locale encoding and raises UnicodeEncodeError on a Windows cp1252 host or
+    # under LC_ALL=C — after every source has already been extracted.
+    OUTPUT_META.write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")

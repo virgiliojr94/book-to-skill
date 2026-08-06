@@ -16,13 +16,12 @@ MAX_FILE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_BYTES = 20 * 1024 * 1024
 SUPPORTING_FILENAMES = ("glossary.md", "patterns.md", "cheatsheet.md")
 
-_INVISIBLE_CODEPOINTS = {
-    0x200B,  # zero width space
-    0x200C,  # zero width non-joiner
-    0x200D,  # zero width joiner
-    0x2060,  # word joiner
-    0xFEFF,  # zero width no-break space (outside the leading BOM)
-}
+# Reuse the extractor's invisible-code-point set instead of duplicating it, so
+# the two injection defenses cannot drift apart. They previously did: the
+# extractor did not strip U+2060 while this scanner flagged it, so a generated
+# skill was warned about a character extraction was meant to have removed.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from book_to_skill.sanitize import is_invisible_codepoint  # noqa: E402
 
 _CONTENT_RULES = (
     (
@@ -90,7 +89,7 @@ class Finding:
 
 
 def _is_invisible(codepoint: int) -> bool:
-    return codepoint in _INVISIBLE_CODEPOINTS or 0xE0000 <= codepoint <= 0xE007F
+    return is_invisible_codepoint(codepoint)
 
 
 def _terminal_safe(value: str) -> str:
