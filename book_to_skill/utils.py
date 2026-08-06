@@ -415,9 +415,18 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
     User-given order is preserved for explicit file arguments.  Expanded
     results (directories, globs) are sorted deterministically so repeated
     runs produce the same output.
+
+    A leading "~" is expanded here rather than relying on the shell: a glob has
+    to be quoted to reach us unexpanded ("~/books/*.epub"), and quoting stops
+    the shell expanding the tilde too. `glob.glob` and `Path` both treat "~" as
+    a literal directory name, so without this the pattern silently matches
+    nothing.
     """
     resolved = []
-    for path_str in paths:
+    for raw_path in paths:
+        # Normalise "~" once, at the entry point, so both the glob branch and
+        # the file/directory branch below see a real path.
+        path_str = os.path.expanduser(raw_path)
         # Check if it has glob wildcards
         if any(char in path_str for char in ("*", "?", "[")):
             glob_matches = glob.glob(path_str, recursive=True)
