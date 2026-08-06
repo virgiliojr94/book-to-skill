@@ -467,10 +467,21 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     ext = input_path.suffix.lower()
     document_format = ext.lstrip(".")
     
-    # Sniff magic bytes if suffix is not supported
+    # Sniff magic bytes if suffix is not supported.
+    #
+    # Every failure in this function has to surface as ExtractionError: the
+    # batch loop in main() catches only that, and anything else aborts the whole
+    # run — including the sources that would have extracted fine. An unreadable
+    # or unopenable file is a per-source problem, so translate it here. (The
+    # ZipFile branch below already does this for OSError.)
     if ext not in SUPPORTED_EXTENSIONS:
-        with open(input_str, "rb") as f:
-            header = f.read(8)
+        try:
+            with open(input_str, "rb") as f:
+                header = f.read(8)
+        except OSError as exc:
+            raise ExtractionError(
+                f"Could not read {input_path.name}: {exc.strerror or exc}"
+            ) from exc
         if header[:4] == b"%PDF":
             ext = ".pdf"
             document_format = "pdf"
