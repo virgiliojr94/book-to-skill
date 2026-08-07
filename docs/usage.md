@@ -1,3 +1,8 @@
+---
+description: "Every way to run /book-to-skill: a single file, a folder, a glob, or a list of paths, with extraction modes, skill naming, and worked command examples."
+seo_title: "Usage - Convert a Book, Folder, or Glob into an Agent Skill"
+---
+
 ## 🚀 Usage
 
 ```

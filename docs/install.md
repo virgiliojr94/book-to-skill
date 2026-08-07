@@ -1,3 +1,8 @@
+---
+description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI and Amp, or as a standalone pip CLI. Every host path and optional extractor covered."
+seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
+---
+
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**

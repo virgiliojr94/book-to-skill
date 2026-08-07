@@ -1,8 +1,26 @@
 ---
+description: "Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI and Amp. Named frameworks and decision rules, loaded on demand."
+seo_title: "book-to-skill - Turn Any Book Into an AI Agent Skill"
 hide:
   - navigation
   - toc
 ---
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "book-to-skill",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, macOS, Windows",
+  "description": "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, RTF, MOBI/AZW) into structured, on-demand agent skills for Claude Code, GitHub Copilot CLI and Amp.",
+  "url": "https://booktoskill.is-a.dev/",
+  "codeRepository": "https://github.com/virgiliojr94/book-to-skill",
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "virgiliojr94", "url": "https://github.com/virgiliojr94" }
+}
+</script>
 
 # book-to-skill
 
@@ -71,13 +89,13 @@ book-to-skill /path/to/book.pdf --mode text
 
 <div class="grid cards" markdown>
 
--   :material-sitemap:{ .lg .middle } __[Architecture](ARCHITECTURE.md)__
+-   :material-sitemap:{ .lg .middle } __[Architecture](architecture.md)__
 
     ---
 
     How the deterministic extractor and the spec-driven generator fit together.
 
--   :material-speedometer:{ .lg .middle } __[Performance](PERFORMANCE.md)__
+-   :material-speedometer:{ .lg .middle } __[Performance](performance.md)__
 
     ---
 

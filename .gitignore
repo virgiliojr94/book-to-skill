@@ -22,3 +22,6 @@ site/
 docs/guide.md
 docs/skill-reference.md
 docs/BACKERS.md
+
+# Social-card render cache (mkdocs-material[imaging]).
+.cache/

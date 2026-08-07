@@ -1,5 +1,7 @@
 site_name: book-to-skill
-site_description: Convert books and documents into structured, on-demand agent skills.
+site_description: >-
+  Turn any book, PDF or EPUB into a structured agent skill for Claude Code,
+  GitHub Copilot CLI and Amp — frameworks and decision rules, loaded on demand.
 site_url: https://booktoskill.is-a.dev/
 repo_url: https://github.com/virgiliojr94/book-to-skill
 repo_name: virgiliojr94/book-to-skill
@@ -11,6 +13,7 @@ edit_uri: ""
 
 theme:
   name: material
+  custom_dir: overrides
   logo: assets/logo.png
   favicon: assets/logo.png
   icon:
@@ -45,13 +48,30 @@ theme:
 nav:
   - Home: index.md
   - Guide: guide.md
-  - How it works: HOW_IT_WORKS.md
-  - Usage: USAGE.md
-  - Install: INSTALL.md
-  - FAQ: FAQ.md
-  - Architecture: ARCHITECTURE.md
-  - Performance: PERFORMANCE.md
+  - How it works: how-it-works.md
+  - Usage: usage.md
+  - Install: install.md
+  - FAQ: faq.md
+  - Architecture: architecture.md
+  - Performance: performance.md
   - Skill Reference: skill-reference.md
+
+plugins:
+  # `search` is on by default, but naming any plugin replaces the default list.
+  - search
+  # No `social` plugin: the share card is a hand-made docs/assets/og-card.jpg and
+  # overrides/main.html emits the og:/twitter: tags around it.
+  #
+  # The docs pages were renamed to lowercase kebab-case slugs; keep the old
+  # SHOUTING_CASE URLs alive so existing inbound links and bookmarks resolve.
+  - redirects:
+      redirect_maps:
+        HOW_IT_WORKS.md: how-it-works.md
+        USAGE.md: usage.md
+        INSTALL.md: install.md
+        FAQ.md: faq.md
+        ARCHITECTURE.md: architecture.md
+        PERFORMANCE.md: performance.md
 
 markdown_extensions:
   - admonition

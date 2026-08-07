@@ -1,3 +1,8 @@
+---
+description: "The full book-to-skill walkthrough, Steps 0-10: document extraction, chapter detection, framework mining, depth budgets, and how the agent skill gets assembled."
+seo_title: "How book-to-skill Works - Book to Agent Skill, Step by Step"
+---
+
 <img align="right" width="180" src="assets/booklin-casting.png" alt="Booklin casting book-to-skill magic">
 
 ## ⚙️ How it works

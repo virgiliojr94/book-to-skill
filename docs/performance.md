@@ -1,3 +1,8 @@
+---
+description: "Measured token cost of book-to-skill: 24x-51x fewer tokens than dumping a book into context, the Discovery Loop Tax, and per-book tables you can reproduce."
+seo_title: "Performance & Token Cost - book-to-skill Benchmarks"
+---
+
 # Performance & Cost
 
 All numbers below are **measured**, not estimated, using `tiktoken` (cl100k_base)

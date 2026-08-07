@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{#
+  MkDocs resolves a page's title from the `nav:` entry first, so the frontmatter
+  `title:` never reaches the <title> tag. Nav labels want to stay short ("FAQ",
+  "Usage") while the SERP title wants keywords, so pages carry a separate
+  `seo_title:` in their frontmatter and it wins here when present.
+
+  The homepage is the case Material can't express at all: it renders bare
+  `site_name` ("book-to-skill", 13 characters) with no room for what the project
+  actually does.
+
+  One title is computed here and reused by <title>, og:title and twitter:title,
+  so the tab, the SERP and the share card can never drift apart.
+#}
+{% macro seo_title() -%}
+  {%- if page and page.meta and page.meta.seo_title -%}
+    {{ page.meta.seo_title }}
+  {%- elif page and page.is_homepage -%}
+    {{ config.site_name }} — Turn Any Book Into an AI Agent Skill
+  {%- elif page and page.title -%}
+    {{ page.title | striptags }} - {{ config.site_name }}
+  {%- else -%}
+    {{ config.site_name }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% block htmltitle %}<title>{{ seo_title() | e }}</title>{% endblock %}
+
+{% block extrahead %}
+  {#- Pages that exist for humans who took a wrong turn, not for the index. -#}
+  {%- if page and page.meta and page.meta.noindex %}
+    <meta name="robots" content="noindex, follow">
+  {%- endif %}
+
+  {#-
+    A single hand-made card, shared by every page, instead of the per-page PNGs
+    the Material social plugin renders. That plugin drags in Cairo and ~30s of
+    build time to produce a flat-purple card headlined with the nav label — which
+    on the most-shared URL of the site reads, in enormous type, "Home".
+  -#}
+  {%- set og_title = seo_title() -%}
+  {%- set og_description = page.meta.description if page and page.meta and page.meta.description else config.site_description -%}
+  {%- set og_image = config.site_url ~ "assets/og-card.jpg" -%}
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name | e }}">
+  <meta property="og:title" content="{{ og_title | e }}">
+  <meta property="og:description" content="{{ og_description | e }}">
+  <meta property="og:url" content="{{ page.canonical_url | e }}">
+  <meta property="og:image" content="{{ og_image | e }}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{ config.site_name | e }} — {{ config.site_description | e }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title | e }}">
+  <meta name="twitter:description" content="{{ og_description | e }}">
+  <meta name="twitter:image" content="{{ og_image | e }}">
+{% endblock %}

@@ -1,3 +1,8 @@
+---
+description: "Answers on book-to-skill: why a skill beats dumping a book into context, how it compares to RAG and 1M-token windows, copyright, accuracy, and supported formats."
+seo_title: "book-to-skill FAQ - Skills vs Context Dumps, RAG, Copyright"
+---
+
 ## ❓ FAQ
 
 **"Can't I just dump the PDF/EPUB into my Claude project context?"**

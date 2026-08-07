@@ -1,3 +1,8 @@
+---
+description: "How book-to-skill is built: a deterministic Python extractor plus a spec-driven agent generator. Pipeline, component map, and the design tradeoffs behind both."
+seo_title: "Architecture - How book-to-skill Extracts and Generates"
+---
+
 # Architecture
 
 book-to-skill has two halves: a **deterministic extractor** (Python) and a
@@ -49,7 +54,7 @@ document into clean text + metadata; the agent turns that into a structured skil
 1. **Extract structure, not summaries** — named frameworks, decision rules,
    anti-patterns; never raw passages.
 2. **Compile-time over runtime** — pay navigation/structuring once; at query time
-   load only the relevant chapter. See [PERFORMANCE.md](PERFORMANCE.md).
+   load only the relevant chapter. See [Performance & Cost](performance.md).
 3. **On-demand chapters** — `SKILL.md` stays small; chapter files cost tokens only
    when read.
 4. **Front-loaded `SKILL.md`** — most important content first (compaction truncates
