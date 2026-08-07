@@ -7,7 +7,23 @@ import subprocess
 import sys
 from collections import Counter
 
-_PDF_PAGE_NUM = re.compile(r"^\s*(\d{1,4}|[ivxlcdm]{1,7})\s*$", re.IGNORECASE)
+# A bare page number sitting alone on a line: Arabic, or a Roman numeral of the
+# kind used to number front matter.
+#
+# The Roman branch spells out the SHAPE of a canonical numeral instead of
+# listing the letters one may contain. `[ivxlcdm]{1,7}` matched any short word
+# built from those letters, so "MIX", "CIVIL", "DIM", "MILD" and "VIVID" were
+# all silently deleted whenever they landed on a page's first or last non-blank
+# line — a one-word line is exactly what a part title or a display heading looks
+# like. Deleting real text is a worse failure than leaving a stray numeral, so
+# the pattern is now exact.
+#
+# The range is 1-99, which is what front matter uses; "c"/"d"/"m" therefore no
+# longer match on their own, so a lone "C" or "M" line is now kept as text.
+# `(?=[ivxl])` is the non-empty guard: both groups are individually optional, so
+# without it the pattern would match a blank line.
+_ROMAN_1_99 = r"(?=[ivxl])(?:xc|xl|l?x{0,3})(?:ix|iv|v?i{0,3})"
+_PDF_PAGE_NUM = re.compile(rf"^\s*(?:\d{{1,4}}|{_ROMAN_1_99})\s*$", re.IGNORECASE)
 _PDF_HYPHEN_WRAP = re.compile(r"(\w)-\n(\w)")
 
 
