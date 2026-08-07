@@ -715,6 +715,10 @@ class TestDetectStructure:
     def test_toc_traditional_chinese(self):
         assert detect_structure("目錄\n第一章")["has_toc"] is True
 
+    @pytest.mark.parametrize("header", ["目 录", "目　录", "目 次", "目　次"])
+    def test_toc_cjk_headers_allow_extracted_whitespace(self, header):
+        assert detect_structure(f"{header}\n第一章 开始\n第二章 进阶")["has_toc"] is True
+
     def test_toc_italian_sommario(self):
         assert detect_structure("Sommario\n1 Introduzione")["has_toc"] is True
 
