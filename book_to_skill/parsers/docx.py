@@ -24,6 +24,10 @@ def extract_docx_with_python_docx(docx_path: str) -> str | None:
 
 
 def extract_docx_with_zipfile(docx_path: str) -> str | None:
+    # Called unconditionally (not just via extract_docx()) so this function is
+    # self-defending even when invoked directly: raises ExtractionError on
+    # DOCTYPE/ENTITY declarations before the XML ever reaches the parser.
+    validate_docx_xml_safety(docx_path)
     try:
         import xml.etree.ElementTree as ET
 
