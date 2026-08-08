@@ -1484,7 +1484,7 @@ class TestTextEncodingDetection:
 
 
 class TestPdftotextEncoding:
-    """pdftotext output (UTF-8) is decoded as UTF-8, not the locale encoding."""
+    """pdftotext is asked for UTF-8 output, and that output is decoded as UTF-8."""
 
     def test_pdftotext_decodes_as_utf8(self, monkeypatch):
         captured = {}
@@ -1504,6 +1504,28 @@ class TestPdftotextEncoding:
         assert pdf_parser.extract_with_pdftotext("x.pdf") == "Café — naïve"
         assert captured.get("encoding") == "utf-8"
         assert captured.get("errors") == "replace"
+
+    def test_pdftotext_requests_utf8_output(self, monkeypatch):
+        """pdftotext defaults to Latin-1 output; without -enc UTF-8 all CJK is dropped."""
+        captured = {}
+
+        class _Result:
+            returncode = 0
+            stdout = "제1장 서론"
+
+        monkeypatch.setattr(pdf_parser.shutil, "which", lambda name: "/usr/bin/pdftotext")
+
+        def fake_run(cmd, **kwargs):
+            captured["argv"] = list(cmd)
+            return _Result()
+
+        monkeypatch.setattr(pdf_parser.subprocess, "run", fake_run)
+
+        assert pdf_parser.extract_with_pdftotext("x.pdf") == "제1장 서론"
+
+        argv = captured["argv"]
+        assert "-enc" in argv, f"pdftotext invoked without -enc: {argv}"
+        assert argv[argv.index("-enc") + 1] == "UTF-8"
 
 
 class TestPdftotextCleanup:
