@@ -580,9 +580,52 @@ Reload (if your agent doesn't auto-detect new skills):
   Claude Code:         restart the session
   Amp:                 restart the session
 
-Share this skill (Copilot ecosystem, optional):
-  gh skill publish $SKILLS_HOME/<skill_name>
+Share this skill (optional):
+  GitHub repo, installable on any host (Step 11):  say "publish"
+  Copilot ecosystem:  gh skill publish $SKILLS_HOME/<skill_name>
 ```
+
+---
+
+## Step 11 — Publish the generated skill to GitHub (optional)
+
+After the Step 10 report, offer once — and only if the Step 9.5 scan passed:
+
+> "Want me to publish this skill to GitHub so any Agent Skills host can install it with `npx skills add`? (private / public / skip)"
+
+If the user declines, stop here. Requirements: the `gh` CLI, authenticated (check `gh auth status`); if unavailable, print the commands below for the user to run manually instead.
+
+**Visibility is `--private` by default — this is a hard rule, not a suggestion.** Run `gh repo create` with `--private` in every case except one: the user's reply to the question above (or a later explicit instruction) literally contains the word "public". A paraphrase, an ambiguous answer, silence, or your own inference is NOT consent — when in doubt, `--private`. A private repo can be flipped public later; a public push of book-derived content cannot be un-published.
+
+**Copyright gate — always apply before creating the repo:** chapter files are synthesized summaries, not raw text, but they still derive from the source material. Per the README's Copyright & fair use policy, skills generated from **third-party copyrighted books must stay private**; offer public only when the source is the user's own writing, internal material they hold rights to, or openly licensed content — and state which case applies.
+
+If accepted:
+
+1. Add two repo files inside `$SKILLS_HOME/<skill_name>/` (never overwrite an existing file):
+   - `README.md` — the skill title, a one-paragraph description ("Agent skill generated from *<Title>* by <Author> with [book-to-skill](https://github.com/virgiliojr94/book-to-skill)"), the install command from step 3 below, the file inventory, and a note that the content is synthesized summaries, not the book text.
+   - `gemini-extension.json` — `{"name": "<skill_name>", "version": "1.0.0", "description": "<description from the SKILL.md frontmatter>"}` so Gemini CLI can load the repo as an extension.
+2. Initialize the skill folder as a git repository and create the remote (default repo name `<skill_name>`; let the user override — some prefer a `<skill_name>-skill` suffix):
+
+```bash
+cd "$SKILLS_HOME/<skill_name>"
+git init -b main
+git add -A
+git commit -m "Add <skill_name> skill"
+gh repo create <repo_name> --private --source . --push
+# --private is the default; substitute --public ONLY under the visibility rule above
+# (the user literally said "public" AND the copyright gate allows it)
+```
+
+3. Report the repo URL and the cross-host install command:
+
+```
+✅ Published: https://github.com/<owner>/<repo_name> (<private|public>)
+
+Install on any Agent Skills host:
+  npx skills add https://github.com/<owner>/<repo_name> --skill <skill_name>
+```
+
+The root-level `SKILL.md` layout is exactly what the `skills` CLI detects, so the repo is installable as-is — no restructuring needed. The local folder stays the live install for this machine; later Update/Fold-in runs can commit and push their changes to the same remote.
 
 ---
 
@@ -631,7 +674,7 @@ Update the master skill file `$SKILLS_HOME/<skill_name>/SKILL.md`:
 - **Topic Index**: Merge the new topics alphabetically. If an existing topic is also covered in the new chapters, append the new chapter links to its line (e.g. `- **Topic** → ch05, ch13`).
 
 ### 6. Scan, Cleanup, and Report
-Once the files are successfully written and merged, run **Step 9.5**, then proceed to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.
+Once the files are successfully written and merged, run **Step 9.5**, then proceed to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices. If the skill folder is a git repository with a remote (published via **Step 11**), offer to commit the update and push it.
 
 ---
 
