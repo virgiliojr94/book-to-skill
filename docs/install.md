@@ -11,6 +11,14 @@ seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
 
+**One command, any host** — the [`skills` CLI](https://skills.sh) resolves the repo, detects the root `SKILL.md`, and installs the complete skill (including `scripts/extract.py` and `tools/`) into the skills folder of every host you select:
+
+```bash
+npx skills add virgiliojr94/book-to-skill
+```
+
+Prefer a manual install? Every per-host `git clone` path below works exactly the same.
+
 **GitHub Copilot CLI** (personal skill):
 
 ```bash

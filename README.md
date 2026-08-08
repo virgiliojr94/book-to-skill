@@ -122,7 +122,10 @@ Two halves: a deterministic Python **extractor** (document → clean text + meta
 ## 📥 Install
 
 ```bash
-# Agent skill (registers /book-to-skill) — clone into your skills folder:
+# One command, any host — via the cross-agent skills CLI:
+npx skills add virgiliojr94/book-to-skill
+
+# Or manually — clone into your skills folder (registers /book-to-skill):
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 # (Copilot CLI: ~/.copilot/skills/ · Amp/cross-agent: ~/.agents/skills/)
 ```
