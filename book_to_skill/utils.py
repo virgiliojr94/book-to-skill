@@ -153,8 +153,13 @@ _KO_CHAPTER = re.compile(
     r"^\s*(?:#{1,6}\s+)?제\s*([0-9]+)\s*[장편절관](?:\s*의\s*[0-9]+)?(?:\s*$|[.:\-]|\s+\S)"
 )
 
-# Table-of-contents header lines across common languages. Anchored to a whole
-# line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
+# Table-of-contents header lines across common languages. Still anchored to a
+# whole line so an inline "the contents of this chapter" never matches, but the
+# header may carry markup: an ATX/AsciiDoc heading marker ("## Contents",
+# "== Contents"), emphasis wrappers ("**Contents**"), and a trailing colon.
+# A bare "^\s*X\s*$" missed every Markdown document, since Markdown writes its
+# ToC heading as "## Table of Contents" — the same blind spot that #91/#92 fixed
+# for chapter headings, which left this sibling pattern behind.
 _TOC_HEADERS = (
     "table of contents", "contents", "índice", "sumário",   # EN / ES / PT
     "目录", "目錄", "目次",                                   # Chinese / Japanese
@@ -164,7 +169,12 @@ _TOC_HEADERS = (
     "inhoudsopgave",                                        # Dutch
 )
 _TOC_PATTERN = re.compile(
-    r"^\s*(?:" + "|".join(re.escape(h) for h in _TOC_HEADERS) + r")\s*$",
+    r"^[ \t]*"                                                  # leading indent
+    r"(?:[#=]{1,6}[ \t]*)?"                                     # "## " / "== "
+    r"(?:\*\*|__|\*|_)?[ \t]*"                                  # opening emphasis
+    r"(?:" + "|".join(re.escape(h) for h in _TOC_HEADERS) + r")"
+    r"[ \t]*(?:\*\*|__|\*|_)?"                                  # closing emphasis
+    r"[ \t]*[:：]?[ \t]*$",                                      # optional colon
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -673,6 +683,68 @@ def print_usage() -> None:
     print(f"Supported formats: {supported_formats_message()}", file=sys.stderr)
 
 
+_WORKDIR_LOCK_NAME = ".extract.lock"
+
+
+def _lock_holder_pid(lock: Path):
+    """PID currently holding the workdir, or None if free/stale/unreadable."""
+    try:
+        pid = int(lock.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return None
+    if pid == os.getpid():
+        return None
+    try:
+        os.kill(pid, 0)          # signal 0 = liveness probe, no signal delivered
+    except ProcessLookupError:
+        return None              # ESRCH: process is gone, the lock is stale
+    except PermissionError:
+        return pid               # EPERM: it exists, we simply may not signal it
+    except (OSError, AttributeError):
+        return None              # unknown / platform without os.kill: don't block
+    return pid
+
+
+def claim_workdir(workdir: Path = None) -> Path:
+    """Take exclusive ownership of the extraction workdir.
+
+    Every run defaults to the same <tempdir>/book_skill_work, so two concurrent
+    extractions overwrite each other's full_text.txt in silence: the second
+    writer wins, and the first run then reports its own metadata against text it
+    did not produce. That is worse than failing, because nothing in the output
+    says the text is wrong. Refuse to start instead, and name the way out.
+
+    Stale locks (holder process gone) are reclaimed automatically, so a crashed
+    run does not wedge the next one.
+    """
+    workdir = OUTPUT_DIR if workdir is None else workdir
+    workdir.mkdir(parents=True, exist_ok=True)
+    lock = workdir / _WORKDIR_LOCK_NAME
+
+    holder = _lock_holder_pid(lock)
+    if holder is not None:
+        raise ExtractionError(
+            f"Extraction workdir {workdir} is already in use by PID {holder}. "
+            f"Concurrent runs would overwrite each other's full_text.txt. "
+            f"Give this run its own directory: "
+            f"BOOK_SKILL_WORKDIR=/tmp/book_skill_work-<name> <command>"
+        )
+
+    lock.write_text(str(os.getpid()), encoding="utf-8")
+    return workdir
+
+
+def release_workdir(workdir: Path = None) -> None:
+    """Drop our claim. Safe to call when the lock is absent or not ours."""
+    workdir = OUTPUT_DIR if workdir is None else workdir
+    lock = workdir / _WORKDIR_LOCK_NAME
+    try:
+        if int(lock.read_text(encoding="utf-8").strip()) == os.getpid():
+            lock.unlink()
+    except (OSError, ValueError):
+        pass
+
+
 def main():
     print_banner()
 
@@ -699,8 +771,12 @@ def main():
         print(f"ERROR: No supported files found matching: {', '.join(raw_input_paths)}", file=sys.stderr)
         sys.exit(1)
         
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
+    try:
+        claim_workdir()
+    except ExtractionError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     extracted_sources = []
     combined_texts = []
     errors = []
@@ -800,8 +876,10 @@ def main():
             "   WARN    : No table of contents detected — chapter mapping in Step 3 "
             "will rely on heading scan only, which may miss or duplicate sections."
         )
-    print(f"\n   Text -> {OUTPUT_TEXT}")
+    print(f"\n   Workdir -> {OUTPUT_DIR}")
+    print(f"   Text -> {OUTPUT_TEXT}")
     print(f"   Meta -> {OUTPUT_META}")
+    release_workdir()
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
