@@ -156,6 +156,13 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
 fi
 
+# Give this run its own extraction workdir. The default is shared across runs,
+# so two conversions in flight at once overwrite each other's full_text.txt —
+# and the loser still writes a metadata.json describing text it did not produce.
+# The extractor now refuses to start on a workdir another live run holds; this
+# keeps you from hitting that at all. Reuse this same value in Step 10.
+export BOOK_SKILL_WORKDIR="${BOOK_SKILL_WORKDIR:-$(mktemp -d -t book_skill_work-XXXXXX)}"
+
 "$PYTHON_BIN" "$SCRIPT_PATH" $INPUT_PATHS --mode <BOOK_TYPE> --install-missing ask
 ```
 
@@ -163,17 +170,17 @@ Before extraction, the script checks optional Python packages needed for the det
 
 **Tip — preflight the environment:** run `"$PYTHON_BIN" "$SCRIPT_PATH" --check` to print a per-format report of which extractors are installed and the exact command to install whatever is missing, without processing any file. Useful when a user reports a setup or quality problem.
 
-This creates:
-- `<tempdir>/book_skill_work/full_text.txt` — combined extracted text of all sources with clear visually demarcated boundaries.
-- `<tempdir>/book_skill_work/metadata.json` — overall combined size, words, pages, token counts, and a detailed list of individual processed `sources`.
+This creates, inside `$BOOK_SKILL_WORKDIR` (the run prints `Workdir ->`, `Text ->` and `Meta ->` so you can confirm where they landed):
+- `full_text.txt` — combined extracted text of all sources with clear visually demarcated boundaries.
+- `metadata.json` — overall combined size, words, pages, token counts, and a detailed list of individual processed `sources`.
 
-Read `<tempdir>/book_skill_work/metadata.json` to inspect the results.
+Read `$BOOK_SKILL_WORKDIR/metadata.json` to inspect the results.
 
 ---
 
 ## Step 2.5 — Pre-flight cost estimate
 
-Read `<tempdir>/book_skill_work/metadata.json` and present the user with an estimate **before doing any generation**:
+Read `$BOOK_SKILL_WORKDIR/metadata.json` and present the user with an estimate **before doing any generation**:
 
 ```
 📖 Sources detected: <total_sources> source(s)
@@ -196,6 +203,14 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
 
 ➡  Proceed with Full Conversion / Update? (or type "analyze only" to preview first)
 ```
+
+**First, sanity-check the chapter count — the estimate is only as good as this number.**
+
+`chapters_detected` comes from a heading scan that looks for "Chapter N" and for Markdown/AsciiDoc headings. A book that numbers its sections `1.`, `2.`, `3.`, or a PDF flattened by `pdftotext` (which carries no Markdown syntax), yields **0** while being perfectly well structured.
+
+Zero is not a small error here, it is a structural one: the output formula multiplies by this count, so a 0 deletes the entire chapter-generation term and the estimate collapses to a flat ~8,500 tokens for a book of any size. The user then approves a number that can be off by half or more, and nothing in the output looks wrong.
+
+So when `chapters_detected` is 0 or obviously disagrees with the source, do the Step 3 structure analysis **now**, before presenting the estimate, and use the count you derive from the table of contents. Say which number you used and where it came from: "the script detected 0 chapters because this book numbers its sections rather than titling them 'Chapter N'; I mapped 6 from the table of contents and estimated on that."
 
 **How to estimate:**
 - Input tokens ≈ `estimated_tokens` from metadata × 1.3 (prompts overhead per chapter pass)
@@ -245,6 +260,12 @@ Read the first 8,000 characters of the extracted `full_text.txt` to identify:
 - Approximate number of chapters
 
 Then read the Table of Contents section if present to map all chapters.
+
+**Treat the ToC as a claim about the book, not as the book.** Two things routinely go wrong, and both are silent:
+
+- **An entry may resolve to nothing.** A ToC row is just a line of text with a page number; extraction can drop the section it points at (a front/back-matter page the extractor skipped, an image-only spread, a PDF whose final pages linearize into boilerplate). Before you commit to a chapter list, confirm each entry actually has body text — `grep -n -i "<entry title>"` and check for a hit *outside* the ToC block. If an entry appears only in the ToC, it does not exist as far as you are concerned. Do not write a chapter for it and do not reconstruct one from the title, which is fabrication dressed as extraction (Quality Rule 7). Record the gap in the generated SKILL.md's Scope & Limits so the reader knows the book has a section your skill does not cover.
+
+- **Not every top-level entry is a chapter.** Front and back matter (Introduction, Preface, Foreword, Conclusion, Afterword, Appendix) often sit at the same indent level as numbered sections. Chapters should be the numbered or clearly parallel body sections. When unnumbered matter carries real content — an Introduction that states the book's core principles, say — fold that content into SKILL.md's Core Frameworks rather than minting a `ch00`, because a reader looking for those principles will look in the front matter of your skill too. When it carries only throat-clearing, drop it.
 
 **If mode is "Analyze Only":** produce the extraction report now and stop. Structure:
 ```
@@ -309,10 +330,22 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
 
 Selection rules:
-1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
+1. If **exactly one** of the host's candidate roots exists on disk, propose it — then confirm before writing (see the destination gate below).
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
 4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
+
+**Destination gate — state the full path and get agreement before any file is written.**
+
+A personal skill root is not an output folder; it is the directory the host **auto-loads every session**. Whatever lands there is live immediately, competing for triggering with everything else installed, under a `name:` you chose rather than one the user picked. If the conversion misfires, the user does not get a bad file to delete — they get a bad skill that starts firing on their prompts. That asymmetry is why this is worth one sentence of friction, even though the rest of the workflow leans toward proceeding.
+
+So before Step 6 creates anything, say plainly where it is going and what it will be called:
+
+> "This will write a new skill to `<SKILLS_HOME>/<skill_name>/` (7 files). That is your live skills directory, so it becomes active as soon as it lands. Good to go, or would you rather I stage it somewhere else first?"
+
+Honour a staging request by writing the whole skill to the path they name and reporting how to move it in later. Do not treat an earlier "yes, convert this book" as agreement about the destination — the user was answering a different question, and most people have no idea the output is auto-loaded until told.
+
+This gate is about *where the files land*, so it applies once per run and does not reopen when Step 5 offers the Update / Overwrite / Rename choice below.
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -539,15 +572,19 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
 fi
 
+# Removes exactly the workdir Step 2 exported. If BOOK_SKILL_WORKDIR is unset
+# here, Step 2's export was lost — do NOT fall back to the shared default path,
+# which may belong to another run in flight. Skip the cleanup and say so.
 "$PYTHON_BIN" - <<'PY'
 import os
 import shutil
-import tempfile
-from pathlib import Path
-shutil.rmtree(
-    os.environ.get("BOOK_SKILL_WORKDIR", Path(tempfile.gettempdir()) / "book_skill_work"),
-    ignore_errors=True,
-)
+
+workdir = os.environ.get("BOOK_SKILL_WORKDIR")
+if not workdir:
+    print("SKIPPED: BOOK_SKILL_WORKDIR unset; not guessing a path to delete.")
+else:
+    shutil.rmtree(workdir, ignore_errors=True)
+    print(f"Removed extraction workdir: {workdir}")
 PY
 ```
 
@@ -597,7 +634,7 @@ Read and parse the existing skill's files:
 - Read `$SKILLS_HOME/<skill_name>/glossary.md`, `$SKILLS_HOME/<skill_name>/patterns.md`, and `$SKILLS_HOME/<skill_name>/cheatsheet.md` to see what terms and frameworks are already indexed.
 
 ### 2. Match Content & Identify Revisions vs. Additions
-Analyze the new extracted text in `<tempdir>/book_skill_work/full_text.txt` to identify if the new content represents:
+Analyze the new extracted text in `$BOOK_SKILL_WORKDIR/full_text.txt` to identify if the new content represents:
 - **Updates/Revisions to existing chapters**: If a section of the new content directly updates or expands an existing chapter's topic, read the existing chapter file, merge the new details into it, and rewrite the file.
 - **New additions**: If the content introduces new chapters, papers, or separate sections, create **new chapter summary files** under `chapters/`. Start numbering these files after the highest existing chapter number (e.g. if the existing chapters stop at `ch12`, create `ch13-*.md`, `ch14-*.md`, etc.).
 
