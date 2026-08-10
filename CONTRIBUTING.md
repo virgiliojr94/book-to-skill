@@ -60,13 +60,26 @@ from Conventional Commit messages — do not hand-edit it:
 
 ```bash
 # 1. bump version in pyproject.toml
-# 2. regenerate CHANGELOG.md from commits (needs git-cliff installed locally)
-git-cliff --tag vX.Y.Z -o CHANGELOG.md
+# 2. prepend the new section to CHANGELOG.md (needs git-cliff locally,
+#    or run it without installing: uvx git-cliff …)
+git-cliff --tag vX.Y.Z --unreleased --prepend CHANGELOG.md
 # 3. commit, tag, push
 git commit -am "chore(release): vX.Y.Z"
 git tag vX.Y.Z && git push origin master vX.Y.Z
 # 4. publish a GitHub Release using the new CHANGELOG section as notes
 ```
+
+**Use `--unreleased --prepend`, not `-o CHANGELOG.md`.** The `-o` form
+rewrites the whole file from commit subjects, which discards the hand-written
+release notes for v1.0–v1.3 — the ones carrying measurements (`precision
+0.999 / recall 1.000`, the `~1000×` CJK undercount, the Gutenberg benchmark)
+that no commit subject contains. `--prepend` adds only the new section and
+leaves everything below it untouched.
+
+One edge case: if you also change `[changelog] header` in `cliff.toml`, that
+release's prepend writes the new header above the old one still sitting in the
+file — delete the stale copy by hand that once. Subsequent releases are clean,
+because the file then already matches the configured header.
 
 git-cliff is a dev-only tool (a single static binary; not a runtime dependency
 of book-to-skill). See `cliff.toml` for the type→section mapping.
