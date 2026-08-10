@@ -1506,6 +1506,56 @@ class TestPdftotextEncoding:
         assert captured.get("errors") == "replace"
 
 
+class TestLooksImageOnly:
+    """Scanned PDFs are caught by probing the first pages, before the chain runs."""
+
+    def _probe(self, monkeypatch, stdout, *, has_pdftotext=True):
+        captured = {}
+
+        class _Result:
+            returncode = 0
+
+        _Result.stdout = stdout
+        monkeypatch.setattr(
+            pdf_parser.shutil, "which",
+            lambda name: "/usr/bin/pdftotext" if has_pdftotext else None,
+        )
+
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            return _Result()
+
+        monkeypatch.setattr(pdf_parser.subprocess, "run", fake_run)
+        return captured
+
+    def test_no_text_in_first_pages_is_image_only(self, monkeypatch):
+        captured = self._probe(monkeypatch, "\n\f\n  \f")
+        assert pdf_parser.looks_image_only("scan.pdf") is True
+        # Only the first pages are probed, not the whole book.
+        assert "-l" in captured["cmd"] and captured["cmd"][captured["cmd"].index("-l") + 1] == "5"
+
+    def test_text_in_first_pages_is_not_image_only(self, monkeypatch):
+        self._probe(monkeypatch, "Chapter 1\nOnce upon a time")
+        assert pdf_parser.looks_image_only("book.pdf") is False
+
+    def test_without_pdftotext_probe_is_skipped(self, monkeypatch):
+        self._probe(monkeypatch, "", has_pdftotext=False)
+        assert pdf_parser.looks_image_only("scan.pdf") is False
+
+    def test_extraction_fails_early_with_ocr_hint(self, monkeypatch, tmp_path):
+        from book_to_skill import utils
+
+        pdf = tmp_path / "scan.pdf"
+        pdf.write_bytes(b"%PDF-1.4\n")
+        monkeypatch.setattr(utils, "looks_image_only", lambda path: True)
+
+        with pytest.raises(ExtractionError) as exc:
+            utils.extract_single_file(pdf, "text", "no")
+
+        assert "scanned" in str(exc.value)
+        assert "ocrmypdf" in str(exc.value)
+
+
 class TestPdftotextCleanup:
     """clean_pdftotext strips repeated headers/footers/page numbers and dehyphenates."""
 

@@ -64,6 +64,25 @@ def extract_with_pdftotext(pdf_path: str) -> str | None:
     return None
 
 
+def looks_image_only(pdf_path: str, pages: int = 5) -> bool:
+    """True when the first `pages` pages yield no extractable text — the signature
+    of a scanned/image-only PDF. Cheap pre-flight so a scan fails in a second
+    instead of after the whole extraction chain has run. Best-effort: without
+    pdftotext it reports False and the normal chain (plus the final empty-text
+    guard) still applies."""
+    if not shutil.which("pdftotext"):
+        return False
+    try:
+        result = subprocess.run(
+            ["pdftotext", "-f", "1", "-l", str(pages), os.path.abspath(pdf_path), "-"],
+            capture_output=True, text=True, timeout=30,
+            encoding="utf-8", errors="replace",
+        )
+        return result.returncode == 0 and not result.stdout.strip()
+    except Exception:
+        return False
+
+
 def extract_with_pypdf(pdf_path: str) -> str | None:
     try:
         import pypdf

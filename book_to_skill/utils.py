@@ -38,6 +38,7 @@ from book_to_skill.parsers.pdf import (
     extract_with_pdftotext,
     extract_with_pypdf,
     extract_with_pdfminer,
+    looks_image_only,
     count_pages,
 )
 from book_to_skill.parsers.epub import (
@@ -533,10 +534,17 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         pages_label = "spine_items"
     elif ext == ".pdf":
         print(f"Extracting PDF: {input_str}")
+        if looks_image_only(input_str):
+            raise ExtractionError(
+                f"{input_path.name} looks like a scanned (image-only) PDF: its first pages "
+                "contain no extractable text, only images.\n"
+                "Run OCR on it first, then retry:\n"
+                "  ocrmypdf input.pdf output.pdf"
+            )
         if extraction_mode == "technical":
             print("Mode: technical — using Docling (layout-aware)...", end=" ", flush=True)
             text = extract_with_docling(input_str)
-            if text:
+            if text and text.strip():
                 method = "docling"
                 print("OK")
             else:
@@ -547,22 +555,22 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
             print("Mode: text — using pdftotext...")
             print("Trying pdftotext...", end=" ", flush=True)
             text = extract_with_pdftotext(input_str)
-            
-            if text:
+
+            if text and text.strip():
                 method = "pdftotext"
                 print("OK")
             else:
                 print("not available")
                 print("Trying pypdf...", end=" ", flush=True)
                 text = extract_with_pypdf(input_str)
-                if text:
+                if text and text.strip():
                     method = "pypdf"
                     print("OK")
                 else:
                     print("not available")
                     print("Trying pdfminer.six...", end=" ", flush=True)
                     text = extract_with_pdfminer(input_str)
-                    if text:
+                    if text and text.strip():
                         method = "pdfminer"
                         print("OK")
                     else:
