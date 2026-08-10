@@ -2,6 +2,12 @@
 # messages so PRs never edit the changelog by hand (no more merge-conflict churn
 # on a shared [Unreleased] section). Keep a Changelog style; grouped by type.
 # Regenerate at release time:  git-cliff --tag vX.Y.Z -o CHANGELOG.md
+#
+# The entry line does NOT append commit.remote.pr_number: PRs land here by
+# squash merge, and GitHub already puts "(#N)" at the end of the squashed
+# commit subject. Appending it again produced "… (#101) (#101)", and only for
+# the commits whose PR git-cliff could resolve — so the generated file differed
+# depending on whether the person cutting the release had GitHub API access.
 
 [changelog]
 header = """
@@ -23,7 +29,7 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | upper_first }}
 {% for commit in commits %}\
-- {{ commit.message | upper_first }}{% if commit.remote.pr_number %} (#{{ commit.remote.pr_number }}){% endif %}
+- {{ commit.message | upper_first }}
 {% endfor %}\
 {% endfor %}\n
 """
