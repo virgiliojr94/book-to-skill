@@ -7,6 +7,20 @@ import sys
 from book_to_skill.parsers.html import _HTMLTextExtractor
 
 
+_IMAGE_EXTENSIONS = (
+    ".avif",
+    ".bmp",
+    ".gif",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".svg",
+    ".tif",
+    ".tiff",
+    ".webp",
+)
+
+
 def extract_with_ebooklib(epub_path: str) -> str | None:
     try:
         import ebooklib
@@ -121,5 +135,17 @@ def count_epub_chapters(epub_path: str) -> int:
             opf_text = zf.read(opf_path).decode("utf-8", errors="replace")
             return len(re.findall(r'<itemref\b', opf_text))
     except Exception:
+        return 0
+
+
+def count_epub_images(epub_path: str) -> int:
+    """Count image members whose content the text-only EPUB parsers omit."""
+    try:
+        with zipfile.ZipFile(epub_path) as zf:
+            return sum(
+                not info.is_dir() and info.filename.lower().endswith(_IMAGE_EXTENSIONS)
+                for info in zf.infolist()
+            )
+    except (OSError, zipfile.BadZipFile):
         return 0
 
