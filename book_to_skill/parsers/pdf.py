@@ -10,6 +10,41 @@ from collections import Counter
 _PDF_PAGE_NUM = re.compile(r"^\s*(\d{1,4}|[ivxlcdm]{1,7})\s*$", re.IGNORECASE)
 _PDF_HYPHEN_WRAP = re.compile(r"(\w)-\n(\w)")
 
+# A wide run of spaces *inside* a line of text is the gutter between columns.
+# Four is above the widest inter-word justification pdftotext emits and below
+# the narrowest real gutter.
+_PDF_GUTTER = re.compile(r"\S {4,}\S")
+
+# Fraction of substantive lines that must show a gutter before the document is
+# treated as multi-column. A single-column PDF scores near zero; a
+# three-column government publication scores ~0.85.
+_MULTICOLUMN_THRESHOLD = 0.35
+
+# Short lines are headings, page furniture and list stubs; they pick up wide
+# gaps by accident. Only lines long enough to span a column are evidence.
+_MIN_GUTTER_LINE = 40
+_GUTTER_SAMPLE = 4000
+
+
+def looks_multicolumn(layout_text: str) -> bool:
+    """Does ``pdftotext -layout`` output come from a multi-column document?
+
+    ``-layout`` preserves horizontal position, which is what keeps table
+    columns aligned — and is exactly what makes a multi-column page unusable:
+    every emitted line spans all columns, so consecutive sentences from
+    different columns interleave.
+
+    This is a structural signal, not layout analysis: two runs of real text
+    separated by a wide space run means two blocks sat side by side.
+    """
+    lines = [ln for ln in layout_text.splitlines()
+             if len(ln.strip()) > _MIN_GUTTER_LINE]
+    if not lines:
+        return False
+    sample = lines[:_GUTTER_SAMPLE]
+    hits = sum(1 for ln in sample if _PDF_GUTTER.search(ln))
+    return hits / len(sample) >= _MULTICOLUMN_THRESHOLD
+
 
 def clean_pdftotext(text: str) -> str:
     """Clean pdftotext '-layout' output (pages are form-feed delimited): drop
@@ -47,18 +82,58 @@ def clean_pdftotext(text: str) -> str:
     return _PDF_HYPHEN_WRAP.sub(r"\1\2", text)
 
 
+def _pdftotext(pdf_path: str, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["pdftotext", *args, pdf_path, "-"],
+        capture_output=True, text=True, timeout=120,
+        encoding="utf-8", errors="replace",
+    )
+
+
 def extract_with_pdftotext(pdf_path: str) -> str | None:
+    """Extract a PDF, choosing ``-layout`` only when it will not scramble text.
+
+    ``-layout`` is the right default for a single-column document: it keeps
+    table columns aligned. On a multi-column document it destroys reading
+    order, because each emitted line spans every column. Measured on IRS
+    Publication 17 (142 pages, three columns), searching both outputs for the
+    same phrase:
+
+        -layout        'standard deduction or if you    (QOF). Taxpayers who made a'
+        reading order  'Standard deduction amount increased. For 2025, the
+                        standard deduction amount has been increased for all filers'
+
+    The first is three columns welded together, and it is what every later
+    step reads. ``-layout`` also pads each line to preserve position, which on
+    that document produced 25,266,249 characters at 96.8% whitespace against
+    957,757 in reading order — 26x larger for text that is also wrong.
+
+    So: run ``-layout`` first (unchanged for the single-column majority), and
+    only re-run without it when the output looks multi-column. The second
+    subprocess is paid solely by documents that need it.
+    """
     if not shutil.which("pdftotext"):
         return None
     try:
         pdf_path = os.path.abspath(pdf_path)
-        result = subprocess.run(
-            ["pdftotext", "-layout", pdf_path, "-"],
-            capture_output=True, text=True, timeout=120,
-            encoding="utf-8", errors="replace",
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return clean_pdftotext(result.stdout)
+        result = _pdftotext(pdf_path, "-layout")
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+
+        if looks_multicolumn(result.stdout):
+            reading_order = _pdftotext(pdf_path)
+            if reading_order.returncode == 0 and reading_order.stdout.strip():
+                # ASCII only: this goes to stderr from the parser, which does
+                # not get cli.py's UTF-8 reconfigure on a legacy Windows console.
+                print("  [info] multi-column layout detected - using reading "
+                      "order instead of -layout", file=sys.stderr)
+                return clean_pdftotext(reading_order.stdout)
+            # Falling back to -layout output is still better than nothing;
+            # say so rather than silently returning scrambled text.
+            print("  [warn] multi-column layout detected but the reading-order "
+                  "pass failed; text may be interleaved", file=sys.stderr)
+
+        return clean_pdftotext(result.stdout)
     except Exception as e:
         print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None
