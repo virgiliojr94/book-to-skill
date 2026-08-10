@@ -63,6 +63,22 @@ book-to-skill is built for a different job: you want to go deep on a specific to
 
 ---
 
+**"My PDF is a scan and extraction stops right away. Why?"**
+
+Because a scanned PDF is a stack of page images — there is no text in it to extract. Every tool in the PDF chain reads a text layer, so a scan yields nothing no matter which one runs.
+
+The extractor checks the first pages and stops there with that explanation. That check exists so the failure costs you a second instead of a full pass over a 400-page book that ends in an empty skill.
+
+Run OCR first, then convert the output:
+
+```bash
+ocrmypdf input.pdf output.pdf
+```
+
+book-to-skill does not run OCR itself, and that is deliberate: it would mean a heavy dependency and a slow, lossy step for every user, to serve a case that a dedicated tool already handles better. The same applies to figures — text baked into diagrams and charts is not extracted from any format.
+
+---
+
 
 ---
 

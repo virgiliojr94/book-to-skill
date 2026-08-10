@@ -158,6 +158,12 @@ The extractor tries tools in order per format and uses the first available. If n
 
 > Before extraction begins, the skill asks you whether the book is **technical** or **text-heavy** and picks the right tool automatically. Docling preserves markdown tables and code blocks; pdftotext is faster for prose-only books.
 
+> **Scanned PDFs need OCR first.** A PDF that is page images with no text layer — a photographed or scanned book — has nothing for these tools to extract. The extractor checks the first pages and stops immediately with an explanation, rather than working through the whole book to produce an empty skill. Run OCR yourself, then convert the result:
+>
+> ```bash
+> ocrmypdf input.pdf output.pdf
+> ```
+
 **EPUB:**
 
 | Tool | Install | Quality |
