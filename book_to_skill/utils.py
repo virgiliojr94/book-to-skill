@@ -154,6 +154,25 @@ _KO_CHAPTER = re.compile(
     r"^\s*(?:#{1,6}\s+)?제\s*([0-9]+)\s*[장편절관](?:\s*의\s*[0-9]+)?(?:\s*$|[.:\-]|\s+\S)"
 )
 
+# Persian chapter headings: "فصل ۱", "فصل اول", "بخش ۲: مفاهیم", "فصل ۱۰".
+# Labels are فصل (chapter) and بخش (section/part). Digits may be ASCII, Persian
+# (U+06F0–U+06F9), or Arabic-Indic (U+0660–U+0669); int() parses all three.
+# Word numerals cover the common 1–10 ordinals only (no "بیست و یکم" composition).
+# Markdown "#" prefixes are handled by `_chapter_number`'s second pass (Issue #91),
+# not duplicated here. Trailing guard mirrors Korean: EOL, punctuation, or a
+# spaced title — Persian has no letter case for a Latin-style `_HEADING_TAIL`.
+_FA_WORD_NUMERALS = {
+    "اول": 1, "دوم": 2, "سوم": 3, "چهارم": 4, "پنجم": 5,
+    "ششم": 6, "هفتم": 7, "هشتم": 8, "نهم": 9, "دهم": 10,
+}
+_FA_DIGITS = "۰-۹٠-٩"  # Persian then Arabic-Indic
+_FA_WORD_ALT = "|".join(_FA_WORD_NUMERALS)
+_FA_CHAPTER = re.compile(
+    rf"^\s*(?:فصل|بخش)\s+"
+    rf"(?:([0-9{_FA_DIGITS}]+)|({_FA_WORD_ALT}))"
+    rf"(?:\s*$|[.:\-—–]|[:：]\s|\s+\S)"
+)
+
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
 _TOC_HEADERS = (
@@ -313,6 +332,12 @@ def _match_chapter_number(line: str) -> int | None:
     km = _KO_CHAPTER.match(s)
     if km:
         return int(km.group(1))
+    fm = _FA_CHAPTER.match(s)
+    if fm:
+        if fm.group(1):
+            n = int(fm.group(1))
+            return n if 1 <= n <= 99 else None
+        return _FA_WORD_NUMERALS[fm.group(2)]
     return None
 
 
@@ -322,7 +347,8 @@ def _chapter_number(line: str) -> int | None:
     Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
     ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
-    "## บทที่ ๑"), and Korean ("제1장 총칙", "## 제4장 근로시간과 휴식")
+    "## บทที่ ๑"), Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
+    Persian ("فصل ۱", "فصل اول", "بخش ۲: مفاهیم", "## فصل ۱: مقدمه")
     heading styles — each optionally preceded by a Markdown/AsciiDoc heading
     marker ("## Chapter 1" is a chapter heading just like "Chapter 1").
     """
