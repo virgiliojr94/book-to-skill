@@ -200,7 +200,7 @@ _FA_ORDINAL_KEYS = sorted(_FA_ORDINALS, key=len, reverse=True)
 _FA_LABEL_REST = re.compile(r"^\s*(?:فصل|بخش)\s+(.*)$")
 _FA_DIGIT_HEAD = re.compile(rf"^([0-9{_FA_DIGITS}]+)(.*)$")
 # Digit form: same idea as the Korean trailing guard (no Latin case to lean on).
-_FA_DIGIT_TAIL = re.compile(r"^(?:\s*$|[.:\-—–：:]|\s+\S)")
+_FA_DIGIT_TAIL = re.compile(r"^(?:\s*$|[.:\-—–：]|\s+\S)")
 
 
 def _fa_chapter_number(s: str) -> int | None:
