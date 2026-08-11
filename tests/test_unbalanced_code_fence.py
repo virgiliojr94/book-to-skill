@@ -128,6 +128,54 @@ class TestFenceCharacterMustMatch:
         assert _closed_fence_line_numbers(lines) == {0, 1, 2}
 
 
+class TestAcceptedOverCountCost:
+    """Pins the cost of the trade this fix makes, so it changes deliberately.
+
+    Leaving an unterminated fence's contents in the scan means code lines are
+    read as prose, and some of them can look like headings. The ATX branch
+    rejects digit-led and all-punctuation titles, but the **setext** branch has
+    no equivalent guard: any line sitting above a run of `-` or `=` becomes a
+    heading. Underlined section titles are common in `--help` output, which is
+    exactly what lives inside code fences in technical Markdown.
+
+    The over-count is accepted on purpose. An extra section is visible and
+    survivable; a truncation that silently drops most of a book's structure is
+    neither. If this number ever changes it should change deliberately, so the
+    current value is asserted rather than described.
+    """
+
+    HELP_OUTPUT_IN_UNCLOSED_FENCE = (
+        "# Handbook\n\n"
+        "## Alpha\na\n\n"
+        "## Beta\n"
+        "```\n"
+        "$ tool --help\n"
+        "Options\n"
+        "-------\n"
+        "more code\n\n"
+        "## Gamma\ng\n\n"
+        "## Delta\nd\n"
+    )
+
+    def test_over_counts_by_one_setext_promotion(self):
+        # 4 real sections (Alpha, Beta, Gamma, Delta) + "Options", promoted by
+        # the "-------" underneath it once the fence is no longer suppressing.
+        assert _structural_chapter_count(self.HELP_OUTPUT_IN_UNCLOSED_FENCE) == 5
+
+    def test_every_real_section_survives(self):
+        """The point of the trade: nothing real is lost, unlike on master."""
+        # On master this document reports 2 — Gamma and Delta are swallowed.
+        assert _structural_chapter_count(self.HELP_OUTPUT_IN_UNCLOSED_FENCE) >= 4
+
+    def test_same_document_with_the_fence_closed_is_exact(self):
+        """With a well-formed fence there is no over-count at all."""
+        closed = self.HELP_OUTPUT_IN_UNCLOSED_FENCE.replace(
+            "more code\n\n", "more code\n```\n\n"
+        )
+
+        assert _structural_chapter_count(closed) == 4
+
+
 class TestExistingBehaviourPreserved:
     def test_bare_digit_titles_still_rejected(self):
         text = "# Book\n\n## 5 Setup\na\n\n## 6 Teardown\nb\n\n## Real One\nc\n"
