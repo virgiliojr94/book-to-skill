@@ -52,9 +52,17 @@ from book_to_skill.sanitize import sanitize_extracted_text
 # CJK codepoints: ideographs + extensions, kana, hangul, CJK punctuation, and
 # fullwidth forms. These are not whitespace-delimited, so counting "words" on a
 # Chinese/Japanese book collapses it to a handful of tokens; count them directly.
+#
+# The last range is the supplementary plane, U+20000-U+3134F — Unified
+# Ideographs Extension B through I. Classical Chinese, Cantonese, Hong Kong and
+# Taiwan place/personal names, and Japanese 人名用漢字 all draw on it. Without it
+# those characters fell through to the whitespace-word branch, where a
+# space-less run of them counts as a single "word": the same ~1000x undercount
+# #103 fixed for the BMP, one plane up.
 _CJK_RE = re.compile(
     r"[　-〿぀-ヿ㐀-䶿一-鿿"
-    r"가-힣豈-﫿＀-￯]"
+    r"가-힣豈-﫿＀-￯"
+    r"\U00020000-\U0003134F]"
 )
 
 
