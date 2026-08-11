@@ -154,24 +154,73 @@ _KO_CHAPTER = re.compile(
     r"^\s*(?:#{1,6}\s+)?제\s*([0-9]+)\s*[장편절관](?:\s*의\s*[0-9]+)?(?:\s*$|[.:\-]|\s+\S)"
 )
 
-# Persian chapter headings: "فصل ۱", "فصل اول", "بخش ۲: مفاهیم", "فصل ۱۰".
-# Labels are فصل (chapter) and بخش (section/part). Digits may be ASCII, Persian
-# (U+06F0–U+06F9), or Arabic-Indic (U+0660–U+0669); int() parses all three.
-# Word numerals cover the common 1–10 ordinals only (no "بیست و یکم" composition).
-# Markdown "#" prefixes are handled by `_chapter_number`'s second pass (Issue #91),
-# not duplicated here. Trailing guard mirrors Korean: EOL, punctuation, or a
-# spaced title — Persian has no letter case for a Latin-style `_HEADING_TAIL`.
-_FA_WORD_NUMERALS = {
-    "اول": 1, "دوم": 2, "سوم": 3, "چهارم": 4, "پنجم": 5,
-    "ششم": 6, "هفتم": 7, "هشتم": 8, "نهم": 9, "دهم": 10,
-}
+# Persian chapter headings: "فصل ۱", "فصل اول", "بخش ۲: مفاهیم",
+# "فصل بیست و یکم", "فصل اولجایی…" (PDF glue). Labels are فصل / بخش.
+# Digits may be ASCII, Persian (U+06F0–U+06F9), or Arabic-Indic (U+0660–U+0669);
+# int() parses all three. Word numerals use a small ordinal map (1–34) with
+# longest-prefix matching so compounds ("بیست و یکم") and teens ("یازدهم") stay
+# maintainable — no giant alternation regex. Markdown "#" prefixes are handled
+# by `_chapter_number`'s second pass (Issue #91). Digit tails still require EOL /
+# punctuation / spaced title; word numerals also accept a glued title letter
+# because PDF extractors often drop the space after the ordinal.
 _FA_DIGITS = "۰-۹٠-٩"  # Persian then Arabic-Indic
-_FA_WORD_ALT = "|".join(_FA_WORD_NUMERALS)
-_FA_CHAPTER = re.compile(
-    rf"^\s*(?:فصل|بخش)\s+"
-    rf"(?:([0-9{_FA_DIGITS}]+)|({_FA_WORD_ALT}))"
-    rf"(?:\s*$|[.:\-—–]|[:：]\s|\s+\S)"
+_FA_ONES = (
+    "اول", "دوم", "سوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم",
 )
+# Ones used after "بیست و" / "سی و" (یکم, not اول).
+_FA_COMPOUND_ONES = (
+    "یکم", "دوم", "سوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم",
+)
+_FA_TEENS = (
+    "یازدهم", "دوازدهم", "سیزدهم", "چهاردهم", "پانزدهم",
+    "شانزدهم", "هفدهم", "هجدهم", "نوزدهم",
+)
+
+
+def _fa_ordinal_map() -> dict[str, int]:
+    """Persian chapter ordinals 1–34, including common spelling variants."""
+    m: dict[str, int] = {}
+    for i, w in enumerate(_FA_ONES, 1):
+        m[w] = i
+    for i, w in enumerate(_FA_TEENS, 11):
+        m[w] = i
+    m["هیجدهم"] = 18  # common alternate spelling of هجدهم
+    m["بیستم"] = 20
+    m["سی ام"] = 30
+    m["سی‌ام"] = 30  # ZWNJ spelling common in Persian typography
+    for i, w in enumerate(_FA_COMPOUND_ONES, 1):
+        m[f"بیست و {w}"] = 20 + i
+        m[f"سی و {w}"] = 30 + i
+    return m
+
+
+_FA_ORDINALS = _fa_ordinal_map()
+# Longest first so "چهاردهم" wins over "چهارم", "بیست و یکم" over nothing shorter.
+_FA_ORDINAL_KEYS = sorted(_FA_ORDINALS, key=len, reverse=True)
+_FA_LABEL_REST = re.compile(r"^\s*(?:فصل|بخش)\s+(.*)$")
+_FA_DIGIT_HEAD = re.compile(rf"^([0-9{_FA_DIGITS}]+)(.*)$")
+# Digit form: same idea as the Korean trailing guard (no Latin case to lean on).
+_FA_DIGIT_TAIL = re.compile(r"^(?:\s*$|[.:\-—–：:]|\s+\S)")
+
+
+def _fa_chapter_number(s: str) -> int | None:
+    """Return a Persian chapter number (1–99 digits / 1–34 words) or None."""
+    m = _FA_LABEL_REST.match(s)
+    if not m:
+        return None
+    rest = m.group(1)
+    dm = _FA_DIGIT_HEAD.match(rest)
+    if dm:
+        n = int(dm.group(1))
+        if 1 <= n <= 99 and _FA_DIGIT_TAIL.match(dm.group(2)) is not None:
+            return n
+        return None
+    for key in _FA_ORDINAL_KEYS:
+        if rest.startswith(key):
+            # Word form: EOL, punctuation, whitespace, or PDF-glued title text.
+            return _FA_ORDINALS[key]
+    return None
+
 
 # Table-of-contents header lines across common languages. Anchored to a whole
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
@@ -332,12 +381,9 @@ def _match_chapter_number(line: str) -> int | None:
     km = _KO_CHAPTER.match(s)
     if km:
         return int(km.group(1))
-    fm = _FA_CHAPTER.match(s)
-    if fm:
-        if fm.group(1):
-            n = int(fm.group(1))
-            return n if 1 <= n <= 99 else None
-        return _FA_WORD_NUMERALS[fm.group(2)]
+    fa = _fa_chapter_number(s)
+    if fa is not None:
+        return fa
     return None
 
 
@@ -348,9 +394,10 @@ def _chapter_number(line: str) -> int | None:
     ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
     "## บทที่ ๑"), Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
-    Persian ("فصل ۱", "فصل اول", "بخش ۲: مفاهیم", "## فصل ۱: مقدمه")
-    heading styles — each optionally preceded by a Markdown/AsciiDoc heading
-    marker ("## Chapter 1" is a chapter heading just like "Chapter 1").
+    Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
+    "## فصل ۱: مقدمه", PDF-glued "فصل اولجایی…") heading styles — each
+    optionally preceded by a Markdown/AsciiDoc heading marker
+    ("## Chapter 1" is a chapter heading just like "Chapter 1").
     """
     match = _match_chapter_number(line)
     if match is not None:

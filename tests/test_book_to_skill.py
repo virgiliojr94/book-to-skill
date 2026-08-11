@@ -674,6 +674,16 @@ class TestDetectStructure:
 
     # ── Persian chapter headings ───────────────────────────────────────────
 
+    # Canonical ordinals 1–34 used by the FA word-numeral map (integration fixture).
+    _FA_ORDINAL_1_TO_34 = (
+        "اول", "دوم", "سوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم",
+        "یازدهم", "دوازدهم", "سیزدهم", "چهاردهم", "پانزدهم", "شانزدهم", "هفدهم",
+        "هجدهم", "نوزدهم", "بیستم",
+        "بیست و یکم", "بیست و دوم", "بیست و سوم", "بیست و چهارم", "بیست و پنجم",
+        "بیست و ششم", "بیست و هفتم", "بیست و هشتم", "بیست و نهم", "سی ام",
+        "سی و یکم", "سی و دوم", "سی و سوم", "سی و چهارم",
+    )
+
     def test_persian_digit_scripts(self):
         """`فصل N` with Persian, Arabic-Indic, and ASCII digits."""
         from book_to_skill.utils import _chapter_number
@@ -684,21 +694,34 @@ class TestDetectStructure:
         assert _chapter_number("فصل ۱۰") == 10
         assert _chapter_number("فصل ١٠") == 10
         assert _chapter_number("فصل 10") == 10
+        assert _chapter_number("فصل ۳۴") == 34
 
-    def test_persian_word_numerals(self):
-        """`فصل اول` … `فصل دهم` map to integers 1–10."""
+    def test_persian_word_numerals_1_to_34(self):
+        """Word ordinals `اول` … `سی و چهارم` map to integers 1–34."""
         from book_to_skill.utils import _chapter_number
 
-        assert _chapter_number("فصل اول") == 1
-        assert _chapter_number("فصل دوم") == 2
-        assert _chapter_number("فصل سوم") == 3
-        assert _chapter_number("فصل چهارم") == 4
-        assert _chapter_number("فصل پنجم") == 5
-        assert _chapter_number("فصل ششم") == 6
-        assert _chapter_number("فصل هفتم") == 7
-        assert _chapter_number("فصل هشتم") == 8
-        assert _chapter_number("فصل نهم") == 9
-        assert _chapter_number("فصل دهم") == 10
+        for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1):
+            assert _chapter_number(f"فصل {word}") == n, word
+        # Common ZWNJ spelling of 30.
+        assert _chapter_number("فصل سی‌ام") == 30
+
+    def test_persian_compound_word_numerals(self):
+        """Explicit compound forms used in longer Persian books."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("فصل بیست و یکم") == 21
+        assert _chapter_number("فصل بیست و نهم") == 29
+        assert _chapter_number("فصل سی و یکم") == 31
+        assert _chapter_number("فصل سی و چهارم") == 34
+
+    def test_persian_hejdahom_spelling_variants(self):
+        """Both common spellings of 18: هجدهم and هیجدهم."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("فصل هجدهم") == 18
+        assert _chapter_number("فصل هجدهم: یک جاسوس") == 18
+        assert _chapter_number("فصل هیجدهم") == 18
+        assert _chapter_number("فصل هیجدهم: یک جاسوس") == 18
 
     def test_persian_bakhsh_section(self):
         """`بخش` (section/part) is accepted with digits or word numerals."""
@@ -708,15 +731,17 @@ class TestDetectStructure:
         assert _chapter_number("بخش ٢") == 2
         assert _chapter_number("بخش 2") == 2
         assert _chapter_number("بخش دوم") == 2
+        assert _chapter_number("بخش سی و چهارم") == 34
 
     def test_persian_titled_headings(self):
-        """Punctuation / dash titles after the numeral are still headings."""
+        """Punctuation / dash / spaced titles after the numeral are headings."""
         from book_to_skill.utils import _chapter_number
 
         assert _chapter_number("فصل ۱: مقدمه") == 1
         assert _chapter_number("فصل اول — مبانی برنامه‌نویسی") == 1
         assert _chapter_number("فصل ۲. اصول") == 2
         assert _chapter_number("بخش ۳: مفاهیم") == 3
+        assert _chapter_number("فصل بیست و یکم پایان سفر") == 21
 
     def test_persian_markdown_prefix(self):
         """Markdown heading prefixes are stripped by `_chapter_number`."""
@@ -724,15 +749,31 @@ class TestDetectStructure:
 
         assert _chapter_number("## فصل ۱: مقدمه") == 1
         assert _chapter_number("### فصل دوم") == 2
+        assert _chapter_number("### فصل سی و چهارم خداحافظ فرانسه") == 34
+
+    def test_persian_pdf_glued_title(self):
+        """PDF extractors often drop the space between ordinal and title."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("فصل اولجایی که به نظر میرسید...") == 1
+        assert _chapter_number("فصل دومشهادت یک جنایتکار علیه خودش") == 2
+        assert _chapter_number("فصل سومعدالت") == 3
+        assert _chapter_number("فصل ششممحاکمه‌ای دیگر") == 6
+        assert _chapter_number("فصل هشتمبی‌احتیاطی در احتیاط") == 8
+        assert _chapter_number("فصل سی و چهارمخداحافظ، فرانسه") == 34
 
     def test_persian_prose_is_not_a_chapter_heading(self):
         """Inline / incomplete `فصل` references must not count as headings."""
         from book_to_skill.utils import _chapter_number
 
         assert _chapter_number("در فصل ۲ این موضوع را بررسی می‌کنیم") is None
+        assert _chapter_number("در فصل دوم این موضوع را بررسی می‌کنیم") is None
         assert _chapter_number("این فصل اول یک توضیح است") is None
         assert _chapter_number("فصل") is None
         assert _chapter_number("بخش") is None
+        # Incomplete compounds are not headings.
+        assert _chapter_number("فصل بیست") is None
+        assert _chapter_number("فصل سی و") is None
         # Existing hard length guard in `_match_chapter_number`.
         assert _chapter_number("فصل ۱: " + ("الف" * 40)) is None
 
@@ -743,6 +784,17 @@ class TestDetectStructure:
         assert result["chapters_detected"] == 3
         # Non-empty sample proves the numeric path, not structural Markdown.
         assert result["chapter_headings_sample"] == ["فصل ۱", "فصل ۲", "فصل ۳"]
+
+    def test_detects_persian_word_chapters_1_to_34(self):
+        """All 34 word-numeral headings count as distinct numeric chapters."""
+        text = "\n".join(
+            f"فصل {word}\nمحتوا فصل {n}."
+            for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1)
+        )
+        result = detect_structure(text)
+        assert result["chapters_detected"] == 34
+        assert result["chapter_headings_sample"]  # numeric path, not MD fallback
+        assert result["chapter_headings_sample"][0] == "فصل اول"
 
     def test_roman_footnote_reference_is_not_a_chapter(self):
         """Scholarly cross-references must stay rejected after the Roman change."""
