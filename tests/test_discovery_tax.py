@@ -120,3 +120,12 @@ class TestDiscoveryTaxOrdering:
         assert skill < d_best < dump, (skill, d_best, dump)
         assert d_best <= d_loop, (d_best, d_loop)
         assert skill < d_loop
+
+
+def test_extract_toc_detects_non_english_toc():
+    # German ToC: the stale local regex missed it and returned the whole front
+    # matter; reusing the extractor's _TOC_PATTERN slices from the ToC heading.
+    front = "Cover junk\nlots of preamble\n\nInhaltsverzeichnis\nKapitel 1 .. 5\nKapitel 2 .. 9\n"
+    toc = dt.extract_toc(front)
+    assert toc.lstrip().startswith("Inhaltsverzeichnis")
+    assert len(toc) < len(front)  # not the whole-front-matter fallback
