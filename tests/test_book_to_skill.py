@@ -712,6 +712,10 @@ class TestDetectStructure:
     def test_toc_spanish_accented(self):
         assert detect_structure("Índice\n1 Introducción")["has_toc"] is True
 
+    def test_toc_portuguese_unaccented(self):
+        # OCR / accent-stripped Brazilian PDFs leave "Sumario" without the accent.
+        assert detect_structure("Sumario\n1 Introdução")["has_toc"] is True
+
     def test_toc_traditional_chinese(self):
         assert detect_structure("目錄\n第一章")["has_toc"] is True
 

@@ -158,6 +158,7 @@ _KO_CHAPTER = re.compile(
 # line (^\s*X\s*$) so an inline "the contents of this chapter" never matches.
 _TOC_HEADERS = (
     "table of contents", "contents", "índice", "sumário",   # EN / ES / PT
+    "sumario",                                              # PT (no accent — OCR / accent-stripped, like indice below)
     "table des matières",                                   # French
     "inhaltsverzeichnis",                                   # German
     "indice", "sommario",                                   # Italian (no accent — distinct from índice above)
