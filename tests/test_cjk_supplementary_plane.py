@@ -63,8 +63,14 @@ class TestSupplementaryPlaneCounted:
             (0x2A700, "Ext C start"),
             (0x2B740, "Ext D start"),
             (0x2CEB0, "Ext E start"),
+            (0x2EBF0, "Ext I start"),
             (0x30000, "Ext G start"),
-            (0x3134A, "Ext I range"),
+            (0x3134E, "Ext G end"),
+            # Extension H sits ABOVE Extension G, so a range that stopped at the
+            # end of G let 4,192 assigned ideographs fall through. Both ends are
+            # probed so the plane boundary cannot regress to a block boundary.
+            (0x31350, "Ext H start"),
+            (0x323AF, "Ext H end"),
         ],
     )
     def test_extension_ranges_are_covered(self, codepoint, name):

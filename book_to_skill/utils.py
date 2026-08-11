@@ -53,8 +53,12 @@ from book_to_skill.sanitize import sanitize_extracted_text
 # fullwidth forms. These are not whitespace-delimited, so counting "words" on a
 # Chinese/Japanese book collapses it to a handful of tokens; count them directly.
 #
-# The last range is the supplementary plane, U+20000-U+3134F — Unified
-# Ideographs Extension B through I. Classical Chinese, Cantonese, Hong Kong and
+# The last range is Planes 2 and 3 (U+20000-U+3FFFF), the ideographic
+# supplementary planes, taken end to end rather than enumerated block by block
+# so a future extension does not silently fall through the way Extension H
+# (U+31350-U+323AF) did. Nothing non-ideographic lives up here: emoji,
+# mathematical alphanumerics and regional indicators are all in Plane 1, which
+# this range does not touch. Classical Chinese, Cantonese, Hong Kong and
 # Taiwan place/personal names, and Japanese 人名用漢字 all draw on it. Without it
 # those characters fell through to the whitespace-word branch, where a
 # space-less run of them counts as a single "word": the same ~1000x undercount
@@ -62,7 +66,7 @@ from book_to_skill.sanitize import sanitize_extracted_text
 _CJK_RE = re.compile(
     r"[　-〿぀-ヿ㐀-䶿一-鿿"
     r"가-힣豈-﫿＀-￯"
-    r"\U00020000-\U0003134F]"
+    r"\U00020000-\U0003FFFF]"
 )
 
 
