@@ -39,7 +39,13 @@ def clean_pdftotext(text: str) -> str:
             nb = [ln.strip() for ln in p.splitlines() if ln.strip()]
             if nb:
                 edge[nb[0]] += 1
-                edge[nb[-1]] += 1
+                # On a single-line page the first and last line are the same
+                # line. Counting it twice would let one page cast two votes
+                # toward the "more than half the pages" threshold below, so a
+                # part-divider page occurring twice in four pages would reach 4
+                # votes instead of 2 and be stripped as boilerplate.
+                if len(nb) > 1:
+                    edge[nb[-1]] += 1
         boiler = {ln for ln, c in edge.items() if c > len(pages) / 2}
         kept = []
         for p in pages:
@@ -48,12 +54,16 @@ def clean_pdftotext(text: str) -> str:
             first = nb_idx[0] if nb_idx else None
             last = nb_idx[-1] if nb_idx else None
             for i, ln in enumerate(lines):
-                s = ln.strip()
-                if s in boiler:
-                    continue
-                # Drop a bare page number only at a page edge (varies per page).
-                if i in (first, last) and _PDF_PAGE_NUM.match(s):
-                    continue
+                # Running headers/footers and page numbers only ever occur at a
+                # page edge -- which is also the only place `boiler` is
+                # collected from. Removing a boilerplate string from every line
+                # meant that when a running header repeated the section title
+                # (common typesetting), the genuine mid-page heading was deleted
+                # along with the headers.
+                if i in (first, last):
+                    s = ln.strip()
+                    if s in boiler or _PDF_PAGE_NUM.match(s):
+                        continue
                 kept.append(ln)
         text = "\n".join(kept)
     else:
