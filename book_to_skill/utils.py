@@ -181,6 +181,40 @@ _ATX_HEADING = re.compile(r"^(#{1,6}|={1,6})\s+(.+?)\s*#*$")
 _SETEXT_UNDERLINE = re.compile(r"^(={2,}|-{2,})$")
 
 
+# Opening or closing line of a fenced code block: three or more backticks or
+# tildes. The captured marker lets the closer be matched to its opener.
+_CODE_FENCE = re.compile(r"^(`{3,}|~{3,})")
+
+
+def _closed_fence_line_numbers(lines: list[str]) -> set[int]:
+    """Line indices inside a fenced code block that is actually CLOSED.
+
+    A fence that never closes is treated as ordinary text rather than swallowing
+    everything after it. Extraction routinely loses a closing fence, and a book
+    about Markdown can simply contain a stray one — and the old live-toggling
+    scan then dropped every heading from that point to the end of the document.
+    Counting a handful of code lines as prose is a far cheaper mistake than
+    losing most of a book's structure.
+
+    The closing fence must use the SAME character as its opener, per CommonMark,
+    so a "```" block is no longer terminated by an unrelated "~~~" line.
+    """
+    inside: set[int] = set()
+    opener: tuple[str, int] | None = None
+    for index, line in enumerate(lines):
+        match = _CODE_FENCE.match(line.strip())
+        if not match:
+            continue
+        marker = match.group(1)
+        if opener is None:
+            opener = (marker[0], index)
+        elif marker[0] == opener[0]:
+            # Include both fence marker lines themselves.
+            inside.update(range(opener[1], index + 1))
+            opener = None
+    return inside
+
+
 def _structural_chapter_count(text: str) -> int:
     """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources.
 
@@ -198,17 +232,14 @@ def _structural_chapter_count(text: str) -> int:
     not match).
     """
     levels: dict[int, set[str]] = {}
-    in_fence = False
+    lines = text.splitlines()
+    fenced = _closed_fence_line_numbers(lines)
     prev = ""  # previous non-fence line (stripped); a setext title candidate
-    for line in text.splitlines():
+    for index, line in enumerate(lines):
+        if index in fenced:
+            prev = ""
+            continue
         s = line.strip()
-        if s.startswith("```") or s.startswith("~~~"):
-            in_fence = not in_fence
-            prev = ""
-            continue
-        if in_fence:
-            prev = ""
-            continue
         # Setext/RST underline: "=" (level 1) or "-" (level 2) directly under a
         # title line at least as long as the underline.
         if (
