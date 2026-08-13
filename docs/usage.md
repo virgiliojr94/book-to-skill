@@ -50,13 +50,13 @@ Both accounts, and how to add yours, are in [book-to-skill-use-cases](https://gi
 
 ## 📤 Publish your generated skill (optional)
 
-After a conversion, the converter offers to push the skill to GitHub as its own repository. The `gh repo create` command defaults to **`--private`**; a public repo is created only when you explicitly answer "public" - chapter files are synthesized from the source material, and skills generated from third-party copyrighted books must stay private (see [Copyright & fair use](../README.md#%EF%B8%8F-copyright--fair-use)). A published skill installs on any Agent Skills host in one command:
+After a conversion, the converter offers to push the skill to GitHub as its own repository. Visibility is asked as its own question and the `gh repo create` command defaults to **`--private`**; a public repo is created only when your answer is the bare word `public`. A sentence about the source's licence is not a visibility answer - "it's public domain" describes the book, not the repository, and still gets you a private repo. Chapter files are synthesized from the source material, and skills generated from third-party copyrighted books must stay private (see [Copyright & fair use](../README.md#%EF%B8%8F-copyright--fair-use)). A published skill installs on any Agent Skills host in one command:
 
 ```bash
 npx skills add https://github.com/<you>/<your-book-slug> --skill <your-book-slug>
 ```
 
-Requires the [`gh` CLI](https://cli.github.com), authenticated. The generated repo ships with a README and a `gemini-extension.json`, and the skill folder becomes the git working copy, so later fold-in updates can push to the same remote.
+Requires the [`gh` CLI](https://cli.github.com), authenticated. The generated repo ships with a README, and the skill folder becomes the git working copy, so later fold-in updates can push to the same remote.
 
 ---
 
