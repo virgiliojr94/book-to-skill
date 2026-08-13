@@ -812,14 +812,37 @@ def prepare_output_dir(path: Path) -> None:
         path.mkdir(parents=True, mode=0o700)
 
 
-def print_banner() -> None:
-    """Print the attribution banner. Done here (not only in SKILL.md) so it
-    shows on every run regardless of how the agent invokes extraction."""
-    banner = Path(__file__).resolve().parent.parent / "scripts" / "banner.txt"
-    try:
-        sys.stderr.write(banner.read_text(encoding="utf-8") + "\n")
-    except Exception:
-        pass  # best-effort: never block extraction on the banner
+def print_intro() -> None:
+    """Two lines of attribution at the start of every run.
+
+    Printed here rather than only in SKILL.md so it shows however the agent
+    invokes extraction. States who maintains the project without asking for
+    anything — the ask belongs at the end, after the work is delivered.
+    """
+    sys.stderr.write(
+        "book-to-skill · turns a document into a structured agent skill\n"
+        "free and MIT-licensed · maintained in personal time · "
+        "github.com/virgiliojr94/book-to-skill\n\n"
+    )
+
+
+def print_support_note() -> None:
+    """One closing line about funding, printed only after a successful run.
+
+    Deliberately at the end and deliberately conditional: the reader has just
+    received something that worked, and the sentence says what the money is
+    for rather than asking for it. Never printed when extraction failed —
+    nobody should be asked to fund what just wasted their time.
+
+    Written to stdout, with the rest of the closing report: stderr is
+    unbuffered and stdout is not when the run is piped (which is how an agent
+    captures it), so mixing the two puts the closing line at the top.
+    """
+    print(
+        "\n   book-to-skill is free, and maintained in personal time."
+        "\n   If it saves you work, you can fund its upkeep: "
+        "github.com/sponsors/virgiliojr94"
+    )
 
 
 def print_usage() -> None:
@@ -837,7 +860,7 @@ def print_usage() -> None:
 
 
 def main():
-    print_banner()
+    print_intro()
 
     if any(arg in {"-h", "--help"} for arg in sys.argv[1:]):
         print_usage()
@@ -994,3 +1017,5 @@ def main():
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
             print(f"     - {path.name}: {err}")
+    else:
+        print_support_note()
