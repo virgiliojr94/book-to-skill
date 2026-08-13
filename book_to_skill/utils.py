@@ -454,15 +454,26 @@ def detect_structure(text: str) -> dict:
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
     # "Chapter N" headings were found, so books with real chapters are unaffected.
-    chapters_detected = (
-        numeric_count if numeric_count > 0 else _structural_chapter_count(text)
-    )
+    #
+    # Which branch answered is reported alongside the count. The two disagree
+    # often, and a wrong count is not visible in the output it produces: it
+    # becomes the plan in Step 3 and the chapter files of the generated skill.
+    # Every parser in this project already announces which method it used
+    # ("Trying python-docx... OK"); this decision had the same shape and was
+    # the only silent one.
+    if numeric_count > 0:
+        chapters_detected = numeric_count
+        chapters_method = "numeric"
+    else:
+        chapters_detected = _structural_chapter_count(text)
+        chapters_method = "structural" if chapters_detected else "none"
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
 
     return {
         "chapters_detected": chapters_detected,
+        "chapters_method": chapters_method,
         "chapter_headings_sample": headings[:10],
         "has_toc": has_toc,
     }
@@ -752,6 +763,10 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
 
     tokens = estimate_tokens(text)
     structure = detect_structure(text)
+    print(
+        f"  chapters: {structure['chapters_detected']} "
+        f"({structure['chapters_method']})"
+    )
     file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
     
     return {
@@ -928,6 +943,7 @@ def main():
                 "words": src["words"],
                 "estimated_tokens": src["estimated_tokens"],
                 "chapters_detected": src["chapters_detected"],
+                "chapters_method": src["chapters_method"],
                 "has_toc": src["has_toc"]
             }
             for src in extracted_sources
@@ -951,7 +967,21 @@ def main():
     print(page_line)
     print(f"   Words   : {total_words:,}")
     print(f"   Tokens  : ~{total_tokens // 1000}K")
-    print(f"   Chapters: {consolidated_structure['chapters_detected']} detected overall")
+    print(
+        f"   Chapters: {consolidated_structure['chapters_detected']} detected overall "
+        f"({consolidated_structure['chapters_method']})"
+    )
+    if consolidated_structure["chapters_method"] == "structural" and (
+        consolidated_structure["chapters_detected"] <= 1 and total_words > 5000
+    ):
+        # Numeric "Chapter N" headings found nothing and the structural fallback
+        # came back with one section for a document of real length. That pairing
+        # is a detection failure far more often than it is a one-chapter book,
+        # and it is invisible in the output it produces.
+        print(
+            "   WARN    : only one section found in a document this long — chapter "
+            "detection likely failed; check the headings before generating."
+        )
     print(f"   ToC     : {'yes' if consolidated_structure['has_toc'] else 'not detected'}")
     if not consolidated_structure["has_toc"]:
         print(
