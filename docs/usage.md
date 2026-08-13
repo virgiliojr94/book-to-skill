@@ -48,7 +48,6 @@ Both accounts, and how to add yours, are in [book-to-skill-use-cases](https://gi
 
 ---
 
-
 ---
 
 [← Back to the README](../README.md)

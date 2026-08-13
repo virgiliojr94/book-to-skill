@@ -9,7 +9,7 @@ seo_title: "book-to-skill FAQ - Skills vs Context Dumps, RAG, Copyright"
 
 You can — but every conversation will burn that token budget upfront. A 400-page book is ~200K tokens. With a skill, only the chapters relevant to your question load — typically a SKILL.md core (~4K) plus the one chapter you asked about (~1K). The rest stays on disk until you need it.
 
-The economics are amortization, not size. Pasting the book pays the full token bill **on every turn of every session, forever**. book-to-skill pays the extraction cost **once** and every future conversation loads only the slice it needs. The bigger your context window, the more this matters — a large window makes the dump *possible*, not *cheap*.
+The economics are amortization, not size. Pasting the book pays the full token bill **on every turn of every session, forever**. book-to-skill pays the extraction cost **once** and every future conversation loads only the slice it needs. The bigger your context window, the more this matters — a large window makes the dump _possible_, not _cheap_.
 
 More importantly: raw text injection is retrieval. A skill is reasoning. When you load a chapter file, Claude isn't searching for keyword matches — it's working with pre-extracted named frameworks, principles, and mental models structured for application, not for reading.
 
@@ -17,7 +17,7 @@ More importantly: raw text injection is retrieval. A skill is reasoning. When yo
 
 **"Claude has a 1M-token context window now — can't I just keep the whole book loaded?"**
 
-A bigger window changes what *fits*, not what's *smart*. Three reasons it isn't a substitute:
+A bigger window changes what _fits_, not what's _smart_. Three reasons it isn't a substitute:
 
 - **You pay per token, per call.** A 1M window doesn't make those tokens free — it makes a large, recurring bill possible. The skill loads kilobytes, not megabytes.
 - **Recall degrades with fill.** Models lose precision retrieving a specific fact buried in a near-full context ("lost in the middle"). A 1K curated chapter beats 200K of raw prose for answering one question.
@@ -33,8 +33,8 @@ RAG works at query time: chunk the book → embed everything → find similar ve
 
 book-to-skill works at compile time: one deep analysis run extracts the author's actual frameworks, names them, describes when to use each, captures the anti-patterns. The output is structure the author spent years building — not a similarity search over their sentences.
 
-RAG answers: *"here are chunks close to your query."*  
-A skill answers: *"here are the 12 frameworks this author built, ready to reason with."*
+RAG answers: _"here are chunks close to your query."_  
+A skill answers: _"here are the 12 frameworks this author built, ready to reason with."_
 
 Pick by shape of the job:
 
@@ -78,7 +78,6 @@ ocrmypdf input.pdf output.pdf
 book-to-skill does not run OCR itself, and that is deliberate: it would mean a heavy dependency and a slow, lossy step for every user, to serve a case that a dedicated tool already handles better. The same applies to figures — text baked into diagrams and charts is not extracted from any format.
 
 ---
-
 
 ---
 

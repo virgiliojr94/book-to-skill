@@ -45,23 +45,23 @@ scripts/extract.py <paths…> --mode <technical|text>
 
 **Extraction benchmark** (103-page technical book, CPU only):
 
-| Method | Time | Tokens | Tables | Code blocks |
-|--------|------|--------|--------|-------------|
-| pdftotext | 0.1s | 27K | 0 | 0 |
-| Docling | 164s | 27K (+1.2%) | 48 | 36 |
+| Method    | Time | Tokens      | Tables | Code blocks |
+| --------- | ---- | ----------- | ------ | ----------- |
+| pdftotext | 0.1s | 27K         | 0      | 0           |
+| Docling   | 164s | 27K (+1.2%) | 48     | 36          |
 
 **Real conversions** (measured: pages, extracted tokens, chapters auto-detected,
 estimated one-pass cost on Claude Sonnet 4.5 at \$3/\$15 per MTok):
 
-| Book | Format | Pages | Tokens | Chapters | ~Cost |
-|------|--------|------:|-------:|---------:|------:|
-| Think Python 2 | PDF | 244 | 119K | 19 | \$0.88 |
-| Working Backwards | PDF | 371 | 175K | 10 | \$0.96 |
-| Pro Git | PDF | 501 | 229K | — † | \$1.23 |
-| Moby-Dick | EPUB | — | 301K | — † | \$1.42 |
+| Book              | Format | Pages | Tokens | Chapters |  ~Cost |
+| ----------------- | ------ | ----: | -----: | -------: | -----: |
+| Think Python 2    | PDF    |   244 |   119K |       19 | \$0.88 |
+| Working Backwards | PDF    |   371 |   175K |       10 | \$0.96 |
+| Pro Git           | PDF    |   501 |   229K |      — † | \$1.23 |
+| Moby-Dick         | EPUB   |     — |   301K |      — † | \$1.42 |
 
 † Chapter auto-detection needs explicit `Chapter N` / `Capítulo N` headings. Pro Git
-uses section titles and Moby-Dick uses chapter *titles* / roman numerals, so neither
+uses section titles and Moby-Dick uses chapter _titles_ / roman numerals, so neither
 auto-segments — extraction and conversion still work, but you point at sections
 manually. A full skill costs roughly **\$1 per book**; far less than re-reading the
 PDF every session.
@@ -78,7 +78,6 @@ PDF every session.
 </details>
 
 ---
-
 
 ---
 

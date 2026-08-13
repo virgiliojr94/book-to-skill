@@ -53,6 +53,7 @@
 You buy a great technical book. You read it once. Three months later you can't remember chapter 7 existed.
 
 The usual workarounds don't help:
+
 - 📄 "Let me just search the PDF" → you get a list of pages, not answers
 - 🧠 "I'll ask the agent about this book" → it either hallucinates or says it doesn't have the content
 - 📝 "I'll take notes as I read" → you end up with a 200-line doc you never open again
@@ -69,13 +70,13 @@ Works with any host that supports the open [Agent Skills](https://github.com/age
 
 Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code):
 
-| File | Purpose | Size |
-|------|---------|------|
-| `SKILL.md` | Core mental models + chapter index | ~4,000 tokens |
-| `chapters/ch01-*.md` … | One file per chapter, loaded on-demand | ~1,000 tokens each |
-| `glossary.md` | Every key term, alphabetically sorted with chapter refs | ~1,500 tokens |
-| `patterns.md` | All techniques, algorithms, and design patterns | ~2,000 tokens |
-| `cheatsheet.md` | Decision tables and quick-reference rules | ~1,000 tokens |
+| File                   | Purpose                                                 | Size               |
+| ---------------------- | ------------------------------------------------------- | ------------------ |
+| `SKILL.md`             | Core mental models + chapter index                      | ~4,000 tokens      |
+| `chapters/ch01-*.md` … | One file per chapter, loaded on-demand                  | ~1,000 tokens each |
+| `glossary.md`          | Every key term, alphabetically sorted with chapter refs | ~1,500 tokens      |
+| `patterns.md`          | All techniques, algorithms, and design patterns         | ~2,000 tokens      |
+| `cheatsheet.md`        | Decision tables and quick-reference rules               | ~1,000 tokens      |
 
 **Chapter files are loaded on-demand** — they don't count against the skill budget until you ask about that topic.
 
@@ -94,10 +95,9 @@ If you re-open a document often enough to wish you'd memorized it, it's a candid
 
 ---
 
-
 ## 🧾 The Discovery Loop Tax
 
-A PDF-reading agent doesn't just read — it *navigates*: it re-fetches the ToC, backtracks, and re-processes all of it on every turn. book-to-skill pays that structuring cost **once**, at conversion, so queries stay proportional to the answer — **24×–51× fewer tokens** than dumping the book into context, measured on real books.
+A PDF-reading agent doesn't just read — it _navigates_: it re-fetches the ToC, backtracks, and re-processes all of it on every turn. book-to-skill pays that structuring cost **once**, at conversion, so queries stay proportional to the answer — **24×–51× fewer tokens** than dumping the book into context, measured on real books.
 
 📊 **Full methodology, numbers, and per-book tables → [docs/performance.md](docs/performance.md#the-discovery-loop-tax)**
 
@@ -147,19 +147,18 @@ Common questions — "why not just dump the PDF?", cost, privacy, non-book input
 <details>
 <summary>🔧 <strong>Requirements</strong></summary>
 
-
 The extractor tries tools in order per format and uses the first available. If nothing is installed, it tells you which command to run. Plain text, Markdown, reStructuredText and AsciiDoc need no extra deps.
 
 > **Check your setup in one command:** `python3 scripts/extract.py --check` prints which extractors are installed for every format and the exact command to install anything missing — no file needed.
 
 **PDF — choose by book type:**
 
-| Book type | Tool | Install | Speed |
-|-----------|------|---------|-------|
-| Text-heavy (prose, few tables) | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ instant |
-| Text-heavy fallback | `pypdf` | `pip3 install pypdf` | ⚡ instant |
-| Text-heavy fallback | `pdfminer.six` | `pip3 install pdfminer.six` | ⚡ instant |
-| **Technical (code, tables, formulas)** | **`docling`** | `pip3 install docling` | ~1.5s/page |
+| Book type                              | Tool                  | Install                          | Speed      |
+| -------------------------------------- | --------------------- | -------------------------------- | ---------- |
+| Text-heavy (prose, few tables)         | `pdftotext` (poppler) | `sudo apt install poppler-utils` | ⚡ instant |
+| Text-heavy fallback                    | `pypdf`               | `pip3 install pypdf`             | ⚡ instant |
+| Text-heavy fallback                    | `pdfminer.six`        | `pip3 install pdfminer.six`      | ⚡ instant |
+| **Technical (code, tables, formulas)** | **`docling`**         | `pip3 install docling`           | ~1.5s/page |
 
 > Before extraction begins, the skill asks you whether the book is **technical** or **text-heavy** and picks the right tool automatically. Docling preserves markdown tables and code blocks; pdftotext is faster for prose-only books.
 
@@ -171,29 +170,27 @@ The extractor tries tools in order per format and uses the first available. If n
 
 **EPUB:**
 
-| Tool | Install | Quality |
-|------|---------|---------|
-| `ebooklib` + `beautifulsoup4` | `pip3 install ebooklib beautifulsoup4` | ⭐⭐⭐ Best |
-| stdlib `zipfile` | built-in — no install needed | ⭐⭐ Always available |
+| Tool                          | Install                                | Quality               |
+| ----------------------------- | -------------------------------------- | --------------------- |
+| `ebooklib` + `beautifulsoup4` | `pip3 install ebooklib beautifulsoup4` | ⭐⭐⭐ Best           |
+| stdlib `zipfile`              | built-in — no install needed           | ⭐⭐ Always available |
 
 **Other formats:**
 
-| Format | Tool | Install |
-|--------|------|---------|
-| DOCX | `python-docx` (fallback: stdlib ZIP/XML) | `pip3 install python-docx` |
-| HTML | `beautifulsoup4` (fallback: stdlib `html.parser`) | `pip3 install beautifulsoup4` |
-| RTF | `striprtf` (fallback: regex) | `pip3 install striprtf` |
-| MOBI / AZW / AZW3 | Calibre `ebook-convert` (external app, not pip) | https://calibre-ebook.com/download |
-| TXT / Markdown / reStructuredText / AsciiDoc | built-in | — |
+| Format                                       | Tool                                              | Install                            |
+| -------------------------------------------- | ------------------------------------------------- | ---------------------------------- |
+| DOCX                                         | `python-docx` (fallback: stdlib ZIP/XML)          | `pip3 install python-docx`         |
+| HTML                                         | `beautifulsoup4` (fallback: stdlib `html.parser`) | `pip3 install beautifulsoup4`      |
+| RTF                                          | `striprtf` (fallback: regex)                      | `pip3 install striprtf`            |
+| MOBI / AZW / AZW3                            | Calibre `ebook-convert` (external app, not pip)   | https://calibre-ebook.com/download |
+| TXT / Markdown / reStructuredText / AsciiDoc | built-in                                          | —                                  |
 
 ---
-
 
 </details>
 
 <details>
 <summary>📁 <strong>Repository structure</strong></summary>
-
 
 ```
 book-to-skill/
@@ -221,10 +218,10 @@ book-to-skill/
 
 ---
 
-
 </details>
 
 ---
+
 ## ⚖️ Copyright & fair use
 
 book-to-skill ships **no book content** — not a single page. It's a converter you point at files you already own.

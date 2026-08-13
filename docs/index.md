@@ -38,33 +38,33 @@ Turn any book or document into a structured, on-demand agent skill — named fra
 
 <div class="grid cards" markdown>
 
--   :material-file-document-multiple:{ .lg .middle } __Multi-format__
+- :material-file-document-multiple:{ .lg .middle } **Multi-format**
 
-    ---
+  ***
 
-    PDF, EPUB, DOCX, HTML, Markdown, RTF, MOBI/AZW (via Calibre). Extraction runs
-    locally with graceful stdlib fallbacks — no upload, no lock-in.
+  PDF, EPUB, DOCX, HTML, Markdown, RTF, MOBI/AZW (via Calibre). Extraction runs
+  locally with graceful stdlib fallbacks — no upload, no lock-in.
 
--   :material-brain:{ .lg .middle } __Structure, not summaries__
+- :material-brain:{ .lg .middle } **Structure, not summaries**
 
-    ---
+  ***
 
-    Named frameworks, mental models, decision rules, and anti-patterns — the
-    author's toolkit, captured with their exact terms, not a book report.
+  Named frameworks, mental models, decision rules, and anti-patterns — the
+  author's toolkit, captured with their exact terms, not a book report.
 
--   :material-flash:{ .lg .middle } __On-demand chapters__
+- :material-flash:{ .lg .middle } **On-demand chapters**
 
-    ---
+  ***
 
-    Per-chapter files load only when the topic is relevant, so a 200-page book
-    costs tokens proportional to the question, not the page count.
+  Per-chapter files load only when the topic is relevant, so a 200-page book
+  costs tokens proportional to the question, not the page count.
 
--   :material-robot-happy:{ .lg .middle } __Multi-agent__
+- :material-robot-happy:{ .lg .middle } **Multi-agent**
 
-    ---
+  ***
 
-    One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, and Amp through the
-    open Agent Skills standard.
+  One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, and Amp through the
+  open Agent Skills standard.
 
 </div>
 
@@ -91,28 +91,28 @@ book-to-skill /path/to/book.pdf --mode text
 
 <div class="grid cards" markdown>
 
--   :material-sitemap:{ .lg .middle } __[Architecture](architecture.md)__
+- :material-sitemap:{ .lg .middle } **[Architecture](architecture.md)**
 
-    ---
+  ***
 
-    How the deterministic extractor and the spec-driven generator fit together.
+  How the deterministic extractor and the spec-driven generator fit together.
 
--   :material-speedometer:{ .lg .middle } __[Performance](performance.md)__
+- :material-speedometer:{ .lg .middle } **[Performance](performance.md)**
 
-    ---
+  ***
 
-    The measured Discovery Loop Tax and real per-conversion token cost.
+  The measured Discovery Loop Tax and real per-conversion token cost.
 
--   :material-book-open-page-variant:{ .lg .middle } __[Skill Reference](skill-reference.md)__
+- :material-book-open-page-variant:{ .lg .middle } **[Skill Reference](skill-reference.md)**
 
-    ---
+  ***
 
-    The full `SKILL.md` spec: every step, depth budget, and quality rule.
+  The full `SKILL.md` spec: every step, depth budget, and quality rule.
 
--   :material-heart:{ .lg .middle } __[Sponsor](https://github.com/sponsors/virgiliojr94)__
+- :material-heart:{ .lg .middle } **[Sponsor](https://github.com/sponsors/virgiliojr94)**
 
-    ---
+  ***
 
-    book-to-skill is free and MIT. Sponsoring funds reviews, releases, and fixes.
+  book-to-skill is free and MIT. Sponsoring funds reviews, releases, and fixes.
 
 </div>

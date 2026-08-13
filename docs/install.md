@@ -6,6 +6,7 @@ seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
+>
 > - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, or Amp) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
 > - **As a standalone CLI** (just the text extractor) → `pip install book-to-skill`, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
@@ -70,7 +71,6 @@ book-to-skill --check                          # report which extractors are ins
 ```
 
 ---
-
 
 ---
 
