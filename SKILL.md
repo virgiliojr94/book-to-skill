@@ -67,7 +67,7 @@ Four paths available. Route based on what the user asks:
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
 1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
-2. Cross-agent personal skills (Copilot + Amp): `~/.agents/skills/`
+2. Cross-agent personal skills (Copilot, Amp, Codex): `~/.agents/skills/`
 3. Claude Code personal skills: `~/.claude/skills/`
 4. Project-local Copilot skills: `.github/skills/`
 5. Project-local Claude skills: `.claude/skills/`
@@ -307,12 +307,13 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 | **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
 
 Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
+4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
