@@ -9,6 +9,11 @@
   <a href="README.ru.md"><strong>Русский</strong></a>
 </p>
 
+
+> **Актуальность перевода.** Источник истины — [английский README](README.md). Этот перевод может отставать от `master`.  
+> Синхронизирован с EN на коммите [`903d102`](https://github.com/virgiliojr94/book-to-skill/commit/903d102fe8f67ea0fe3db7bea85eec7d8b505967) (2026-08-14).  
+> Чтобы увидеть drift: `git log 903d102..master -- README.md`
+
 <p align="center">
   <strong>Превратите любую техническую книгу, папку документов или набор источников в единый agent skill — чтобы изучать, ссылаться и использовать в GitHub Copilot CLI, Amp или Claude Code.</strong>
 </p>
@@ -116,11 +121,12 @@ PDF-агент не просто читает — *навигирует*: ToC, b
 
 ## 🚀 Usage
 
-`/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, update/fold-in.
+`/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, and update/fold-in modes. После конверсии converter может опубликовать skill на GitHub (по умолчанию private), чтобы любой host ставил его через `npx skills add`.
 
-▶️ **Режимы → [docs/usage.md](docs/usage.md)**
+▶️ **Все режимы и примеры → [docs/usage.md](docs/usage.md)**
 
-💬 **Кейсы → [use cases](https://github.com/virgiliojr94/book-to-skill-use-cases)**
+💬 **На практике → [use cases](https://github.com/virgiliojr94/book-to-skill-use-cases)** — DevEx-книга превратилась в survey 300+ инженеров; scanned PDF, который «завис», стал [#130](https://github.com/virgiliojr94/book-to-skill/pull/130). Добавьте свой кейс: account в вашем Gist, index — one-line PR.
+
 
 ---
 
@@ -202,3 +208,8 @@ MIT — на converter в этом репо, **не** на книги/докум
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=virgiliojr94/book-to-skill&type=date&legend=top-left" />
  </picture>
 </a>
+
+---
+
+<!-- translation-meta: source=README.md@903d102fe8f67ea0fe3db7bea85eec7d8b505967 date=2026-08-14 maintainer=@MonteNegroX -->
+<sub>Russian translation synced to English README at commit <code>903d102</code> · English remains canonical · Maintainer: <a href="https://github.com/MonteNegroX">@MonteNegroX</a></sub>
