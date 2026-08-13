@@ -6,7 +6,17 @@ import pytest
 from book_to_skill.exceptions import ExtractionError
 from book_to_skill.utils import prepare_output_dir
 
+# Permission bits are a POSIX concept. On Windows os.chmod only toggles the
+# read-only flag and st_mode always reports 0o666/0o777, so asserting 0o700
+# fails there even though prepare_output_dir() behaves correctly — it guards
+# the symlink and non-directory cases on every platform and only tightens the
+# mode where the mode means something.
+posix_permissions = pytest.mark.skipif(
+    not hasattr(os, "getuid"), reason="POSIX-only permission bits"
+)
 
+
+@posix_permissions
 def test_prepare_output_dir_creates_dir_with_restrictive_permissions(tmp_path):
     target = tmp_path / "work"
 
@@ -34,6 +44,7 @@ def test_prepare_output_dir_rejects_non_directory(tmp_path):
         prepare_output_dir(target)
 
 
+@posix_permissions
 def test_prepare_output_dir_tightens_permissions_on_existing_own_dir(tmp_path):
     target = tmp_path / "work"
     target.mkdir()
@@ -44,7 +55,7 @@ def test_prepare_output_dir_tightens_permissions_on_existing_own_dir(tmp_path):
     assert stat.S_IMODE(target.stat().st_mode) == 0o700
 
 
-@pytest.mark.skipif(not hasattr(os, "getuid"), reason="POSIX-only ownership check")
+@posix_permissions
 def test_prepare_output_dir_rejects_directory_owned_by_another_user(tmp_path, monkeypatch):
     target = tmp_path / "work"
     target.mkdir()
