@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import re
+import statistics
 import sys
 import shutil
 import zipfile
@@ -228,6 +229,40 @@ def _closed_fence_line_numbers(lines: list[str]) -> set[int]:
     return inside
 
 
+# A numbered heading is a chapter when the numbering is systematic AND the
+# sections carry a chapter's worth of text. Both are required, because neither
+# separates the two shapes alone: a three-step tutorial is also systematic and
+# also ascends from 1, while a single long section is not a numbering scheme.
+# Measured medians of body text per section: tutorial steps ~20 chars, doc
+# sections ~500, paper sections ~2,000, real book chapters ~5,000. The floor
+# sits an order of magnitude below the smallest real chapter seen and an order
+# above the largest tutorial step.
+_MIN_NUMBERED_TITLES = 3
+_MIN_NUMBERED_BODY_CHARS = 200
+
+
+def _numbered_titles_are_structural(
+    entries: list[tuple[str, int]], heading_lines: list[int], lines: list[str]
+) -> bool:
+    """Decide whether digit-led titles at one depth are chapters or list items.
+
+    Deliberately not based on the numbers themselves. An ascending run starting
+    at 1 describes "Step 1 / Step 2 / Step 3" as accurately as it describes a
+    paper's sections, and requiring the run to be unbroken would throw away a
+    whole book when extraction drops one heading, a chapter list that starts at
+    0, or a multi-source corpus where the numbering restarts.
+    """
+    if len(entries) < _MIN_NUMBERED_TITLES:
+        return False
+    ordered = sorted(heading_lines)
+    bodies = []
+    for _, index in entries:
+        after = [ln for ln in ordered if ln > index]
+        end = after[0] if after else len(lines)
+        bodies.append(sum(len(ln) for ln in lines[index + 1:end]))
+    return statistics.median(bodies) >= _MIN_NUMBERED_BODY_CHARS
+
+
 def _structural_chapter_count(text: str) -> int:
     """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources.
 
@@ -244,8 +279,13 @@ def _structural_chapter_count(text: str) -> int:
     the underline (so thematic breaks, table borders, and front-matter "---" do
     not match).
     """
-    levels: dict[int, set[str]] = {}
     lines = text.splitlines()
+    levels: dict[int, set[str]] = {}
+    # Digit-led titles are held back and judged per depth at the end (see
+    # _numbered_titles_are_structural): "## 1. Introduction" and "## 5 Setup"
+    # are the same string shape, so the line alone cannot decide.
+    numbered: dict[int, list[tuple[str, int]]] = {}
+    heading_lines: list[int] = []
     fenced = _closed_fence_line_numbers(lines)
     prev = ""  # previous non-fence line (stripped); a setext title candidate
     for index, line in enumerate(lines):
@@ -263,20 +303,28 @@ def _structural_chapter_count(text: str) -> int:
         ):
             depth = 1 if s[0] == "=" else 2
             levels.setdefault(depth, set()).add(prev.lower())
+            heading_lines.append(index)
             prev = ""
             continue
         # ATX heading ("# Title", "== Section").
         m = _ATX_HEADING.match(s)
         if m:
             title = m.group(2).strip().lower()
-            # Reject empty, bare-digit-led ("## 5 Setup"), and all-punctuation
-            # ("=====" table-border) titles — none are real chapter headings.
-            if title and not title[0].isdigit() and re.search(r"\w", title):
-                levels.setdefault(len(m.group(1)), set()).add(title)
+            depth = len(m.group(1))
+            # Reject empty and all-punctuation ("=====" table-border) titles.
+            if title and re.search(r"\w", title):
+                heading_lines.append(index)
+                if title[0].isdigit():
+                    numbered.setdefault(depth, []).append((title, index))
+                else:
+                    levels.setdefault(depth, set()).add(title)
             # An ATX heading line is not a setext title for the next line.
             prev = ""
             continue
         prev = s
+    for depth, entries in numbered.items():
+        if _numbered_titles_are_structural(entries, heading_lines, lines):
+            levels.setdefault(depth, set()).update(title for title, _ in entries)
     if not levels:
         return 0
     for depth in sorted(levels):
