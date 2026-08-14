@@ -1206,6 +1206,13 @@ class TestDocxExtraction:
 class TestResolveInputFiles:
     """Additional edge-case tests for resolve_input_files."""
 
+    def test_existing_file_with_glob_metacharacters_is_literal(self, tmp_path):
+        target = _make_text_file(tmp_path / "book [2013].pdf")
+
+        result = resolve_input_files([str(target)])
+
+        assert result == [target.resolve()]
+
     def test_nonexistent_file_kept_for_error_reporting(self, tmp_path):
         """A nonexistent explicit path is kept so extract_single_file can report it."""
         fake = tmp_path / "nonexistent.pdf"

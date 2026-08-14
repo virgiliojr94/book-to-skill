@@ -534,7 +534,9 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
         # the file/directory branch below see a real path.
         path_str = os.path.expanduser(raw_path)
         # Check if it has glob wildcards
-        if any(char in path_str for char in ("*", "?", "[")):
+        if not Path(path_str).exists() and any(
+            char in path_str for char in ("*", "?", "[")
+        ):
             glob_matches = glob.glob(path_str, recursive=True)
             # Sort expanded glob results deterministically
             expanded = []
