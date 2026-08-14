@@ -7,7 +7,7 @@ seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
 
 > **Two ways to use it, do not confuse them:**
 > - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, or Codex) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
-> - **As a standalone CLI** (just the text extractor) → `pip install book-to-skill`, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
+> - **As a standalone CLI** (just the text extractor) → `pip install` it from the repository, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
 
@@ -64,13 +64,16 @@ Then in any agent session:
 
 ### Standalone CLI (pip)
 
-`pip install book-to-skill` is a **separate, optional** path. It installs only the
+Installing the CLI with `pip` is a **separate, optional** path. It installs only the
 text-extraction engine as a CLI, for scripting or to grab the optional extractors;
 it does **not** register the `/book-to-skill` agent skill (use the `git clone` above
 for that).
 
+`book-to-skill` is not on PyPI yet, so `pip` takes the package straight from the
+repository:
+
 ```bash
-pip install "book-to-skill[pdf,epub,docx]"   # engine + optional extractors
+pip install "book-to-skill[pdf,epub,docx] @ git+https://github.com/virgiliojr94/book-to-skill.git"
 book-to-skill ~/path/to/book.pdf --mode text  # or: python -m book_to_skill ...
 book-to-skill --check                          # report which extractors are installed
 ```

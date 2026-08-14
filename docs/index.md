@@ -83,7 +83,8 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 **As a standalone CLI** (just the text extractor, optional):
 
 ```bash
-pip install "book-to-skill[pdf,epub,docx]"
+# not on PyPI yet — pip takes it from the repository
+pip install "book-to-skill[pdf,epub,docx] @ git+https://github.com/virgiliojr94/book-to-skill.git"
 book-to-skill /path/to/book.pdf --mode text
 ```
 
