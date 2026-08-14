@@ -96,14 +96,14 @@ def estimate_tokens(text: str) -> int:
 # the longer words match in full. Captures the number (bounded to 1..99 — drops
 # years like "2025.") and whatever follows it on the line, so we can reject prose.
 _EXPLICIT_CHAPTER = re.compile(
-    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDMivxlcdm]{1,7}))\b(?P<rest>.*)$",
+    r"^\s*(?:chapter|unit|lesson|module|lecture|part|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDMivxlcdm]{1,7}))\b(?P<rest>.*)$",
     re.IGNORECASE,
 )
 # A heading's number is followed by end-of-line, punctuation (“. : - —“), or a
 # Capitalized title word. A lowercase continuation (“Chapter 6 explores...”,
 # “Chapter 8 are relevant...”) is prose / a cross-reference, not a heading.
 # The uppercase class is À-Þ so titles starting with Ü/Û (common in German, e.g. “Überblick”) are recognized.
-_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+[A-ZÀ-Þ0-9\"“(]")
+_HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+(?![a-z])")
 
 # Roman-numeral chapter heading: "I: Loomings", "II. The Carpet-Bag".
 # Uppercase alone at line start is safe — no common English word is a valid
@@ -179,7 +179,7 @@ _TOC_HEADERS = (
 )
 _TOC_CJK_PATTERN = r"目[ \t\u3000]*(?:录|錄|次)"
 _TOC_PATTERN = re.compile(
-    r"^\s*(?:"
+    r"^\s*(?:#{1,6}\s*)?(?:"
     + "|".join([*(re.escape(h) for h in _TOC_HEADERS), _TOC_CJK_PATTERN])
     + r")\s*$",
     re.IGNORECASE | re.MULTILINE,
@@ -461,12 +461,21 @@ def detect_structure(text: str) -> dict:
     # Every parser in this project already announces which method it used
     # ("Trying python-docx... OK"); this decision had the same shape and was
     # the only silent one.
-    if numeric_count > 0:
+    if numeric_count >= 2:
         chapters_detected = numeric_count
         chapters_method = "numeric"
     else:
-        chapters_detected = _structural_chapter_count(text)
-        chapters_method = "structural" if chapters_detected else "none"
+        # A single stray number (e.g. a Roman numeral inside an example paper
+        # reproduced in the book, or a lone "Part 1") is not enough to suppress
+        # the structural (Markdown/AsciiDoc) heading count, so course-style
+        # books with "### Unit N" headings still get counted via max().
+        structural_count = _structural_chapter_count(text)
+        chapters_detected = max(numeric_count, structural_count)
+        chapters_method = (
+            "structural" if structural_count > numeric_count
+            else "numeric" if numeric_count
+            else "none"
+        )
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
