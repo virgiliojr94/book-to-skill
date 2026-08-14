@@ -289,6 +289,15 @@ Use the answer to weight what gets highlighted in the SKILL.md Core section.
 
 `DEPTH` and `BOOK_TYPE` together set the per-chapter token budget in Step 7. Do **not** ask a separate "study vs reference" question — it is inferred here. (In Modes 2/3, where Step 4 is skipped, default `DEPTH=study`.)
 
+**Ask about navigation tier (one extra prompt):**
+
+> "How should the skill's navigation be organized?
+>
+> 1. **Flat** (default) — How to Use, Topic Index, Supporting Files, and Scope & Limits all live in SKILL.md. Best for short / simple books.
+> 2. **Progressive** — SKILL.md stays lean (~1,800 tokens: core frameworks + chapter index + quick-reference table); the full topic index, source mapping, usage guide, and scope move to a separate `HOW_TO_USE.md`, loaded on demand when the user says "expand framework". Best for large, frequently-triggered books."
+
+Set `NAV=flat` or `NAV=progressive` based on the answer. Default to `flat` if the user is unsure. (In Modes 2/3, where Step 4 is skipped, default `NAV=flat`.)
+
 ---
 
 ## Step 5 — Determine skill name
@@ -447,14 +456,67 @@ Avoid: bare term→definition rows (that's the glossary), and prose paragraphs (
 - Format mostly as compact tables and decision rules; the content you'd want on a single printed page kept beside you while working.
 - Max 1,200 tokens.
 
+### HOW_TO_USE.md *(only if `NAV=progressive`)*
+
+Create `$SKILLS_HOME/<skill_name>/HOW_TO_USE.md`:
+
+This is the **deep-navigation layer** — loaded only when the user says "expand framework" or needs full orientation. It holds everything that would bloat SKILL.md but is essential for thorough use.
+
+Structure:
+```markdown
+# <Full Title> — Extended Framework
+
+> Load this file on demand: say "expand framework" to open it.
+
+## How to Use This Skill
+
+- **No arguments** — load SKILL.md core frameworks
+- **By chapter** — ask for `ch03`; I load that specific chapter
+- **By topic / method** — ask about `<framework>`; I find the relevant chapter
+- **By source mapping** (if applicable) — ask "which chapter maps to <textbook section>?"
+- **By depth tier** (if applicable) — add `beginner` / `intermediate` / `advanced` (or your own tiers) for the matching level
+
+## Source / Textbook Mapping (if applicable)
+
+| Skill chapter | Source / standard textbook |
+|---|---|
+| ... | ... |
+
+## Tiered Depth System (if applicable)
+
+| Mark | Tier | Use when |
+|---|---|---|
+| 🟢 `[B]` | Beginner | ... |
+| 🟡 `[I]` | Intermediate | ... |
+| 🔴 `[A]` | Advanced | ... |
+
+## Full Topic Index
+
+<!-- Complete term/framework → chapter mapping, extracted from all Step 7 chapters -->
+- **<Term/Framework>** → ch<N>[, ch<N>]
+- ...
+
+## Scope & Limits
+
+This skill covers <what it covers>. It does not cover <what it doesn't>. Pair with: <brief note>.
+```
+
+**Skeleton rules:**
+- Sections marked "(if applicable)" are **conditional** — skip them if the book has no source mapping or no tiered depth system.
+- The Topic Index must be comprehensive (extracted from all chapters generated in Step 7).
+- Keep the total under 2,000 tokens.
+- The "expand framework" trigger phrase must appear in the first blockquote so the agent knows how to load it.
+
 ---
 
 ## Step 9 — Generate the master SKILL.md
 
-**CRITICAL TOKEN BUDGET: Keep SKILL.md body under 4,000 tokens.**
+**CRITICAL TOKEN BUDGET:** `NAV=flat` → keep SKILL.md body under 4,000 tokens; `NAV=progressive` → keep it under 1,800 tokens (deep navigation moves to HOW_TO_USE.md).
 Compaction truncates from the END — put the most important content FIRST.
 
 Create `$SKILLS_HOME/<skill_name>/SKILL.md`:
+
+### If `NAV=flat` (default)
 
 ```markdown
 ---
@@ -517,6 +579,50 @@ combine with project-specific tools. For topics beyond this book, check related 
 or ask the agent directly.
 ```
 
+### If `NAV=progressive`
+
+```markdown
+---
+name: <skill_name>
+description: "Knowledge base from \"<Full Title>\" by <Author(s)>. Use when applying <author>'s frameworks for <key topics, 3–6 terms>, studying the book, or referencing its concepts."
+---
+
+<!-- argument-hint: [topic, framework name, or chapter number] -->
+
+# <Full Title>
+**Author**: <Author(s)> | **Pages**: ~<N> | **Chapters**: <N> | **Generated**: <YYYY-MM-DD>
+
+## Core Frameworks & Mental Models
+<!-- ~1,500 tokens: the author's most important named frameworks and principles.
+     Preserve exact names. Write as "Use X when Y", "Prefer X over Y because Z".
+     This is a toolkit, not a summary. -->
+
+<generate ~1,500 tokens of the most critical frameworks and insights here>
+
+---
+
+## Chapter Index
+
+| # | Title | Key Frameworks |
+|---|-------|----------------|
+| [ch01](chapters/ch01-<slug>.md) | <Title> | <framework1>, <framework2> |
+| [ch02](chapters/ch02-<slug>.md) | <Title> | <framework1>, <framework2> |
+...
+
+---
+
+## Quick Reference
+
+| File | Purpose |
+|------|---------|
+| [cheatsheet.md](cheatsheet.md) | Decision rules, trade-off tables, thresholds |
+| [glossary.md](glossary.md) | Key terms with definitions |
+| [patterns.md](patterns.md) | Techniques, patterns, anti-patterns |
+| [HOW_TO_USE.md](HOW_TO_USE.md) | 📖 Full topic index, source mapping, usage guide — say "expand framework" to load |
+```
+
+**Discovery hint (required):** keep the `HOW_TO_USE.md` row above — it is the pointer that lets an agent find the deep-navigation layer even when it never receives a follow-up question. The "expand framework" phrase must also appear in the first blockquote of HOW_TO_USE.md (Step 8).
+
 ---
 
 ## Step 9.5 — Scan the generated skill
@@ -566,6 +672,7 @@ Files generated:
   glossary.md      — key terms                 (~X tokens)
   patterns.md      — techniques & patterns     (~X tokens)
   cheatsheet.md    — quick reference           (~X tokens)
+  HOW_TO_USE.md    — full navigation (on-demand; NAV=progressive only) (~X tokens)
   ─────────────────────────────────────────────────────
   Total skill size: ~X tokens (loaded on-demand, not all at once)
 
@@ -676,6 +783,12 @@ For each new or revised chapter:
   - Read existing `$SKILLS_HOME/<skill_name>/cheatsheet.md`.
   - Extract new comparison rules, decision tables, or parameter guides.
   - Integrate them cleanly into the cheatsheet structure.
+- **Merge HOW_TO_USE.md** *(only if the skill has one — `NAV=progressive`)*:
+  - Read existing `$SKILLS_HOME/<skill_name>/HOW_TO_USE.md`.
+  - Update the topic index with new terms from the new chapters/sections.
+  - If new source mappings or depth tiers are introduced, add them.
+  - Update scope & limits if the new content expands coverage.
+  - Keep the total under 2,500 tokens (fold-in may grow the index past the initial 2,000-token budget).
 
 ### 5. Re-generate the Master SKILL.md
 Update the master skill file `$SKILLS_HOME/<skill_name>/SKILL.md`:
@@ -698,4 +811,5 @@ Once the files are successfully written and merged, run **Step 9.5**, then proce
 5. **Front-load SKILL.md** — compaction keeps the first 5,000 tokens; most important content comes first
 6. **Chapter files are on-demand** — they don't count against skill budget until loaded
 7. **Never copy raw book text** — always synthesize, summarize, extract signal
-8. **Topic index is critical** — it's how the agent navigates to the right chapter file
+8. **Topic index is critical** — it's how the agent navigates to the right chapter file (in `NAV=progressive`, it lives in HOW_TO_USE.md)
+9. **Progressive disclosure (`NAV=progressive`)** — SKILL.md is the lightweight entry (~1,800 tokens); deep navigation (topic index, source mapping, scope, usage guide) lives in HOW_TO_USE.md and loads only when the user says "expand framework" or needs full orientation. Never bloat SKILL.md with content the agent can load on demand.
