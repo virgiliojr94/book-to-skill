@@ -1,12 +1,13 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through Hermes Agent, GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
 
 <!--
 Cross-agent notes (informational; ignored by host agents):
-  - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
-    .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
+  - Compatible skill roots: Hermes Agent ($HERMES_HOME/skills, default ~/.hermes/skills),
+    GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills, .github/skills,
+    .claude/skills, .agents/skills), Amp (.agents/skills,
     ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
   - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
     `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
@@ -66,14 +67,15 @@ Four paths available. Route based on what the user asks:
 
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
-1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
-2. Cross-agent personal skills (Copilot, Amp, Codex): `~/.agents/skills/`
-3. Claude Code personal skills: `~/.claude/skills/`
-4. Project-local Copilot skills: `.github/skills/`
-5. Project-local Claude skills: `.claude/skills/`
-6. Project-local Amp / Copilot skills: `.agents/skills/`
-7. Amp global skills: `~/.config/agents/skills/`
-8. Amp legacy global skills: `~/.config/amp/skills/`
+1. Hermes Agent skills: `$HERMES_HOME/skills/` (default `~/.hermes/skills/`)
+2. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
+3. Cross-agent personal skills (Copilot, Amp, Codex): `~/.agents/skills/`
+4. Claude Code personal skills: `~/.claude/skills/`
+5. Project-local Copilot skills: `.github/skills/`
+6. Project-local Claude skills: `.claude/skills/`
+7. Project-local Amp / Copilot skills: `.agents/skills/`
+8. Amp global skills: `~/.config/agents/skills/`
+9. Amp legacy global skills: `~/.config/amp/skills/`
 
 For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
 
@@ -131,6 +133,7 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 for candidate in \
+  "${HERMES_HOME:-$HOME/.hermes}/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
@@ -304,6 +307,7 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 
 | Host agent | Personal skill root (probe in order) | Project-local root |
 |---|---|---|
+| **Hermes Agent** | `$HERMES_HOME/skills` (default `~/.hermes/skills`) | `.claude/skills` → `.agents/skills` |
 | **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
@@ -313,7 +317,7 @@ Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
+4. If you cannot identify the host, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
