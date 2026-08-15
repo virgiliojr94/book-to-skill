@@ -752,15 +752,31 @@ class TestDetectStructure:
         assert _chapter_number("### فصل سی و چهارم خداحافظ فرانسه") == 34
 
     def test_persian_pdf_glued_title(self):
-        """PDF extractors often drop the space between ordinal and title."""
+        """PDF glue is allowed after teens/compounds, not after short 1–10 ordinals.
+
+        Short ordinals are plausible prefixes of ordinary Persian words
+        ("اولویت‌ها", "اولیه", "دومینو"), so they require a separator. Longer
+        forms are not, and extractors do drop the space after them.
+        """
         from book_to_skill.utils import _chapter_number
 
-        assert _chapter_number("فصل اولجایی که به نظر میرسید...") == 1
-        assert _chapter_number("فصل دومشهادت یک جنایتکار علیه خودش") == 2
-        assert _chapter_number("فصل سومعدالت") == 3
-        assert _chapter_number("فصل ششممحاکمه‌ای دیگر") == 6
-        assert _chapter_number("فصل هشتمبی‌احتیاطی در احتیاط") == 8
         assert _chapter_number("فصل سی و چهارمخداحافظ، فرانسه") == 34
+        assert _chapter_number("فصل بیست و یکمپایان سفر") == 21
+        assert _chapter_number("فصل هجدهمیک جاسوس") == 18
+        assert _chapter_number("فصل هیجدهمیک جاسوس") == 18
+        # Short 1–10 glued titles are rejected (see false-positive test below).
+        assert _chapter_number("فصل اولجایی که به نظر میرسید...") is None
+        assert _chapter_number("فصل دومشهادت یک جنایتکار علیه خودش") is None
+        assert _chapter_number("فصل سومعدالت") is None
+
+    def test_persian_short_ordinal_false_positives(self):
+        """Ordinary phrases that begin with a short ordinal must not be chapters."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("فصل اولویت‌ها") is None
+        assert _chapter_number("فصل اولیه") is None
+        assert _chapter_number("فصل دومینو") is None
+        assert _chapter_number("فصل سومین") is None
 
     def test_persian_prose_is_not_a_chapter_heading(self):
         """Inline / incomplete `فصل` references must not count as headings."""

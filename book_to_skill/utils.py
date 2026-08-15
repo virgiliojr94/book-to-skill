@@ -155,14 +155,19 @@ _KO_CHAPTER = re.compile(
 )
 
 # Persian chapter headings: "فصل ۱", "فصل اول", "بخش ۲: مفاهیم",
-# "فصل بیست و یکم", "فصل اولجایی…" (PDF glue). Labels are فصل / بخش.
-# Digits may be ASCII, Persian (U+06F0–U+06F9), or Arabic-Indic (U+0660–U+0669);
-# int() parses all three. Word numerals use a small ordinal map (1–34) with
-# longest-prefix matching so compounds ("بیست و یکم") and teens ("یازدهم") stay
-# maintainable — no giant alternation regex. Markdown "#" prefixes are handled
-# by `_chapter_number`'s second pass (Issue #91). Digit tails still require EOL /
-# punctuation / spaced title; word numerals also accept a glued title letter
-# because PDF extractors often drop the space after the ordinal.
+# "فصل بیست و یکم", "فصل سی و چهارمخداحافظ…" (PDF glue on long forms).
+# Labels are فصل / بخش. Digits may be ASCII, Persian (U+06F0–U+06F9), or
+# Arabic-Indic (U+0660–U+0669); int() parses all three. Word numerals use a
+# small ordinal map (1–34) with longest-prefix matching so compounds
+# ("بیست و یکم") and teens ("یازدهم") stay maintainable. Markdown "#" prefixes
+# are handled by `_chapter_number`'s second pass (Issue #91).
+#
+# Trailing rules (Persian has no letter case for a Latin-style `_HEADING_TAIL`):
+#   - digits: EOL / punctuation / spaced title (Korean-style);
+#   - short word ordinals 1–10: require a separator (space, punct, ZWNJ, or EOL)
+#     so "فصل اولویت‌ها" / "فصل اولیه" are not read as chapter 1;
+#   - teens and compounds: also allow a glued title letter — PDF extractors
+#     often drop the space, and a long ordinal is not a plausible word prefix.
 _FA_DIGITS = "۰-۹٠-٩"  # Persian then Arabic-Indic
 _FA_ONES = (
     "اول", "دوم", "سوم", "چهارم", "پنجم", "ششم", "هفتم", "هشتم", "نهم", "دهم",
@@ -175,6 +180,9 @@ _FA_TEENS = (
     "یازدهم", "دوازدهم", "سیزدهم", "چهاردهم", "پانزدهم",
     "شانزدهم", "هفدهم", "هجدهم", "نوزدهم",
 )
+_FA_ONES_SET = frozenset(_FA_ONES)
+# After a short (1–10) word ordinal: end, whitespace, punctuation, or ZWNJ.
+_FA_SHORT_ORDINAL_TAIL = re.compile(r"^(?:$|\s|[.:\-—–：]|\u200c)")
 
 
 def _fa_ordinal_map() -> dict[str, int]:
@@ -185,6 +193,8 @@ def _fa_ordinal_map() -> dict[str, int]:
     for i, w in enumerate(_FA_TEENS, 11):
         m[w] = i
     m["هیجدهم"] = 18  # common alternate spelling of هجدهم
+    # Fused "بیستم" only — "بیست ام" / "بیست‌ام" are not common spellings
+    # (unlike "سی ام" / "سی‌ام" for 30), so they stay unmapped on purpose.
     m["بیستم"] = 20
     m["سی ام"] = 30
     m["سی‌ام"] = 30  # ZWNJ spelling common in Persian typography
@@ -216,9 +226,13 @@ def _fa_chapter_number(s: str) -> int | None:
             return n
         return None
     for key in _FA_ORDINAL_KEYS:
-        if rest.startswith(key):
-            # Word form: EOL, punctuation, whitespace, or PDF-glued title text.
-            return _FA_ORDINALS[key]
+        if not rest.startswith(key):
+            continue
+        tail = rest[len(key):]
+        # Short 1–10 ordinals need a separator; teens/compounds may be PDF-glued.
+        if key in _FA_ONES_SET and _FA_SHORT_ORDINAL_TAIL.match(tail) is None:
+            return None
+        return _FA_ORDINALS[key]
     return None
 
 
@@ -395,7 +409,7 @@ def _chapter_number(line: str) -> int | None:
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
     "## บทที่ ๑"), Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
-    "## فصل ۱: مقدمه", PDF-glued "فصل اولجایی…") heading styles — each
+    "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each
     optionally preceded by a Markdown/AsciiDoc heading marker
     ("## Chapter 1" is a chapter heading just like "Chapter 1").
     """
