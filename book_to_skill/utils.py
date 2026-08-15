@@ -533,8 +533,10 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
         # Normalise "~" once, at the entry point, so both the glob branch and
         # the file/directory branch below see a real path.
         path_str = os.path.expanduser(raw_path)
-        # Check if it has glob wildcards
-        if any(char in path_str for char in ("*", "?", "[")):
+        # Check if it has glob wildcards. A path that exists literally on disk
+        # (e.g. a filename containing a literal "[" or "]") is not a glob
+        # pattern even though it contains glob metacharacters.
+        if any(char in path_str for char in ("*", "?", "[")) and not Path(path_str).exists():
             glob_matches = glob.glob(path_str, recursive=True)
             # Sort expanded glob results deterministically
             expanded = []
