@@ -46,6 +46,7 @@ from book_to_skill.parsers.epub import (
     extract_with_ebooklib,
     extract_with_zipfile,
     count_epub_chapters,
+    count_epub_images,
 )
 from book_to_skill.sanitize import sanitize_extracted_text
 
@@ -657,6 +658,17 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                 )
         pages = count_epub_chapters(input_str)
         pages_label = "spine_items"
+        images_dropped = count_epub_images(input_str)
+        if images_dropped:
+            # Text-only extraction never writes images. The count turns a
+            # silent loss into a stated limit (issue #127): the metadata row
+            # and the run report both surface it, and the generated skill's
+            # Scope & Limits section inherits it via the Step 8 template.
+            print(
+                f"  [info] {images_dropped} image(s) in this EPUB are not "
+                "extracted — figure content is unavailable",
+                file=sys.stderr,
+            )
     elif ext == ".pdf":
         print(f"Extracting PDF: {input_str}")
         if looks_image_only(input_str):
@@ -783,6 +795,11 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         "estimated_tokens": tokens,
         "text": text,
         **structure,
+        **(
+            {"images_dropped": images_dropped}
+            if ext == ".epub"
+            else {}
+        ),
     }
 
 
@@ -919,6 +936,7 @@ def main():
     # Consolidate metadata
     total_file_size_mb = sum(src["file_size_mb"] for src in extracted_sources)
     total_pages = sum(src["pages"] for src in extracted_sources)
+    total_images_dropped = sum(src.get("images_dropped", 0) for src in extracted_sources)
     total_chars = len(consolidated_text)
     total_words = len(consolidated_text.split())
     total_tokens = estimate_tokens(consolidated_text)
@@ -967,11 +985,21 @@ def main():
                 "estimated_tokens": src["estimated_tokens"],
                 "chapters_detected": src["chapters_detected"],
                 "chapters_method": src["chapters_method"],
-                "has_toc": src["has_toc"]
+                "has_toc": src["has_toc"],
+                **(
+                    {"images_dropped": src["images_dropped"]}
+                    if "images_dropped" in src
+                    else {}
+                )
             }
             for src in extracted_sources
         ],
         **consolidated_structure,
+        **(
+            {"images_dropped": total_images_dropped}
+            if total_images_dropped
+            else {}
+        ),
     }
     
     # encoding="utf-8" is required, not cosmetic: the payload is dumped with
@@ -1004,6 +1032,14 @@ def main():
         print(
             "   WARN    : only one section found in a document this long — chapter "
             "detection likely failed; check the headings before generating."
+        )
+    if total_images_dropped:
+        # Issue #127: EPUB extraction is text-only, so every image in the
+        # archive is dropped without a signal. Surface the loss here and in
+        # metadata.json so "confidently incomplete" becomes a stated limit.
+        print(
+            f"   WARN    : {total_images_dropped} image(s) in the source were not "
+            "extracted — figures, diagrams and charts are unavailable."
         )
     print(f"   ToC     : {'yes' if consolidated_structure['has_toc'] else 'not detected'}")
     if not consolidated_structure["has_toc"]:

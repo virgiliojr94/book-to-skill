@@ -117,7 +117,7 @@ Store the answer as `BOOK_TYPE`:
 - Option 3 → `BOOK_TYPE=text`
 
 **If `BOOK_TYPE=technical`**, inform the user before proceeding:
-> "📐 Technical mode selected — using Docling for structure-aware extraction (tables, code blocks, formulas preserved as markdown). This takes ~1.5s per page, so expect a few minutes for longer sources. Starting now…"
+> "📐 Technical mode selected — using Docling for structure-aware extraction of PDFs (tables, code blocks, formulas preserved as markdown). EPUB sources are extracted as text only: their images are never read, so figures are not preserved. This takes ~1.5s per page, so expect a few minutes for longer sources. Starting now…"
 
 **If `BOOK_TYPE=text`**, inform:
 > "📄 Text mode selected — using the fastest suitable extractor for each file type. Plain text/Markdown/HTML are usually ready in seconds; PDFs use pdftotext when available."
@@ -515,6 +515,12 @@ the relevant chapter file before answering.
 This skill covers the book content only. For hands-on implementation in your codebase,
 combine with project-specific tools. For topics beyond this book, check related skills
 or ask the agent directly.
+
+If `metadata.json` reports `"images_dropped": N`, add a line stating the boundary so
+the skill does not silently overclaim:
+
+> Figures in the source were not read — the N images were not extracted, so
+> figure-borne content (diagrams, matrices, decision tables) is absent from this skill.
 ```
 
 ---

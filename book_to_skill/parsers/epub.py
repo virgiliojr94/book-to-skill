@@ -123,3 +123,42 @@ def count_epub_chapters(epub_path: str) -> int:
     except Exception:
         return 0
 
+
+# Image extensions that are not declared in the OPF manifest but still sit in
+# the archive. Some EPUB producers ship a permissive manifest (or none at all),
+# so a manifest-only count would silently under-report; the extension scan is
+# the fallback, not the primary, because the manifest is the spec-defined list
+# of everything the book actually uses.
+_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tif", ".tiff", ".avif")
+
+
+def count_epub_images(epub_path: str) -> int:
+    """Count the images inside an EPUB without extracting them.
+
+    Primary source is the OPF manifest: every ``<item>`` whose ``media-type``
+    starts with ``image/`` is a figure the book ships (and that text-only
+    extraction drops). Falls back to scanning the archive for known image
+    extensions when no OPF is found or it declares no images. Returns 0 on any
+    error — this is a reporting aid, never a reason to fail extraction.
+    """
+    try:
+        with zipfile.ZipFile(epub_path) as zf:
+            opf_path = _find_opf_path(zf)
+            if opf_path:
+                opf_text = zf.read(opf_path).decode("utf-8", errors="replace")
+                manifest_images = [
+                    tag
+                    for tag in re.findall(r"<item\b[^>]*?/?>", opf_text)
+                    if re.search(r'\bmedia-type=["\']image/', tag)
+                ]
+                if manifest_images:
+                    return len(manifest_images)
+            return sum(
+                1
+                for n in zf.namelist()
+                if n.lower().endswith(_IMAGE_EXTENSIONS)
+                and not n.startswith("META-INF/")
+            )
+    except Exception:
+        return 0
+
