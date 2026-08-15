@@ -30,7 +30,10 @@ def test_prepare_output_dir_rejects_symlink(tmp_path):
     real_dir = tmp_path / "real"
     real_dir.mkdir()
     link = tmp_path / "work"
-    link.symlink_to(real_dir)
+    try:
+        link.symlink_to(real_dir, target_is_directory=True)
+    except (NotImplementedError, OSError) as exc:
+        pytest.skip(f"directory symlinks are unavailable on this host: {exc}")
 
     with pytest.raises(ExtractionError, match="symbolic link"):
         prepare_output_dir(link)
