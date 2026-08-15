@@ -51,6 +51,11 @@ from book_to_skill.parsers.epub import (
 from book_to_skill.sanitize import sanitize_extracted_text
 
 
+# Covers and decorative assets are common in prose EPUBs, so only surface the
+# omission when the archive contains more than five images.
+_EPUB_IMAGE_NOTICE_THRESHOLD = 5
+
+
 # CJK codepoints: ideographs + extensions, kana, hangul, CJK punctuation, and
 # fullwidth forms. These are not whitespace-delimited, so counting "words" on a
 # Chinese/Japanese book collapses it to a handful of tokens; count them directly.
@@ -660,7 +665,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         pages = count_epub_chapters(input_str)
         pages_label = "spine_items"
         images_dropped = count_epub_images(input_str)
-        if images_dropped:
+        if images_dropped > _EPUB_IMAGE_NOTICE_THRESHOLD:
             print(
                 f"  [warn] {input_path.name} contains {images_dropped} image(s); "
                 "their content is not extracted",

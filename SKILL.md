@@ -178,7 +178,7 @@ Read `<tempdir>/book_skill_work/metadata.json` and present the user with an esti
 ```
 📖 Sources detected: <total_sources> source(s)
 <list each source filename and format from the sources metadata list>
-<if images_dropped > 0: warn that N source images were not read>
+<if images_dropped > 5: warn that N source images were not read>
 📄 Combined Pages/Sections: ~<N> | Words: ~<N> | Total tokens: ~<N>K
 
 💰 Estimated token cost (Full Conversion / Update):
@@ -516,7 +516,7 @@ the relevant chapter file before answering.
 This skill covers the book content only. For hands-on implementation in your codebase,
 combine with project-specific tools. For topics beyond this book, check related skills
 or ask the agent directly.
-<if images_dropped > 0: state that N source images were not read>
+<if images_dropped > 5: state that N source images were not read>
 ```
 
 ---

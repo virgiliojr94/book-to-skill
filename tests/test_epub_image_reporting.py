@@ -35,16 +35,26 @@ def _make_epub_with_images(path, image_count=2):
     return path
 
 
-def test_epub_extraction_reports_dropped_images(tmp_path, capsys):
-    source = _make_epub_with_images(tmp_path / "figures.epub", image_count=2)
+def test_epub_extraction_reports_material_dropped_images(tmp_path, capsys):
+    source = _make_epub_with_images(tmp_path / "figures.epub", image_count=6)
 
     with mock.patch("book_to_skill.utils.prepare_dependencies"):
         result = extract_single_file(source, "text", "no")
 
-    assert result["images_dropped"] == 2
+    assert result["images_dropped"] == 6
     stderr = capsys.readouterr().err
-    assert "2 image(s)" in stderr
+    assert "6 image(s)" in stderr
     assert "content is not extracted" in stderr
+
+
+def test_epub_extraction_keeps_cover_only_book_quiet(tmp_path, capsys):
+    source = _make_epub_with_images(tmp_path / "novel.epub", image_count=1)
+
+    with mock.patch("book_to_skill.utils.prepare_dependencies"):
+        result = extract_single_file(source, "text", "no")
+
+    assert result["images_dropped"] == 1
+    assert "content is not extracted" not in capsys.readouterr().err
 
 
 def test_main_persists_epub_image_loss_in_source_and_total_metadata(
