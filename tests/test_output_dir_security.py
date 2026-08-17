@@ -6,7 +6,15 @@ import pytest
 from book_to_skill.exceptions import ExtractionError
 from book_to_skill.utils import prepare_output_dir
 
+# POSIX-only: chmod mode bits and unprivileged symlink creation don't apply on
+# Windows (os.getuid is the same platform marker the ownership test below uses).
+_posix_only = pytest.mark.skipif(
+    not hasattr(os, "getuid"),
+    reason="POSIX permission/symlink semantics not enforced on Windows",
+)
 
+
+@_posix_only
 def test_prepare_output_dir_creates_dir_with_restrictive_permissions(tmp_path):
     target = tmp_path / "work"
 
@@ -16,6 +24,7 @@ def test_prepare_output_dir_creates_dir_with_restrictive_permissions(tmp_path):
     assert stat.S_IMODE(target.stat().st_mode) == 0o700
 
 
+@_posix_only
 def test_prepare_output_dir_rejects_symlink(tmp_path):
     real_dir = tmp_path / "real"
     real_dir.mkdir()
@@ -34,6 +43,7 @@ def test_prepare_output_dir_rejects_non_directory(tmp_path):
         prepare_output_dir(target)
 
 
+@_posix_only
 def test_prepare_output_dir_tightens_permissions_on_existing_own_dir(tmp_path):
     target = tmp_path / "work"
     target.mkdir()
