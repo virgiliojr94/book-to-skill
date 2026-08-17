@@ -197,7 +197,8 @@ The extractor tries tools in order per format and uses the first available. If n
 
 ```
 book-to-skill/
-├── SKILL.md              # Skill definition + step-by-step instructions (the generator spec)
+├── SKILL.md              # Skill definition, Steps 0-6 (input, extraction, cost estimate, destination)
+├── GENERATION.md         # Steps 7-11 + Update/Fold-in Workflow + Quality Rules — loaded on-demand, not on every run
 ├── scripts/
 │   ├── extract.py        # Thin entrypoint wrapper
 │   └── extractor/        # Modular extraction package
