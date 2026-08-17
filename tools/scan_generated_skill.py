@@ -60,8 +60,29 @@ _CONTENT_RULES = (
         "contains a model chat-template delimiter",
     ),
     (
+        # Only the delimited forms — a token, not the English phrase. The
+        # families below are the ones that appear in real chat templates and
+        # tool-calling protocols:
+        #
+        #   <tool_call> … </tool_call>     Hermes / Qwen style
+        #   <|tool_call|>                  special-token style
+        #   [TOOL_CALL] / [/tool_call]     bracket style
+        #   {{tool_call}}                  template placeholder
+        #   "tool_call"                    JSON key or value
+        #
+        # Matching bare prose instead fired on every book that explains what a
+        # tool call is — the agent and prompting books this converter is most
+        # used on. A gate that always trips on a whole category teaches people
+        # to wave it through, which costs more than the false positive itself.
         "prompt.tool_call_tag",
-        re.compile(r"\btool[_ -]?call\b", re.IGNORECASE),
+        re.compile(
+            r"""<\|?\s*/?\s*tool[_ -]?call\s*\|?>      # <tool_call>, </tool_call>, <|tool_call|>
+              | \[\s*/?\s*tool[_ -]?call\s*\]          # [TOOL_CALL], [/tool_call]
+              | \{\{\s*/?\s*tool[_ -]?call\s*\}\}      # {{tool_call}}
+              | "\s*tool[_ -]?call\s*"                 # JSON key or value
+            """,
+            re.IGNORECASE | re.VERBOSE,
+        ),
         "contains a tool-call control token",
     ),
 )

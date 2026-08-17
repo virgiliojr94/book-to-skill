@@ -67,7 +67,7 @@ Four paths available. Route based on what the user asks:
 This converter can run from multiple skill systems. When looking for this converter's helper script or writing the generated book skill, prefer these locations in order:
 
 1. GitHub Copilot CLI personal skills: `~/.copilot/skills/`
-2. Cross-agent personal skills (Copilot + Amp): `~/.agents/skills/`
+2. Cross-agent personal skills (Copilot, Amp, Codex): `~/.agents/skills/`
 3. Claude Code personal skills: `~/.claude/skills/`
 4. Project-local Copilot skills: `.github/skills/`
 5. Project-local Claude skills: `.claude/skills/`
@@ -307,12 +307,13 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 | **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
 
 Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, or Claude Code?"
+4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -580,9 +581,62 @@ Reload (if your agent doesn't auto-detect new skills):
   Claude Code:         restart the session
   Amp:                 restart the session
 
-Share this skill (Copilot ecosystem, optional):
-  gh skill publish $SKILLS_HOME/<skill_name>
+Share this skill (optional):
+  GitHub repo, installable on any host (Step 11):  say "publish"
+  Copilot ecosystem:  gh skill publish $SKILLS_HOME/<skill_name>
 ```
+
+---
+
+## Step 11 — Publish the generated skill to GitHub (optional)
+
+After the Step 10 report, offer once — and only if the Step 9.5 scan passed:
+
+> "Want me to publish this skill to GitHub so any Agent Skills host can install it with `npx skills add`? (yes / skip)"
+
+If the user declines, stop here. Requirements: the `gh` CLI, authenticated (check `gh auth status`). If `gh` is missing or unauthenticated, offer to set it up (`brew install gh` or https://cli.github.com, then `gh auth login`) — or use the no-`gh` path: the user creates an empty repo of the chosen visibility in the GitHub web UI, then you run the `git init`/`add`/`commit` commands below followed by `git remote add origin <repo-url> && git push -u origin main`. The visibility rule below applies to the web-created repo exactly the same.
+
+**Visibility is a separate closed question — never inferred, never read out of an earlier answer.** Once the user accepts, ask it on its own and require a one-word reply:
+
+> "Private or public repository? Reply with one word: `private` or `public`."
+
+**The reply must *be* `public`, not merely contain it — a hard rule, not a suggestion.** Run `gh repo create` with `--private` in every case except one: the answer to the visibility question is the bare word `public`. Substring matching is forbidden, because a sentence about **the source's licence is not a visibility answer** — "it's public domain", "the book is public domain", "it's publicly available" all describe the material, not the repository, and all resolve to `--private`. A paraphrase, a sentence, an ambiguous answer, silence, or your own inference is NOT consent: re-ask once, and if the reply is still not the bare word, use `--private` and say so in the report. A private repo can be flipped public later; a public push of book-derived content cannot be un-published.
+
+**Copyright gate — always apply before creating the repo:** chapter files are synthesized summaries, not raw text, but they still derive from the source material. Per the README's Copyright & fair use policy, skills generated from **third-party copyrighted books must stay private**; offer public only when the source is the user's own writing, openly licensed content, or material the user explicitly confirms they are authorized to redistribute publicly — and state which case applies. Having access to internal company material is not permission to disclose it: skills from internal docs stay **private** unless the user states they hold publication rights.
+
+If accepted:
+
+1. Add a repo `README.md` inside `$SKILLS_HOME/<skill_name>/` (never overwrite an existing file) — the skill title, a one-paragraph description ("Agent skill generated from *<Title>* by <Author> with [book-to-skill](https://github.com/virgiliojr94/book-to-skill)"), the install command from step 3 below, the file inventory, and a note that the content is synthesized summaries, not the book text.
+2. Initialize the skill folder as a git repository and create the remote (default repo name `<skill_name>`; let the user override — some prefer a `<skill_name>-skill` suffix). **Nested-repo guard:** first check whether the skill folder already sits inside a git repository (`git -C "$SKILLS_HOME/<skill_name>" rev-parse --show-toplevel` — always the case for project-local roots like `.claude/skills/`). If it does, do NOT `git init` in place: the outer repository would record the folder as an embedded repo (gitlink, mode 160000) without `.gitmodules`, and fresh clones of the outer project would silently omit the skill. Instead, copy the skill folder to a scratch directory, run the commands below from the copy, and tell the user the published repo — not the project-local folder — is the remote's working copy.
+
+```bash
+cd "$SKILLS_HOME/<skill_name>"
+git init -b main
+git add -A
+git commit -m "Add <skill_name> skill"
+gh repo create <repo_name> --private --source . --push
+# --private is the default; substitute --public ONLY under the visibility rule above
+# (the visibility answer WAS the bare word "public" AND the copyright gate allows it)
+```
+
+3. Report the repo URL and the cross-host install command:
+
+```
+✅ Published: https://github.com/<owner>/<repo_name> (<private|public>)
+
+Install on any Agent Skills host:
+  npx skills add https://github.com/<owner>/<repo_name> --skill <skill_name>
+```
+
+   When the nested-repo guard fired and the repo was published from a scratch copy, add one line — that local folder never gains a remote, so the Update/Fold-in push offer will never appear for it:
+
+```
+⚠️  Published from a copy: <skill folder> sits inside another git repository, so it has
+    no remote of its own. To publish a later update, re-run Step 11, or clone
+    https://github.com/<owner>/<repo_name> and fold new material into the clone.
+```
+
+The root-level `SKILL.md` layout is exactly what the `skills` CLI detects, so the repo is installable as-is — no restructuring needed. Outside the nested-repo case the local folder stays the live install for this machine and is the remote's working copy, so later Update/Fold-in runs can commit and push their changes to the same remote.
 
 ---
 
@@ -631,7 +685,7 @@ Update the master skill file `$SKILLS_HOME/<skill_name>/SKILL.md`:
 - **Topic Index**: Merge the new topics alphabetically. If an existing topic is also covered in the new chapters, append the new chapter links to its line (e.g. `- **Topic** → ch05, ch13`).
 
 ### 6. Scan, Cleanup, and Report
-Once the files are successfully written and merged, run **Step 9.5**, then proceed to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices.
+Once the files are successfully written and merged, run **Step 9.5**, then proceed to **Step 10** to perform cleanup and print a custom update report summarizing the newly added chapters, merged glossary terms, and updated indices. If the skill folder is a git repository with a remote (published via **Step 11**), offer to commit the update and push it.
 
 ---
 

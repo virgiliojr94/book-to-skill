@@ -1,12 +1,12 @@
 ---
-description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI and Amp, or as a standalone pip CLI. Every host path and optional extractor covered."
+description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp and Codex, or as a standalone pip CLI. Every host path and optional extractor covered."
 seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
 ---
 
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
-> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, or Amp) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
+> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, or Codex) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
 > - **As a standalone CLI** (just the text extractor) → `pip install book-to-skill`, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
@@ -28,10 +28,16 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.copilot/skills/bo
 /skills info book-to-skill
 ```
 
-Or the cross-agent path that Copilot CLI and Amp both discover:
+Or the cross-agent path that Copilot CLI, Amp and Codex all discover:
 
 ```bash
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+```
+
+**OpenAI Codex** reads `~/.agents/skills` and follows symlinks, so the clone above is all it needs. A local checkout works too, linked in rather than copied:
+
+```bash
+ln -s /path/to/book-to-skill ~/.agents/skills/book-to-skill
 ```
 
 **Claude Code**:

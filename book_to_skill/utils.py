@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import re
+import statistics
 import sys
 import shutil
 import zipfile
@@ -228,6 +229,40 @@ def _closed_fence_line_numbers(lines: list[str]) -> set[int]:
     return inside
 
 
+# A numbered heading is a chapter when the numbering is systematic AND the
+# sections carry a chapter's worth of text. Both are required, because neither
+# separates the two shapes alone: a three-step tutorial is also systematic and
+# also ascends from 1, while a single long section is not a numbering scheme.
+# Measured medians of body text per section: tutorial steps ~20 chars, doc
+# sections ~500, paper sections ~2,000, real book chapters ~5,000. The floor
+# sits an order of magnitude below the smallest real chapter seen and an order
+# above the largest tutorial step.
+_MIN_NUMBERED_TITLES = 3
+_MIN_NUMBERED_BODY_CHARS = 200
+
+
+def _numbered_titles_are_structural(
+    entries: list[tuple[str, int]], heading_lines: list[int], lines: list[str]
+) -> bool:
+    """Decide whether digit-led titles at one depth are chapters or list items.
+
+    Deliberately not based on the numbers themselves. An ascending run starting
+    at 1 describes "Step 1 / Step 2 / Step 3" as accurately as it describes a
+    paper's sections, and requiring the run to be unbroken would throw away a
+    whole book when extraction drops one heading, a chapter list that starts at
+    0, or a multi-source corpus where the numbering restarts.
+    """
+    if len(entries) < _MIN_NUMBERED_TITLES:
+        return False
+    ordered = sorted(heading_lines)
+    bodies = []
+    for _, index in entries:
+        after = [ln for ln in ordered if ln > index]
+        end = after[0] if after else len(lines)
+        bodies.append(sum(len(ln) for ln in lines[index + 1:end]))
+    return statistics.median(bodies) >= _MIN_NUMBERED_BODY_CHARS
+
+
 def _structural_chapter_count(text: str) -> int:
     """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources.
 
@@ -244,8 +279,13 @@ def _structural_chapter_count(text: str) -> int:
     the underline (so thematic breaks, table borders, and front-matter "---" do
     not match).
     """
-    levels: dict[int, set[str]] = {}
     lines = text.splitlines()
+    levels: dict[int, set[str]] = {}
+    # Digit-led titles are held back and judged per depth at the end (see
+    # _numbered_titles_are_structural): "## 1. Introduction" and "## 5 Setup"
+    # are the same string shape, so the line alone cannot decide.
+    numbered: dict[int, list[tuple[str, int]]] = {}
+    heading_lines: list[int] = []
     fenced = _closed_fence_line_numbers(lines)
     prev = ""  # previous non-fence line (stripped); a setext title candidate
     for index, line in enumerate(lines):
@@ -263,20 +303,28 @@ def _structural_chapter_count(text: str) -> int:
         ):
             depth = 1 if s[0] == "=" else 2
             levels.setdefault(depth, set()).add(prev.lower())
+            heading_lines.append(index)
             prev = ""
             continue
         # ATX heading ("# Title", "== Section").
         m = _ATX_HEADING.match(s)
         if m:
             title = m.group(2).strip().lower()
-            # Reject empty, bare-digit-led ("## 5 Setup"), and all-punctuation
-            # ("=====" table-border) titles — none are real chapter headings.
-            if title and not title[0].isdigit() and re.search(r"\w", title):
-                levels.setdefault(len(m.group(1)), set()).add(title)
+            depth = len(m.group(1))
+            # Reject empty and all-punctuation ("=====" table-border) titles.
+            if title and re.search(r"\w", title):
+                heading_lines.append(index)
+                if title[0].isdigit():
+                    numbered.setdefault(depth, []).append((title, index))
+                else:
+                    levels.setdefault(depth, set()).add(title)
             # An ATX heading line is not a setext title for the next line.
             prev = ""
             continue
         prev = s
+    for depth, entries in numbered.items():
+        if _numbered_titles_are_structural(entries, heading_lines, lines):
+            levels.setdefault(depth, set()).update(title for title, _ in entries)
     if not levels:
         return 0
     for depth in sorted(levels):
@@ -406,15 +454,26 @@ def detect_structure(text: str) -> dict:
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
     # "Chapter N" headings were found, so books with real chapters are unaffected.
-    chapters_detected = (
-        numeric_count if numeric_count > 0 else _structural_chapter_count(text)
-    )
+    #
+    # Which branch answered is reported alongside the count. The two disagree
+    # often, and a wrong count is not visible in the output it produces: it
+    # becomes the plan in Step 3 and the chapter files of the generated skill.
+    # Every parser in this project already announces which method it used
+    # ("Trying python-docx... OK"); this decision had the same shape and was
+    # the only silent one.
+    if numeric_count > 0:
+        chapters_detected = numeric_count
+        chapters_method = "numeric"
+    else:
+        chapters_detected = _structural_chapter_count(text)
+        chapters_method = "structural" if chapters_detected else "none"
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
 
     return {
         "chapters_detected": chapters_detected,
+        "chapters_method": chapters_method,
         "chapter_headings_sample": headings[:10],
         "has_toc": has_toc,
     }
@@ -704,6 +763,10 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
 
     tokens = estimate_tokens(text)
     structure = detect_structure(text)
+    print(
+        f"  chapters: {structure['chapters_detected']} "
+        f"({structure['chapters_method']})"
+    )
     file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
     
     return {
@@ -749,14 +812,37 @@ def prepare_output_dir(path: Path) -> None:
         path.mkdir(parents=True, mode=0o700)
 
 
-def print_banner() -> None:
-    """Print the attribution banner. Done here (not only in SKILL.md) so it
-    shows on every run regardless of how the agent invokes extraction."""
-    banner = Path(__file__).resolve().parent.parent / "scripts" / "banner.txt"
-    try:
-        sys.stderr.write(banner.read_text(encoding="utf-8") + "\n")
-    except Exception:
-        pass  # best-effort: never block extraction on the banner
+def print_intro() -> None:
+    """Two lines of attribution at the start of every run.
+
+    Printed here rather than only in SKILL.md so it shows however the agent
+    invokes extraction. States who maintains the project without asking for
+    anything — the ask belongs at the end, after the work is delivered.
+    """
+    sys.stderr.write(
+        "book-to-skill · turns a document into a structured agent skill\n"
+        "free and MIT-licensed · maintained in personal time · "
+        "github.com/virgiliojr94/book-to-skill\n\n"
+    )
+
+
+def print_support_note() -> None:
+    """One closing line about funding, printed only after a successful run.
+
+    Deliberately at the end and deliberately conditional: the reader has just
+    received something that worked, and the sentence says what the money is
+    for rather than asking for it. Never printed when extraction failed —
+    nobody should be asked to fund what just wasted their time.
+
+    Written to stdout, with the rest of the closing report: stderr is
+    unbuffered and stdout is not when the run is piped (which is how an agent
+    captures it), so mixing the two puts the closing line at the top.
+    """
+    print(
+        "\n   book-to-skill is free, and maintained in personal time."
+        "\n   If it saves you work, you can fund its upkeep: "
+        "github.com/sponsors/virgiliojr94"
+    )
 
 
 def print_usage() -> None:
@@ -774,7 +860,7 @@ def print_usage() -> None:
 
 
 def main():
-    print_banner()
+    print_intro()
 
     if any(arg in {"-h", "--help"} for arg in sys.argv[1:]):
         print_usage()
@@ -880,6 +966,7 @@ def main():
                 "words": src["words"],
                 "estimated_tokens": src["estimated_tokens"],
                 "chapters_detected": src["chapters_detected"],
+                "chapters_method": src["chapters_method"],
                 "has_toc": src["has_toc"]
             }
             for src in extracted_sources
@@ -903,7 +990,21 @@ def main():
     print(page_line)
     print(f"   Words   : {total_words:,}")
     print(f"   Tokens  : ~{total_tokens // 1000}K")
-    print(f"   Chapters: {consolidated_structure['chapters_detected']} detected overall")
+    print(
+        f"   Chapters: {consolidated_structure['chapters_detected']} detected overall "
+        f"({consolidated_structure['chapters_method']})"
+    )
+    if consolidated_structure["chapters_method"] == "structural" and (
+        consolidated_structure["chapters_detected"] <= 1 and total_words > 5000
+    ):
+        # Numeric "Chapter N" headings found nothing and the structural fallback
+        # came back with one section for a document of real length. That pairing
+        # is a detection failure far more often than it is a one-chapter book,
+        # and it is invisible in the output it produces.
+        print(
+            "   WARN    : only one section found in a document this long — chapter "
+            "detection likely failed; check the headings before generating."
+        )
     print(f"   ToC     : {'yes' if consolidated_structure['has_toc'] else 'not detected'}")
     if not consolidated_structure["has_toc"]:
         print(
@@ -916,3 +1017,5 @@ def main():
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
             print(f"     - {path.name}: {err}")
+    else:
+        print_support_note()

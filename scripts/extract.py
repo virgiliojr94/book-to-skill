@@ -7,8 +7,8 @@ Backward-compatible entrypoint wrapper.
 import os
 import sys
 
-# Force UTF-8 stdout/stderr so the attribution banner (braille art) and the
-# dependency-check glyphs (✓ / ✗) don't raise UnicodeEncodeError on Windows
+# Force UTF-8 stdout/stderr so extracted text, the attribution line's separators
+# and the dependency-check glyphs (✓ / ✗) don't raise UnicodeEncodeError on Windows
 # consoles that default to a legacy code page (e.g. GBK / cp936).
 for _stream in (sys.stdout, sys.stderr):
     try:
