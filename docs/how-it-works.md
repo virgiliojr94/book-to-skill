@@ -38,8 +38,9 @@ scripts/extract.py <paths…> --mode <technical|text>
                ▼
           Skill written to:
             ~/.agents/skills/<slug>/    (cross-agent: Copilot CLI, Amp, Codex)
-            ~/.claude/skills/<slug>/    (symlink → above, added when
-                                         running under Claude Code)
+            ~/.claude/skills/<slug>/    (symlink → above, attempted under
+                                         Claude Code and verified by
+                                         read-back; report states the result)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
 
