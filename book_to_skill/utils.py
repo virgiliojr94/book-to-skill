@@ -70,8 +70,12 @@ _EPUB_IMAGE_NOTICE_THRESHOLD = 5
 # those characters fell through to the whitespace-word branch, where a
 # space-less run of them counts as a single "word": the same ~1000x undercount
 # #103 fixed for the BMP, one plane up.
+# The Kangxi-radical range (U+2F00-U+2FDF) is included because some Chinese
+# ebooks render ordinary Han characters — 网 as ⽹ (U+2F79), 大 as ⼤
+# (U+2F24), 一 as ⼀ (U+2F00) — as radical forms throughout the whole text;
+# without it such a book still falls through to the whitespace-word branch.
 _CJK_RE = re.compile(
-    r"[　-〿぀-ヿ㐀-䶿一-鿿"
+    r"[⼀-⿟　-〿぀-ヿ㐀-䶿一-鿿"
     r"가-힣豈-﫿＀-￯"
     r"\U00020000-\U0003FFFF]"
 )
@@ -140,6 +144,19 @@ _CN_NUM_VALUES = {
 }
 _CN_NUM_UNITS = {"十": 10, "百": 100, "千": 1000}
 _CN_NUM_CLASS = "〇零一二两三四五六七八九十百千"
+
+# Kangxi-radical numerals → CJK ideograph numerals. Some Chinese ebooks
+# (e.g. certain e-reader platforms) encode numerals as Kangxi radicals from
+# the U+2F00 block instead of CJK unified ideographs — "第⼀章" with
+# U+2F00 (⼀) rather than U+4E00 (一). NFKC does not map these, so normalize
+# them explicitly before chapter detection. Only numerals that exist as
+# Kangxi radicals are listed (三/四/五/六/七/九 have no radical form).
+_KANGXI_NUMERAL_TRANS = {
+    0x2F00: ord("一"),  # ⼀ KANGXI RADICAL ONE
+    0x2F06: ord("二"),  # ⼆ KANGXI RADICAL TWO
+    0x2F0B: ord("八"),  # ⼋ KANGXI RADICAL EIGHT
+    0x2F17: ord("十"),  # ⼗ KANGXI RADICAL TEN
+}
 # Full-width Arabic digits (U+FF10–U+FF19) are common in Japanese typesetting,
 # e.g. "第１章". int() already parses them (str.isdigit() is True), so only the
 # regex character classes need to accept them.
@@ -473,7 +490,9 @@ def _roman_to_int(s: str) -> int | None:
 def _match_chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading,
     with no Markdown/AsciiDoc heading prefix (the caller strips it first)."""
-    s = line.strip()
+    # Normalize Kangxi-radical numerals (⼀⼆⼋⼗) to ideographs so Chinese
+    # ebooks that encode chapter numbers in the U+2F00 block are detected.
+    s = line.strip().translate(_KANGXI_NUMERAL_TRANS)
     if len(s) > 80:
         return None
     m = _EXPLICIT_CHAPTER.match(s)

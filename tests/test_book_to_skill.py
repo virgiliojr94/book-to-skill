@@ -1010,6 +1010,33 @@ class TestDetectStructure:
         assert _cn_numeral_to_int("不是数字") is None
         assert _cn_numeral_to_int("9999") is None  # out of 1..999 chapter range
 
+    # ── Kangxi-radical numerals (U+2F00 block) ──────────────────────────────
+    # Some Chinese ebooks (e.g. certain e-reader platforms) encode numerals as
+    # Kangxi radicals instead of CJK ideographs: 第⼀章 with U+2F00, not U+4E00.
+    # NFKC does not map these, so detection must normalize them explicitly.
+
+    def test_kangxi_radical_chapter_headings(self):
+        text = (
+            "第⼀章\n正文\n"      # U+2F00 KANGXI RADICAL ONE
+            "第⼆章\n正文\n"      # U+2F06 KANGXI RADICAL TWO
+            "第⼋章\n正文\n"      # U+2F0B KANGXI RADICAL EIGHT
+            "第⼗章\n正文\n"      # U+2F17 KANGXI RADICAL TEN
+            "第⼗⼀章\n正文\n"    # ⼗⼀ = 11
+            "第⼗⼆章\n正文\n"    # ⼗⼆ = 12
+        )
+        assert detect_structure(text)["chapters_detected"] == 6
+
+    def test_kangxi_mixed_with_ideograph_chapters(self):
+        # Real-world mix from an actual ebook: radicals for 一/二/八/十,
+        # ideographs for the rest — all 12 chapters must be found.
+        nums = ["⼀", "⼆", "三", "四", "五", "六", "七", "⼋", "九", "⼗", "⼗⼀", "⼗⼆"]
+        text = "".join(f"第{n}章\n正文。\n" for n in nums)
+        assert detect_structure(text)["chapters_detected"] == 12
+
+    def test_kangxi_radical_in_markdown_heading(self):
+        text = "## 第⼀讲\n正文\n## 第⼆讲\n正文\n"
+        assert detect_structure(text)["chapters_detected"] == 2
+
     def test_french_chapitre(self):
         assert detect_structure("Chapitre 1\nx\nChapitre 2\nx")["chapters_detected"] == 2
 
@@ -2001,6 +2028,12 @@ class TestCjkTokenEstimate:
 
     def test_empty_is_zero(self):
         assert estimate_tokens("") == 0
+
+    def test_kangxi_radicals_counted_as_cjk(self):
+        # Some Chinese ebooks render Han characters as Kangxi radicals
+        # throughout (网 as ⽹ U+2F79, 大 as ⼤ U+2F24, 一 as ⼀ U+2F00).
+        # A space-less run of them must not fall into the word branch.
+        assert estimate_tokens("⼀" * 1500) == 1000
 
 
 class TestPdfLibsCleanup:
