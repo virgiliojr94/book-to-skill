@@ -75,7 +75,7 @@ This converter can run from multiple skill systems. When looking for this conver
 7. Amp global skills: `~/.config/agents/skills/`
 8. Amp legacy global skills: `~/.config/amp/skills/`
 
-For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
+For **generated** book skills, prefer the user-level cross-agent root `~/.agents/skills/` — one physical copy serves every supported host. Copilot CLI and Amp discover it natively; Claude Code needs a symlink from `~/.claude/skills/<skill_name>` (created in Step 10, see Step 5 for the rules). Pick a host-private or project-local root only when the user asks for one.
 
 ---
 
@@ -301,23 +301,24 @@ Otherwise, propose two options and let the user choose:
 
 Default to author-concept format if the book has a strong methodological identity.
 
-Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem for existing skill homes and pick by **the host the user is running in**:
+Choose the destination skill root (`SKILLS_HOME`). For **personal** (user-level) installs, default to the cross-agent root `~/.agents/skills` — one physical copy serves every supported host:
 
-| Host agent | Personal skill root (probe in order) | Project-local root |
+| Host agent | Personal skill root | Project-local root |
 |---|---|---|
-| **GitHub Copilot CLI** | `~/.copilot/skills` → `~/.agents/skills` | `.github/skills` → `.claude/skills` → `.agents/skills` |
-| **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
-| **Claude Code** | `~/.claude/skills` | `.claude/skills` |
+| **GitHub Copilot CLI** | `~/.agents/skills` (discovered natively) | `.github/skills` → `.claude/skills` → `.agents/skills` |
+| **Amp** | `~/.agents/skills` (discovered natively) | `.agents/skills` |
 | **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
+| **Claude Code** | `~/.agents/skills` + symlink from `~/.claude/skills/<skill_name>` | `.claude/skills` |
 
 Selection rules:
-1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
-2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
-3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
+1. Personal install: set `SKILLS_HOME` to `~/.agents/skills` (create the directory if missing). One exception, so the default does not invent a convention in someone else's house: if `~/.agents/skills` does not exist **and** the host's private root already contains skills, use the private root instead and say why in the report.
+2. **Claude Code does not scan `~/.agents/skills`** — after generation completes, Step 10 links the skill in with `ln -sfn "$HOME/.agents/skills/<skill_name>" "$HOME/.claude/skills/<skill_name>"`.
+3. If the user explicitly asks for a host-private root (`~/.copilot/skills`, `~/.claude/skills`, `~/.config/agents/skills`, `~/.config/amp/skills`), honor it and skip the symlink.
+4. If the user explicitly asked for project-local output, use the project-local row for their host.
+5. If the choice requires knowing the host (project-local output, or the Claude Code symlink) and you cannot identify it, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
-Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
-If it does, prompt the user to choose:
+Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists. On Claude Code, also check whether `~/.claude/skills/<skill_name>` exists as a **real directory** (not a symlink) — a previous install may live there; if so, offer to migrate it (move the directory into `~/.agents/skills/` and replace the original path with the symlink) before continuing.
+If the skill already exists, prompt the user to choose:
 1. **Update / Fold-in** (Mode 4) — integrate new files/content into the existing skill components.
 2. **Overwrite** — delete and regenerate the skill from scratch.
 3. **Rename** — append `-2` or use a different custom slug.
@@ -536,6 +537,38 @@ If the scanner exits non-zero, stop and ask a human to review its file/line find
 
 ## Step 10 — Cleanup and report
 
+If the host is Claude Code and `SKILLS_HOME` is `~/.agents/skills` (the default personal install), expose the skill to Claude Code with a symlink — Claude Code only scans `~/.claude/skills`:
+
+```bash
+mkdir -p "$HOME/.claude/skills"
+LINK="$HOME/.claude/skills/<skill_name>"
+TARGET="$HOME/.agents/skills/<skill_name>"
+if [ -d "$LINK" ] && [ ! -L "$LINK" ]; then
+  CLAUDE_STATUS="skipped-realdir"                 # Step 5 migration declined; leave the old dir
+else
+  ln -sfn "$TARGET" "$LINK" 2>/dev/null || true
+  # Read the link back — do NOT trust that `ln` did what was asked. On Windows/MSYS
+  # `ln -s` may COPY instead of link (or need Developer Mode / an elevated shell), and
+  # PowerShell/cmd have no `ln` at all. The report must reflect what is on disk, not the
+  # fact that the command ran.
+  if [ -L "$LINK" ] && [ "$(readlink "$LINK")" = "$TARGET" ]; then
+    CLAUDE_STATUS="linked"
+  elif [ -e "$LINK" ]; then
+    CLAUDE_STATUS="copy"                           # a real file/dir landed instead of a link
+  else
+    CLAUDE_STATUS="absent"                         # ln unavailable or refused
+  fi
+fi
+```
+
+The real-directory guard is required: `ln -sfn` into an existing real directory would nest the link *inside* it (`~/.claude/skills/<skill_name>/<skill_name>`), leaving Claude Code loading the stale copy. If the user declined the Step 5 migration, skip the symlink and say so in the report — Claude Code keeps using the old directory until it is migrated.
+
+**Read the link back before you report anything about it.** The symlink is a claim, not a fact: fill the "Discoverable by" line from `CLAUDE_STATUS` (what is actually on disk), never from "the command was issued". **Do not hard-fail when the link is missing or is a copy** — the skill exists at the hub and every other host still finds it; the honest report is "written to `~/.agents/skills/<skill_name>`; Claude Code will not see it until the link is created", not an abort. (Windows lead, unverified: a directory junction — `mklink /J` in an elevated `cmd`, or `New-Item -ItemType Junction` in PowerShell — needs neither Developer Mode nor a symlink privilege; if you attempt it, it does not change the read-back-then-report rule.)
+
+Skip this when the user chose a host-private or project-local root (Step 5, rules 3-4).
+
+Then clean up the extraction workdir:
+
 ```bash
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
@@ -578,6 +611,14 @@ Usage:
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
 
+Discoverable by: <only what is true for the chosen destination — see below>
+
+Somewhere else?  mv ~/.agents/skills/<skill_name> <dest> \
+                   && ln -sfn <dest> ~/.claude/skills/<skill_name>
+
+Prompted for permission on every file? That is your host gating writes outside the
+working directory. Say "save it in this project" and re-run to write inside it.
+
 Reload (if your agent doesn't auto-detect new skills):
   GitHub Copilot CLI:  /skills reload
   Claude Code:         restart the session
@@ -587,6 +628,19 @@ Share this skill (optional):
   GitHub repo, installable on any host (Step 11):  say "publish"
   Copilot ecosystem:  gh skill publish $SKILLS_HOME/<skill_name>
 ```
+
+Fill the "Discoverable by" line from `CLAUDE_STATUS` (the read-back result), never from the fact that `ln` ran — for `~/.agents/skills` installs:
+- `linked` → "Copilot CLI, Amp, Codex (natively); Claude Code via symlink ~/.claude/skills/<skill_name>"
+- `skipped-realdir` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — migrate the real directory at ~/.claude/skills/<skill_name> first"
+- `copy` or `absent` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — the host could not create the symlink (a plain copy drifts on the next Update/Fold-in). Enable Developer Mode / create the link manually, or run the skill from ~/.agents/skills"
+- host-private or project-local root → name only the host(s) that scan that root; no symlink claim
+
+The "Somewhere else?" relocation line must be correct for the path actually taken, so it never breaks the symlink the run just created:
+- `~/.agents/skills` + symlink → `mv ~/.agents/skills/<skill_name> <dest> && ln -sfn <dest> ~/.claude/skills/<skill_name>`
+- host-private root → `mv <src_root>/<skill_name> <dest>`
+- project-local root → `mv <project_root>/<skill_name> <dest>`
+
+The "Prompted for permission on every file?" line is the answer to a host that gates writes outside the working directory (any personal-scope root is out-of-cwd): the destination was announced above, and the one-line fix — re-run asking for the project-local root — sits next to it. Keep it only for personal-scope installs; drop it when the user already chose project-local.
 
 ---
 
