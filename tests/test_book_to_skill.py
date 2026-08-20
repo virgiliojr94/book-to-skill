@@ -870,6 +870,52 @@ class TestDetectStructure:
         text = "The contents of this chapter are varied and the index is long.\n"
         assert detect_structure(text)["has_toc"] is False
 
+
+    def test_toc_markdown_atx_heading(self):
+        # issue #126: a Markdown export writes the ToC as "## Table of Contents"
+        text = """## Table of Contents
+1. Intro
+2. Body
+"""
+        assert detect_structure(text)["has_toc"] is True
+
+    def test_toc_markdown_headers_other_languages(self):
+        text = """## 目录
+第一章 开始
+第二章 进阶
+"""
+        assert detect_structure(text)["has_toc"] is True
+
+    def test_unit_style_chapter_headings(self):
+        # course-style books: "### Unit 1 ✏ ..." must be detected as chapters
+        text = """### Unit 1 ✏ How to Write an Introduction
+body
+### Unit 2 ✏ Writing about Methodology
+body
+"""
+        assert detect_structure(text)["chapters_detected"] >= 2
+
+    def test_stray_roman_numeral_does_not_suppress_structural_count(self):
+        # a single Roman numeral inside a reproduced example paper must not
+        # outvote the structural heading count of the surrounding book
+        text = """### Introduction
+VIII. CONCLUSIONS
+### Methodology
+"""
+        result = detect_structure(text)
+        assert result["chapters_detected"] >= 2
+        assert result["chapters_method"] == "structural"
+
+    def test_unit_style_headings_count_as_numeric(self):
+        # "Unit N" headings are explicit chapters once the markdown prefix is
+        # stripped, so they take the numeric branch
+        text = """### Unit 1 ✏ How to Write an Introduction
+VIII. CONCLUSIONS
+### Unit 2 ✏ Writing about Methodology
+"""
+        result = detect_structure(text)
+        assert result["chapters_detected"] >= 2
+        assert result["chapters_method"] == "numeric"
     def test_numbered_list_items_are_not_chapters(self):
         # The AI-Engineering failure: numbered list items were counted as chapters.
         text = (
