@@ -1759,6 +1759,7 @@ class TestPdftotextEncoding:
         monkeypatch.setattr(pdf_parser.shutil, "which", lambda name: "/usr/bin/pdftotext")
 
         def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
             captured.update(kwargs)
             return _Result()
 
@@ -1767,6 +1768,12 @@ class TestPdftotextEncoding:
         assert pdf_parser.extract_with_pdftotext("x.pdf") == "Café — naïve"
         assert captured.get("encoding") == "utf-8"
         assert captured.get("errors") == "replace"
+        # pdftotext itself must be told to emit UTF-8, not the platform's
+        # legacy 8-bit default (this is what actually avoids mojibake on
+        # Windows; decoding stdout as UTF-8 alone isn't enough).
+        cmd = captured.get("cmd") or []
+        enc_idx = cmd.index("-enc")
+        assert cmd[enc_idx + 1] == "UTF-8"
 
 
 class TestLooksImageOnly:
