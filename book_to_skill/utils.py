@@ -388,6 +388,13 @@ def _structural_chapter_count(text: str) -> int:
             and prev
             and not _SETEXT_UNDERLINE.match(prev)
             and len(s) >= len(prev)
+            # A title made only of punctuation is never a chapter. Two thematic
+            # breaks in a row ("***" over "---"), an ASCII box rule, a row of
+            # dots, or a table border sitting above an underline all reach this
+            # point. The ATX branch below already rejects them with the same
+            # test; the setext branch had no equivalent, so the identical string
+            # counted as a heading here and not there.
+            and re.search(r"\w", prev)
         ):
             depth = 1 if s[0] == "=" else 2
             levels.setdefault(depth, set()).add(prev.lower())
