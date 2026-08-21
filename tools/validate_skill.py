@@ -127,7 +127,9 @@ def tool_base(entry):
 def audit(path, lens="claude"):
     rules = LENSES[lens]
     label = rules["label"]
-    text = Path(path).read_text(encoding="utf-8")
+    # utf-8-sig so a SKILL.md saved with a UTF-8 BOM still parses — otherwise the
+    # leading ﻿ makes text.startswith("---") false and frontmatter is missed.
+    text = Path(path).read_text(encoding="utf-8-sig")
     fm, body = parse_frontmatter(text)
     errors, warns = [], []
     if fm is None:
