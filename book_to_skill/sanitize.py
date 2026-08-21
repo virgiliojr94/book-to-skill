@@ -57,10 +57,27 @@ _INVISIBLE_LETTER_CODEPOINTS = frozenset({
     0xFFA0,  # HALFWIDTH HANGUL FILLER
 })
 
+# 5. Deprecated / annotation format controls. All category Cf,
+#    Default_Ignorable, and render as nothing — the same invisible
+#    format-control shape as group 1, just blocks the original list missed.
+#    None has any use in extracted book prose.
+_ANNOTATION_FORMAT_CODEPOINTS = frozenset({
+    0x206A,  # INHIBIT SYMMETRIC SWAPPING
+    0x206B,  # ACTIVATE SYMMETRIC SWAPPING
+    0x206C,  # INHIBIT ARABIC FORM SHAPING
+    0x206D,  # ACTIVATE ARABIC FORM SHAPING
+    0x206E,  # NATIONAL DIGIT SHAPES
+    0x206F,  # NOMINAL DIGIT SHAPES
+    0xFFF9,  # INTERLINEAR ANNOTATION ANCHOR
+    0xFFFA,  # INTERLINEAR ANNOTATION SEPARATOR
+    0xFFFB,  # INTERLINEAR ANNOTATION TERMINATOR
+})
+
 _INVISIBLE_CODEPOINTS = (
     _ZERO_WIDTH_CODEPOINTS
     | _BIDI_CONTROL_CODEPOINTS
     | _INVISIBLE_LETTER_CODEPOINTS
+    | _ANNOTATION_FORMAT_CODEPOINTS
 )
 
 # 4. The Unicode tag block. Originally language tags, now used to smuggle an
