@@ -163,17 +163,21 @@ Before extraction, the script checks optional Python packages needed for the det
 
 **Tip — preflight the environment:** run `"$PYTHON_BIN" "$SCRIPT_PATH" --check` to print a per-format report of which extractors are installed and the exact command to install whatever is missing, without processing any file. Useful when a user reports a setup or quality problem.
 
-This creates:
-- `<tempdir>/book_skill_work/full_text.txt` — combined extracted text of all sources with clear visually demarcated boundaries.
-- `<tempdir>/book_skill_work/metadata.json` — overall combined size, words, pages, token counts, dropped EPUB image counts, and a detailed list of individual processed `sources`.
+This creates a **per-run** work directory — `<tempdir>/book_skill_work-<pid>/` by default, or exactly the path you set in `BOOK_SKILL_WORKDIR` — containing:
+- `full_text.txt` — combined extracted text of all sources with clear visually demarcated boundaries.
+- `metadata.json` — overall combined size, words, pages, token counts, dropped EPUB image counts, the resolved `workdir`, and a detailed list of individual processed `sources`.
 
-Read `<tempdir>/book_skill_work/metadata.json` to inspect the results.
+The run prints all three paths on completion (`Workdir ->`, `Text ->`, `Meta ->`). **Take the paths from that output (or from `metadata.json`'s own `workdir` field) rather than assuming a fixed location** — the directory name differs per run so that concurrent extractions on one machine cannot overwrite each other's results.
+
+Read that run's `metadata.json` to inspect the results.
+
+**Always confirm the extraction is the document you asked for** before generating anything: check `filename` / `source_file` in `metadata.json`, or the `SOURCE:` header on the first line of `full_text.txt`. If you are waiting on a background run, wait on *its* specific workdir — polling a shared path can surface a different run's output.
 
 ---
 
 ## Step 2.5 — Pre-flight cost estimate
 
-Read `<tempdir>/book_skill_work/metadata.json` and present the user with an estimate **before doing any generation**:
+Read this run's `metadata.json` (the `Meta ->` path from the extraction output) and present the user with an estimate **before doing any generation**:
 
 ```
 📖 Sources detected: <total_sources> source(s)
@@ -542,17 +546,34 @@ if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   PYTHON_BIN="python"
 fi
 
-"$PYTHON_BIN" - <<'PY'
-import os
+Remove **the work directory this run actually used** — the `Workdir ->` path from the
+extraction output, which is also stored as `workdir` in `metadata.json`. Never delete a
+directory you did not create: another extraction may be running beside yours.
+
+```bash
+# WORKDIR is the path this run reported; quote it in case of spaces.
+rm -rf "$WORKDIR"
+```
+
+Equivalently, if you still have the metadata file:
+
+```bash
+"$PYTHON_BIN" - "$WORKDIR_METADATA_JSON" <<'PY'
+import json
 import shutil
-import tempfile
+import sys
 from pathlib import Path
-shutil.rmtree(
-    os.environ.get("BOOK_SKILL_WORKDIR", Path(tempfile.gettempdir()) / "book_skill_work"),
-    ignore_errors=True,
-)
+
+meta_path = Path(sys.argv[1])
+workdir = json.loads(meta_path.read_text(encoding="utf-8")).get("workdir")
+if workdir:
+    shutil.rmtree(workdir, ignore_errors=True)
 PY
 ```
+
+Older copies of this file removed a single fixed `book_skill_work` directory. That path is
+no longer used, so such a cleanup is now a harmless no-op rather than something that could
+delete a concurrent run's output.
 
 Then report to the user:
 
@@ -653,7 +674,7 @@ Read and parse the existing skill's files:
 - Read `$SKILLS_HOME/<skill_name>/glossary.md`, `$SKILLS_HOME/<skill_name>/patterns.md`, and `$SKILLS_HOME/<skill_name>/cheatsheet.md` to see what terms and frameworks are already indexed.
 
 ### 2. Match Content & Identify Revisions vs. Additions
-Analyze the new extracted text in `<tempdir>/book_skill_work/full_text.txt` to identify if the new content represents:
+Analyze the new extracted text in this run's `full_text.txt` (the `Text ->` path from the extraction output) to identify if the new content represents:
 - **Updates/Revisions to existing chapters**: If a section of the new content directly updates or expands an existing chapter's topic, read the existing chapter file, merge the new details into it, and rewrite the file.
 - **New additions**: If the content introduces new chapters, papers, or separate sections, create **new chapter summary files** under `chapters/`. Start numbering these files after the highest existing chapter number (e.g. if the existing chapters stop at `ch12`, create `ch13-*.md`, `ch14-*.md`, etc.).
 

@@ -1059,6 +1059,9 @@ def main():
         "estimated_tokens": total_tokens,
         "estimated_tokens_human": f"~{total_tokens // 1000}K",
         "images_dropped": total_images_dropped,
+        # Self-describing so a consumer can clean up exactly the directory this
+        # run created, without having to reconstruct the per-run default path.
+        "workdir": str(OUTPUT_DIR),
         "output_text": str(OUTPUT_TEXT),
         "total_sources": len(extracted_sources),
         "sources": [
@@ -1120,8 +1123,9 @@ def main():
             "   WARN    : No table of contents detected — chapter mapping in Step 3 "
             "will rely on heading scan only, which may miss or duplicate sections."
         )
-    print(f"\n   Text -> {OUTPUT_TEXT}")
-    print(f"   Meta -> {OUTPUT_META}")
+    print(f"\n   Workdir -> {OUTPUT_DIR}")
+    print(f"   Text    -> {OUTPUT_TEXT}")
+    print(f"   Meta    -> {OUTPUT_META}")
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
