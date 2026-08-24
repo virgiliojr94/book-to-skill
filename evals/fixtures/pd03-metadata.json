@@ -1,0 +1,15 @@
+{
+  "title": "Synthetic Reliability Notes",
+  "description": "A synthetic handbook used only to evaluate one-level chunk routing.",
+  "chunks": [
+    {
+      "description": "Observe system signals.",
+      "summary": "Measure before changing.",
+      "key_elements": ["signal", "evidence window"]
+    },
+    {
+      "description": "Respond after observation.",
+      "summary": "Use the smallest safe response."
+    }
+  ]
+}

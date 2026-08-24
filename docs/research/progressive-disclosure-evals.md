@@ -210,7 +210,7 @@ Status values:
 | PD-00 | DONE | Freeze current baseline and evaluation contract | none | no |
 | PD-01 | DONE | Implement deterministic manifest + hashing + budget schema | PD-00 | no |
 | PD-02 | BLOCKED | Implement fixture/replay scorer with trajectory metrics | PD-01 | no |
-| PD-03 | BLOCKED | Implement paper-flat baseline pack builder | PD-01 | no |
+| PD-03 | DONE | Implement paper-flat baseline pack builder | PD-01 | no |
 | PD-04 | BLOCKED | Add dry-run/live runner contract and first harness adapter | PD-02, PD-03 | no |
 | PD-05 | BLOCKED | Representation experiment: raw payload vs structured B2S payload | PD-04 | no |
 | PD-06 | BLOCKED | Automatic vs explicit activation experiment | PD-04 | no |
@@ -551,7 +551,7 @@ Agents update this table when a task changes status. Keep entries short; link to
 | PD-00 | DONE | — | [`evals/results/pd00-baseline.md`](../../evals/results/pd00-baseline.md) | Deterministic synthetic discovery-tax baseline; no production authorization |
 | PD-01 | DONE | — | `tests/evals/test_manifest.py` | Deterministic manifest, source SHA-256, budget/secret validation, and repeatable CLI verified locally |
 | PD-02 | BLOCKED | — | — | waits for PD-01 |
-| PD-03 | BLOCKED | — | — | waits for PD-01 |
+| PD-03 | DONE | — | `tests/evals/test_paper_flat.py` | Deterministic synthetic one-level paper-flat pack builder verified locally; no production authorization |
 | PD-04 | BLOCKED | — | — | waits for PD-02/03 |
 | PD-05 | BLOCKED | — | — | primary representation experiment |
 | PD-06 | BLOCKED | — | — | host capability dependent |
