@@ -19,7 +19,7 @@ _CHAPTER = re.compile(
 def _chunks(source: str) -> List[str]:
     """Split at chapter headings, or return one whole-source fallback chunk."""
     lines = source.splitlines(keepends=True)
-    starts = [index for index, line in enumerate(lines) if _CHAPTER.match(line.strip())]
+    starts = [index for index, line in enumerate(lines) if _CHAPTER.match(line.rstrip())]
     if not starts:
         return [source]
     return ["".join(lines[start:end]) for start, end in zip(starts, starts[1:] + [len(lines)])]

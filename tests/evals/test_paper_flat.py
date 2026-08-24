@@ -55,6 +55,12 @@ def test_source_chapter_headings_determine_chunks(tmp_path):
     assert all(chunk.read_text(encoding="utf-8").startswith(f"Chapter {number}") for number, chunk in enumerate(chunks, 1))
 
 
+def test_indented_hash_code_line_does_not_split_chunks():
+    source = "# Top-level\n\n    # Code comment\n\nChapter 2: Next\n"
+
+    assert paper_flat._chunks(source) == ["# Top-level\n\n    # Code comment\n\n", "Chapter 2: Next\n"]
+
+
 def test_no_heading_uses_one_full_source_chunk(tmp_path):
     source = tmp_path / "source.txt"
     metadata = tmp_path / "metadata.json"
