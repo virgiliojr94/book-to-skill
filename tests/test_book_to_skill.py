@@ -627,6 +627,27 @@ class TestDetectStructure:
         assert _chapter_number("บทความนี้ยาวมากและมีรายละเอียดเยอะ") is None
         assert _chapter_number("ตอนนี้เรามาดูกันว่าเกิดอะไรขึ้น") is None
 
+    # ── Hindi (Devanagari) chapter headings ────────────────────────────────
+    def test_detects_hindi_chapters(self):
+        """Hindi headings: `अध्याय N`, with Devanagari or Arabic digits."""
+        text = (
+            "अध्याय १ प्रस्तावना\nसामग्री\n"
+            "अध्याय २ विधियाँ\nसामग्री\n"
+            "अध्याय 3 परिणाम\nसामग्री"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_hindi_markdown_prefix(self):
+        text = "## अध्याय १ पहला\nसामग्री\n## अध्याय २ दूसरा\nसामग्री"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_hindi_prose_is_not_a_chapter_heading(self):
+        """`अध्याय` used in prose (no number, or not at the start) is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("इस अध्याय में हम चर्चा करेंगे") is None
+        assert _chapter_number("अध्याय") is None
+
     # ── Korean chapter headings ────────────────────────────────────────────
 
     def test_korean_je_n_jang(self):

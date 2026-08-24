@@ -157,6 +157,18 @@ _TH_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?(?:บทที่|ตอนที่|ภาคที่|บท|ตอน|ภาค)\s*([0-9{_TH_DIGITS}]+)\b"
 )
 
+# Hindi (Devanagari) chapter headings: "अध्याय 1", "अध्याय १", "## अध्याय 2".
+# अध्याय ("chapter") + a number. Devanagari digits (U+0966-U+096F) are positional
+# like Arabic, so — as with Thai — only a digit remap is needed, no composition.
+# Optional Markdown "#" prefix so "## अध्याय १" is recognized in converted ebooks.
+# Scoped to the digit form (not word ordinals like "पहला अध्याय") and requiring a
+# number keeps prose that merely uses the word अध्याय from matching.
+_HI_DIGITS = "०-९"
+_HI_DIGIT_MAP = str.maketrans("०१२३४५६७८९", "0123456789")
+_HI_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?अध्याय\s*([0-9{_HI_DIGITS}]+)\b"
+)
+
 # Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
 # 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
 # subsection), with an optional "의N" branch suffix that Korean statutes use for
@@ -497,6 +509,9 @@ def _match_chapter_number(line: str) -> int | None:
     tm = _TH_CHAPTER.match(s)
     if tm:
         return int(tm.group(1).translate(_TH_DIGIT_MAP))
+    hm = _HI_CHAPTER.match(s)
+    if hm:
+        return int(hm.group(1).translate(_HI_DIGIT_MAP))
     km = _KO_CHAPTER.match(s)
     if km:
         return int(km.group(1))
@@ -512,7 +527,8 @@ def _chapter_number(line: str) -> int | None:
     Handles Arabic ("Chapter 5", "Capítulo 5: ..."), Roman-numeral
     ("I: Loomings", "## i. introduction", "II. The Carpet-Bag"),
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
-    "## บทที่ ๑"), Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
+    "## บทที่ ๑"), Hindi ("अध्याय 1", "अध्याय १", "## अध्याय 2"),
+    Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
     "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each
     optionally preceded by a Markdown/AsciiDoc heading marker
