@@ -1,0 +1,22 @@
+Synthetic Progressive Disclosure Book
+
+Sumário
+Capítulo 1 — Orientação
+Capítulo 2 — Recuperação
+Capítulo 3 — Verificação
+
+Capítulo 1 — Orientação
+A orientação apresenta o objetivo da avaliação. O leitor identifica o livro,
+o capítulo e a pergunta antes de carregar detalhes. Esta seção usa texto
+sintético, curto e determinístico para exercitar a descoberta de capítulos.
+
+Capítulo 2 — Recuperação
+A recuperação localiza a evidência necessária depois da orientação. O agente
+consulta o sumário, abre o capítulo relevante e evita carregar capítulos sem
+relação com a pergunta. Esta seção permanece sintética e não reproduz obra
+publicada.
+
+Capítulo 3 — Verificação
+A verificação confirma que a resposta usa a evidência do capítulo alvo. O
+relatório separa contagens medidas da estimativa do loop de descoberta. Esta
+seção é o alvo determinístico para a linha de base PD-00.

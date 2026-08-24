@@ -25,3 +25,6 @@ docs/BACKERS.md
 
 # Social-card render cache (mkdocs-material[imaging]).
 .cache/
+
+# Local evaluation work products
+.eval-work/
