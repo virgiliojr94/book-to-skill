@@ -54,8 +54,10 @@ def build_paper_flat(source_path: Path, metadata_path: Path, output_dir: Path) -
     written = []
     for number, (payload, details) in enumerate(zip(chunks, metadata["chunks"]), 1):
         relative = f"chunks/chunk-{number:02d}.md"
-        (output_dir / relative).write_text(payload, encoding="utf-8", newline="\n")
-        written.append(output_dir / relative)
+        path = output_dir / relative
+        with path.open("w", encoding="utf-8", newline="\n") as file:
+            file.write(payload)
+        written.append(path)
         elements = ", ".join(details.get("key_elements", [])) or "—"
         rows.append(f"| `{relative}` | {details['description']} | {details['summary']} | {elements} |")
 
@@ -76,7 +78,8 @@ def build_paper_flat(source_path: Path, metadata_path: Path, output_dir: Path) -
         ]
     )
     root_path = output_dir / "SKILL.md"
-    root_path.write_text(root, encoding="utf-8", newline="\n")
+    with root_path.open("w", encoding="utf-8", newline="\n") as file:
+        file.write(root)
     return [root_path, *written]
 
 
