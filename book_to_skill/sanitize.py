@@ -48,14 +48,13 @@ _BIDI_CONTROL_CODEPOINTS = frozenset({
 })
 
 # 3. Characters that are not format controls (so a category-based filter misses
-#    them) but still render as blank width. Unlike a space they are letters or
-#    symbols, so they survive whitespace normalisation and can pad hidden text.
+#    them) but still render as blank width. Unlike a space they are letters, so
+#    they survive whitespace normalisation and can pad hidden text.
 _INVISIBLE_LETTER_CODEPOINTS = frozenset({
     0x115F,  # HANGUL CHOSEONG FILLER
     0x1160,  # HANGUL JUNGSEONG FILLER
     0x3164,  # HANGUL FILLER
     0xFFA0,  # HALFWIDTH HANGUL FILLER
-    0x2800,  # BRAILLE PATTERN BLANK — a symbol that draws no dots
 })
 
 _INVISIBLE_CODEPOINTS = (
@@ -84,16 +83,20 @@ _VARIATION_SELECTOR_RANGES = (
     (0xE0100, 0xE01EF),  # VARIATION SELECTOR-17 .. -256 (supplement)
 )
 
-# 6. Interlinear annotation controls. A conforming renderer hides the annotation
+# 7. Interlinear annotation controls. A conforming renderer hides the annotation
 #    between the anchor and the terminator, so text a human never sees is still
 #    read in full by the model — the same split this module exists to close.
+# 6. Deprecated format controls. Category Cf and Default_Ignorable, with no
+#    legitimate use in extracted book prose; contributed by #182.
+_DEPRECATED_FORMAT_RANGE = (0x206A, 0x206F)
+
 _ANNOTATION_CODEPOINTS = frozenset({
     0xFFF9,  # INTERLINEAR ANNOTATION ANCHOR
     0xFFFA,  # INTERLINEAR ANNOTATION SEPARATOR
     0xFFFB,  # INTERLINEAR ANNOTATION TERMINATOR
 })
 
-# 7. Musical beaming and phrasing controls: zero-width format characters that
+# 8. Musical beaming and phrasing controls: zero-width format characters that
 #    can pad hidden text anywhere, not only in musical notation.
 _MUSICAL_FORMAT_RANGE = (0x1D173, 0x1D17A)
 
@@ -106,6 +109,8 @@ def is_invisible_codepoint(codepoint: int) -> bool:
     the scanner then warns about — or worse, neither layer covers it.
     """
     if codepoint in _INVISIBLE_CODEPOINTS or codepoint in _ANNOTATION_CODEPOINTS:
+        return True
+    if _DEPRECATED_FORMAT_RANGE[0] <= codepoint <= _DEPRECATED_FORMAT_RANGE[1]:
         return True
     if _TAG_BLOCK_START <= codepoint <= _TAG_BLOCK_END:
         return True
