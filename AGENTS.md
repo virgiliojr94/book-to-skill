@@ -106,3 +106,32 @@ Live model experiments are expensive and are never the first validation step.
 ## Instruction scope
 
 This root file applies repository-wide. A more deeply nested `AGENTS.md` may add narrower instructions for its subtree; the more specific file wins when instructions conflict. Direct user/system instructions take precedence over repository guidance.
+
+## Factory integration
+
+This pilot adds [addyosmani/factory](https://github.com/addyosmani/factory) as a repository-local
+software-factory workflow. Read `docs/factory/CONTRACT.md` and `docs/factory/CHARTER.md`
+before using it, and use the repo-scoped Codex adapters under `.agents/skills/`.
+
+The Factory contract is shared with Claude Code. If the adapters and contract disagree, the
+contract governs Factory workflow semantics; this project instruction file and the MiP
+governance overlay below remain authoritative for project-specific restrictions. Factory must
+never weaken a project or MiP restriction.
+
+Repository hooks in `.codex/hooks.json` are defense in depth. They require local trust and
+do not replace GitHub branch protection.
+
+### MiP governance overlay
+
+This pilot operates under MiP OS 1.0. Founder-approved MiP doctrine, enterprise governance,
+and project ownership remain authoritative for MiP-specific decisions. Factory governs the
+bounded engineering work loop beneath those controls.
+
+The authority order for this pilot is: Founder-approved MiP doctrine and enterprise
+governance; project-owned security and ownership controls; the Factory contract and charter;
+then task-local work instructions. Factory must never weaken an existing MiP restriction.
+
+Human approval is required for architecture, authentication, authorization, financial
+calculations, customer data, databases or schema migrations, secrets, billing, production
+infrastructure, security controls, dependency changes with meaningful system impact, agent
+permissions, MiP governance, deployments, and destructive operations. Never auto-merge.
