@@ -205,6 +205,7 @@ def count_pages(pdf_path: str) -> int:
         if text:
             return text.count("\f") + (0 if text.endswith("\f") else 1)
     except Exception:
+        # All page-counting methods are best-effort; preserve the historical 0 result.
         pass
 
     return 0
