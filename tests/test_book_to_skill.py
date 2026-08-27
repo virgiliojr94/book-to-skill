@@ -919,6 +919,24 @@ class TestDetectStructure:
         text = "Capítulo 1\nalgum texto\nCapítulo 2\nmais texto\n"
         assert detect_structure(text)["chapters_detected"] == 2
 
+    def test_detects_plain_numbered_chapter_headings(self):
+        """Plain numbered headings such as '1  Introduction' are chapters."""
+        text = (
+            "1  Introdução e Visão Geral\n"
+            "Texto do capítulo.\n"
+            "2  Princípios Fundamentais\n"
+            "Texto do capítulo.\n"
+            "3  Produtos de Trabalho\n"
+            "Texto do capítulo.\n"
+            "4  Práticas para Elaboração\n"
+            "Texto do capítulo.\n"
+        )
+
+        result = detect_structure(text)
+
+        assert result["chapters_detected"] == 4
+        assert result["chapters_method"] == "numeric"
+
     def test_distinct_numbering_dedups_toc_and_body(self):
         # A ToC heading and the body heading for the same chapter count once.
         text = "Capítulo 1: Alicerces\n...\nCapítulo 1\nbody of chapter one\n"

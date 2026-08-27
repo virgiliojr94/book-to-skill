@@ -508,35 +508,54 @@ def _roman_to_int(s: str) -> int | None:
 
 def _match_chapter_number(line: str) -> int | None:
     """Return the chapter number if the line is a genuine chapter heading,
-    with no Markdown/AsciiDoc heading prefix (the caller strips it first)."""
+    with no Markdown/AsciiDoc heading prefix (the caller strips it first).
+    """
     # Normalize Kangxi-radical numerals (⼀⼆⼋⼗) to ideographs so Chinese
     # ebooks that encode chapter numbers in the U+2F00 block are detected.
     s = line.strip().translate(_KANGXI_NUMERAL_TRANS)
+
     if len(s) > 80:
         return None
+
+    # Plain numbered chapter headings used by many technical books,
+    # e.g. "1  Introduction" or "12  Advanced Topics".
+    #
+    # Require at least two spaces after the chapter number. This avoids
+    # treating ordinary numbered list items such as "1. Item" as chapters.
+    plain = re.match(r"^([1-9]\d{0,2})\s{2,}\S", s)
+    if plain:
+        return int(plain.group(1))
+
     m = _EXPLICIT_CHAPTER.match(s)
     if m and _HEADING_TAIL.match(m.group("rest")):
         if m.group(1):
             return int(m.group(1))
         return _roman_to_int(m.group("roman").upper())
+
     rm = _ROMAN_HEAD.match(s) or _LC_MD_ROMAN.match(s)
     if rm:
         return _roman_to_int(rm.group(1))
+
     cm = _CN_CHAPTER.match(s) or _MD_CN_HEADING.match(s)
     if cm:
         return _cn_numeral_to_int(cm.group(1))
+
     tm = _TH_CHAPTER.match(s)
     if tm:
         return int(tm.group(1).translate(_TH_DIGIT_MAP))
+
     hm = _HI_CHAPTER.match(s)
     if hm:
         return int(hm.group(1).translate(_HI_DIGIT_MAP))
+
     km = _KO_CHAPTER.match(s)
     if km:
         return int(km.group(1))
+
     fa = _fa_chapter_number(s)
     if fa is not None:
         return fa
+
     return None
 
 
