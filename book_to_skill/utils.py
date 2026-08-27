@@ -101,12 +101,13 @@ def estimate_tokens(text: str) -> int:
 
 
 # Explicit chapter heading: "Chapter 5", "Capítulo 5: ...", "Chapter 1. Intro".
-# Also French/German/Italian/Dutch chapter words (chapitre/kapitel/capitolo/
-# hoofdstuk), matching the ToC languages added alongside. "ch.?" stays last so
-# the longer words match in full. Captures the number (bounded to 1..99 — drops
-# years like "2025.") and whatever follows it on the line, so we can reject prose.
+# Also French/German/Italian/Dutch/Vietnamese chapter words (chapitre/kapitel/
+# capitolo/hoofdstuk/chương), matching the ToC languages added alongside. "ch.?"
+# stays last so the longer words match in full. Captures the number (bounded to
+# 1..99 — drops years like "2025.") and whatever follows it on the line, so we
+# can reject prose.
 _EXPLICIT_CHAPTER = re.compile(
-    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDMivxlcdm]{1,7}))\b(?P<rest>.*)$",
+    r"^\s*(?:chapter|chapitre|kapitel|cap[ií]tulo|capitolo|hoofdstuk|chương|ch\.?)\s*(?:(\d{1,2})|(?P<roman>[IVXLCDMivxlcdm]{1,7}))\b(?P<rest>.*)$",
     re.IGNORECASE,
 )
 # A heading's number is followed by end-of-line, punctuation (“. : - —“), or a

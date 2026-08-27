@@ -1070,6 +1070,16 @@ class TestDetectStructure:
     def test_dutch_hoofdstuk(self):
         assert detect_structure("Hoofdstuk 1\nx\nHoofdstuk 2\nx")["chapters_detected"] == 2
 
+    def test_vietnamese_chuong(self):
+        assert detect_structure("Chương 1\nx\nChương 2\nx")["chapters_detected"] == 2
+
+    def test_vietnamese_chuong_not_program(self):
+        # "Chương trình" (program) starts with the chapter word but is not a
+        # heading — no number follows "Chương", so it must not match.
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("Chương trình 1 của khóa học") is None
+
     def test_german_kapitel_with_title(self):
         text = "Kapitel 1: Einführung\nx\nKapitel 2: Methoden\nx"
         assert detect_structure(text)["chapters_detected"] == 2
