@@ -1817,6 +1817,30 @@ class TestPdftotextEncoding:
         assert captured.get("errors") == "replace"
 
 
+class TestPdfPageCount:
+    """Tests for PDF page-count fallback behavior."""
+
+    def test_count_pages_uses_pdfminer_when_pdfinfo_and_pypdf_are_unavailable(
+        self, monkeypatch
+    ):
+        """Use pdfminer as the final fallback when other page counters are unavailable."""
+        fake_pdf = "fake.pdf"
+
+        monkeypatch.setattr(pdf_parser.shutil, "which", lambda _: None)
+
+        high_level = mock.MagicMock()
+        high_level.extract_text.return_value = (
+            "page one\fpage two\fpage three"
+        )
+
+        pdfminer = mock.MagicMock()
+        pdfminer.high_level = high_level
+
+        monkeypatch.setitem(sys.modules, "pdfminer", pdfminer)
+        monkeypatch.setitem(sys.modules, "pdfminer.high_level", high_level)
+
+        assert pdf_parser.count_pages(fake_pdf) == 3
+
 class TestLooksImageOnly:
     """Scanned PDFs are caught by probing the first pages, before the chain runs."""
 
