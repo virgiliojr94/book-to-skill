@@ -26,6 +26,30 @@ _ROMAN_1_99 = r"(?=[ivxl])(?:xc|xl|l?x{0,3})(?:ix|iv|v?i{0,3})"
 _PDF_PAGE_NUM = re.compile(rf"^\s*(?:\d{{1,4}}|{_ROMAN_1_99})\s*$", re.IGNORECASE)
 _PDF_HYPHEN_WRAP = re.compile(r"(\w)-\n(\w)")
 
+# A wide internal run of spaces — the column gutter. Multi-column `-layout`
+# output pads each physical line across all columns, so a substantive line
+# contains 4+ spaces between two non-space characters; single-column reading
+# order never does (#128).
+GUTTER = re.compile(r"\S[ ]{4,}\S")
+
+
+def looks_multicolumn(layout_text: str, threshold: float = 0.35) -> bool:
+    """True when `-layout` output looks like a multi-column page: under -layout
+    each physical line spans all columns, so a large fraction of substantive
+    lines carry a wide internal run of spaces (the gutter). Reading order has no
+    gutters, so the fraction is near zero on single-column documents.
+
+    Only substantive lines (40+ chars after stripping) are sampled, capped at
+    the first 4000 lines for a bounded cost on huge documents. Returns False on
+    empty or all-short input — a book with no long lines is not multi-column.
+    """
+    lines = [ln for ln in layout_text.splitlines() if len(ln.strip()) > 40]
+    if not lines:
+        return False
+    sample = lines[:4000]
+    gutter_lines = sum(1 for ln in sample if GUTTER.search(ln))
+    return gutter_lines / len(sample) >= threshold
+
 
 def clean_pdftotext(text: str) -> str:
     """Clean pdftotext '-layout' output (pages are form-feed delimited): drop
@@ -73,20 +97,48 @@ def clean_pdftotext(text: str) -> str:
     return _PDF_HYPHEN_WRAP.sub(r"\1\2", text)
 
 
-def extract_with_pdftotext(pdf_path: str) -> str | None:
+def _run_pdftotext(
+    pdf_path: str, extra_args: list[str], timeout: int
+) -> subprocess.CompletedProcess[str] | None:
+    """Best-effort single pdftotext invocation; returns None when pdftotext is
+    missing or the call fails outright."""
     if not shutil.which("pdftotext"):
         return None
     try:
-        pdf_path = os.path.abspath(pdf_path)
-        result = subprocess.run(
-            ["pdftotext", "-layout", pdf_path, "-"],
-            capture_output=True, text=True, timeout=120,
-            encoding="utf-8", errors="replace",
+        return subprocess.run(
+            ["pdftotext", *extra_args, os.path.abspath(pdf_path), "-"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            encoding="utf-8",
+            errors="replace",
         )
-        if result.returncode == 0 and result.stdout.strip():
-            return clean_pdftotext(result.stdout)
     except Exception as e:
-        print(f"  [warn] extract_with_pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"  [warn] pdftotext failed: {type(e).__name__}: {e}", file=sys.stderr)
+        return None
+
+
+def extract_with_pdftotext(pdf_path: str) -> str | None:
+    """Extract text with pdftotext, choosing the mode per document (#128).
+
+    `-layout` keeps table columns aligned on single-column documents, but on a
+    multi-column page it welds every column's lines together: consecutive
+    sentences from different columns get interleaved, and the padding inflates
+    the output ~26x. Both extractions are cheap (seconds for a 140-page book),
+    so we run `-layout` first and re-run in reading order (no flag) only when
+    the gutter heuristic flags the document as multi-column.
+    """
+    layout = _run_pdftotext(pdf_path, ["-layout"], timeout=120)
+    if layout is not None and layout.returncode == 0 and layout.stdout.strip():
+        if looks_multicolumn(layout.stdout):
+            reading = _run_pdftotext(pdf_path, [], timeout=120)
+            if (
+                reading is not None
+                and reading.returncode == 0
+                and reading.stdout.strip()
+            ):
+                return clean_pdftotext(reading.stdout)
+        return clean_pdftotext(layout.stdout)
     return None
 
 
@@ -101,8 +153,11 @@ def looks_image_only(pdf_path: str, pages: int = 5) -> bool:
     try:
         result = subprocess.run(
             ["pdftotext", "-f", "1", "-l", str(pages), os.path.abspath(pdf_path), "-"],
-            capture_output=True, text=True, timeout=30,
-            encoding="utf-8", errors="replace",
+            capture_output=True,
+            text=True,
+            timeout=30,
+            encoding="utf-8",
+            errors="replace",
         )
         return result.returncode == 0 and not result.stdout.strip()
     except Exception:
@@ -112,6 +167,7 @@ def looks_image_only(pdf_path: str, pages: int = 5) -> bool:
 def extract_with_pypdf(pdf_path: str) -> str | None:
     try:
         import pypdf
+
         text_parts = []
         with open(pdf_path, "rb") as f:
             reader = pypdf.PdfReader(f)
@@ -126,19 +182,26 @@ def extract_with_pypdf(pdf_path: str) -> str | None:
     except ImportError:
         return None
     except Exception as e:
-        print(f"  [warn] extract_with_pypdf failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(
+            f"  [warn] extract_with_pypdf failed: {type(e).__name__}: {e}",
+            file=sys.stderr,
+        )
         return None
 
 
 def extract_with_pdfminer(pdf_path: str) -> str | None:
     try:
         from pdfminer.high_level import extract_text
+
         text = extract_text(pdf_path)  # already form-feed delimited per page
         return clean_pdftotext(text) if text else text
     except ImportError:
         return None
     except Exception as e:
-        print(f"  [warn] extract_with_pdfminer failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(
+            f"  [warn] extract_with_pdfminer failed: {type(e).__name__}: {e}",
+            file=sys.stderr,
+        )
         return None
 
 
@@ -164,7 +227,10 @@ def extract_with_docling(pdf_path: str) -> str | None:
     except ImportError:
         return None
     except Exception as e:
-        print(f"  [warn] extract_with_docling failed: {type(e).__name__}: {e}", file=sys.stderr)
+        print(
+            f"  [warn] extract_with_docling failed: {type(e).__name__}: {e}",
+            file=sys.stderr,
+        )
         return None
 
 
