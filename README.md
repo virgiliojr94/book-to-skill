@@ -72,7 +72,7 @@ Works with any host that supports the open [Agent Skills](https://github.com/age
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code):
+Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in the user-level cross-agent skills directory `~/.agents/skills/<slug>/` — one copy that Copilot CLI, Amp, and Codex discover natively; when run under Claude Code, the converter also attempts a verified symlink at `~/.claude/skills/<slug>/` — Claude Code sees the skill when the link read-back confirms it; otherwise the run report says so (host-private and project-local destinations remain available on request):
 
 | File | Purpose | Size |
 |------|---------|------|
