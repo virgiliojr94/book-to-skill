@@ -1,13 +1,14 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, or Claude Code, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, Claude Code, or Hermes Agent, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
 
 <!--
 Cross-agent notes (informational; ignored by host agents):
   - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
     .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
-    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills).
+    ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills),
+    Hermes Agent ($HERMES_HOME/skills, .hermes/skills, .agents/skills).
   - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
     `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
     adds `shell_command`. The skill needs shell (to run extract.py) and file
@@ -21,7 +22,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -74,6 +75,8 @@ This converter can run from multiple skill systems. When looking for this conver
 6. Project-local Amp / Copilot skills: `.agents/skills/`
 7. Amp global skills: `~/.config/agents/skills/`
 8. Amp legacy global skills: `~/.config/amp/skills/`
+9. Hermes Agent personal skills: `$HERMES_HOME/skills/` (defaults to `~/.hermes/skills/`)
+10. Hermes Agent project skills: `.hermes/skills/` or `.agents/skills/`
 
 For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
 
@@ -130,13 +133,18 @@ Run the extraction script, passing the input paths:
 
 ```bash
 SCRIPT_PATH=""
+HERMES_HOME_RESOLVED="${HERMES_HOME:-$HOME/.hermes}"
 for candidate in \
   "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
+  "$HERMES_HOME_RESOLVED/skills/book-to-skill/scripts/extract.py" \
+  "$HERMES_HOME_RESOLVED"/skills/*/book-to-skill/scripts/extract.py \
   ".github/skills/book-to-skill/scripts/extract.py" \
   ".claude/skills/book-to-skill/scripts/extract.py" \
   ".agents/skills/book-to-skill/scripts/extract.py" \
+  ".hermes/skills/book-to-skill/scripts/extract.py" \
+  ".hermes/skills"/*/book-to-skill/scripts/extract.py \
   "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
 do
@@ -313,12 +321,15 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 | **Amp** | `~/.agents/skills` → `~/.config/agents/skills` → `~/.config/amp/skills` | `.agents/skills` |
 | **Claude Code** | `~/.claude/skills` | `.claude/skills` |
 | **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
+| **Hermes Agent** | `$HERMES_HOME/skills/<category>` (defaults to `~/.hermes/skills/<category>`) | `.hermes/skills/<category>` → `.agents/skills` |
+
+For Hermes Agent, use the active profile's `HERMES_HOME` and choose a category that matches the generated skill's subject. Do not construct profile paths manually. If the user selects a project-local Hermes root, run `hermes skills trust <project-root>` after generation and verify discovery with `hermes skills list`; project skills remain unavailable until the project is trusted.
 
 Selection rules:
 1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
 2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
 3. If the user explicitly asked for project-local output, prefer the project-local row.
-4. If you cannot identify the host, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, or Claude Code?"
+4. If you cannot identify the host, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.
 If it does, prompt the user to choose:
@@ -603,6 +614,7 @@ Reload (if your agent doesn't auto-detect new skills):
   GitHub Copilot CLI:  /skills reload
   Claude Code:         restart the session
   Amp:                 restart the session
+  Hermes Agent:         start a new session
 
 Share this skill (optional):
   GitHub repo, installable on any host (Step 11):  say "publish"

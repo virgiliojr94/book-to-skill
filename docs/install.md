@@ -1,12 +1,12 @@
 ---
-description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp and Codex, or as a standalone pip CLI. Every host path and optional extractor covered."
-seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, or pip"
+description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex and Hermes Agent, or as a standalone pip CLI. Every host path and optional extractor covered."
+seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, Hermes, or pip"
 ---
 
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
-> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, or Codex) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
+> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Codex, or Hermes Agent) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
 > - **As a standalone CLI** (just the text extractor) → `pip install` it from the repository, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
@@ -39,6 +39,30 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/boo
 ```bash
 ln -s /path/to/book-to-skill ~/.agents/skills/book-to-skill
 ```
+
+**Hermes Agent**:
+
+```bash
+git clone https://github.com/virgiliojr94/book-to-skill.git \
+  "${HERMES_HOME:-$HOME/.hermes}/skills/productivity/book-to-skill"
+```
+
+`HERMES_HOME` is profile-aware and defaults to `~/.hermes`. The converter can
+live under another existing Hermes category if preferred. Start a new Hermes
+session, then invoke `/book-to-skill` or ask Hermes to use the `book-to-skill`
+skill. Generated book skills should go under the category that matches their
+subject rather than automatically reusing `productivity`.
+
+For a project-local installation, use `.hermes/skills/<category>/book-to-skill`
+and explicitly trust the project before starting a new session:
+
+```bash
+hermes skills trust /path/to/project
+hermes skills list
+```
+
+Hermes does not load project-local skills from `.hermes/skills/` or
+`.agents/skills/` until that project has been trusted.
 
 **Claude Code**:
 

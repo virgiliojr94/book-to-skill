@@ -9,6 +9,7 @@ Lenses:
   claude   — Claude Code rules (default; back-compat)
   copilot  — GitHub Copilot CLI rules
   amp      — Sourcegraph Amp rules
+  hermes   — Hermes Agent rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
@@ -22,8 +23,9 @@ Refs:
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
   Amp        https://ampcode.com/manual#skills
+  Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp] [path/to/SKILL.md]
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -81,6 +83,25 @@ LENSES = {
         "reserved_name_words": set(),
         "bash_tool_names": {"shell_command", "Bash"},
         "unknown_tool_severity": "warn",
+    },
+    "hermes": {
+        "label": "Hermes Agent",
+        "tools": set(),
+        "recognized_keys": {
+            "name", "description", "version", "author", "license", "platforms",
+            "tags", "category", "required_environment_variables", "prerequisites",
+            "compatibility", "environments", "setup", "required_credential_files",
+            "related_skills", "metadata",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": set(),
+        "unknown_tool_severity": "warn",
+        "enforces_allowed_tools": False,
+        "description_soft_limit": 60,
+        "name_pattern": r"[a-z0-9][a-z0-9._-]*",
+        "name_charset": (
+            "lowercase letters/digits/hyphens/dots/underscores and start with a letter or digit"
+        ),
     },
 }
 
@@ -141,8 +162,10 @@ def audit(path, lens="claude"):
     else:
         if len(name) > 64:
             errors.append(f"name: {len(name)} > 64 chars")
-        if not re.fullmatch(r"[a-z0-9-]+", name):
-            errors.append(f"name: '{name}' must be lowercase letters/digits/hyphens")
+        name_pattern = rules.get("name_pattern", r"[a-z0-9-]+")
+        if not re.fullmatch(name_pattern, name):
+            charset = rules.get("name_charset", "lowercase letters/digits/hyphens")
+            errors.append(f"name: '{name}' must be {charset}")
         for w in rules["reserved_name_words"]:
             if w in name.lower():
                 errors.append(f"name: '{name}' contains a reserved word")
@@ -153,6 +176,12 @@ def audit(path, lens="claude"):
         errors.append("description: missing (required)")
     elif len(desc) > 1024:
         errors.append(f"description: {len(desc)} > 1024 chars")
+    elif soft_limit := rules.get("description_soft_limit"):
+        if len(desc) > soft_limit:
+            warns.append(
+                f"description: {len(desc)} > {soft_limit} chars "
+                f"({label} house guideline for reliable routing)"
+            )
 
     # Tool grant analysis (lens-specific)
     tools = get_list_items(fm, "allowed-tools")
@@ -160,7 +189,7 @@ def audit(path, lens="claude"):
         inline = get_scalar(fm, "allowed-tools")
         if inline:
             tools = inline.split()
-    if tools:  # a restriction is declared -> the host enforces it
+    if tools and rules.get("enforces_allowed_tools", True):
         bases = {tool_base(t) for t in tools}
         known = {b for b in bases if b in rules["tools"]}
         unknown = [t for t in tools if tool_base(t) not in rules["tools"]]
