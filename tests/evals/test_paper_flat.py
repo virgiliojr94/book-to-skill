@@ -72,6 +72,9 @@ def test_no_heading_uses_one_full_source_chunk(tmp_path):
 
 def test_pack_has_no_child_skill_hierarchy(tmp_path):
     build(tmp_path)
-    files = sorted(path.relative_to(tmp_path / "pack") for path in (tmp_path / "pack").rglob("*") if path.is_file())
+    files = sorted(
+        (path.relative_to(tmp_path / "pack") for path in (tmp_path / "pack").rglob("*") if path.is_file()),
+        key=lambda path: path.as_posix(),
+    )
     assert files == [Path("SKILL.md"), Path("chunks/chunk-01.md"), Path("chunks/chunk-02.md")]
     assert all(path.name == "SKILL.md" for path in files if path.name == "SKILL.md")
