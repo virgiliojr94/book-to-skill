@@ -198,6 +198,15 @@ _BN_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?অধ্যায়\s*([0-9{_BN_DIGITS}]+)\b"
 )
 
+# Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
+# "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
+# unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
+# dedicated matcher (rather than adding the word to _EXPLICIT_CHAPTER) is used
+# because that alternation is Latin-only and its number would still be read
+# there. Requiring whitespace then a number keeps prose that merely uses an
+# inflected form ("В этой главе…", "Главная страница") from matching.
+_RU_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?глава\s+([0-9]+)\b", re.IGNORECASE)
+
 # Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
 # 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
 # subsection), with an optional "의N" branch suffix that Korean statutes use for
@@ -563,6 +572,9 @@ def _match_chapter_number(line: str) -> int | None:
     bm = _BN_CHAPTER.match(s)
     if bm:
         return int(bm.group(1).translate(_BN_DIGIT_MAP))
+    rum = _RU_CHAPTER.match(s)
+    if rum:
+        return int(rum.group(1))
 
     km = _KO_CHAPTER.match(s)
     if km:
@@ -583,6 +595,7 @@ def _chapter_number(line: str) -> int | None:
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
     "## บทที่ ๑"), Hindi ("अध्याय 1", "अध्याय १", "## अध्याय 2"),
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
+    Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
     "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each

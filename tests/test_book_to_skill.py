@@ -668,6 +668,27 @@ class TestDetectStructure:
         assert _chapter_number("এই অধ্যায়ে আমরা আলোচনা করব") is None
         assert _chapter_number("অধ্যায়") is None
 
+    def test_detects_russian_chapters(self):
+        """Russian headings: `Глава N`, case-insensitive, with Arabic digits."""
+        text = (
+            "Глава 1 Введение\nсодержание\n"
+            "ГЛАВА 2 Методы\nсодержание\n"
+            "Глава 3 Результаты\nсодержание"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_russian_markdown_prefix(self):
+        text = "## Глава 1 Первая\nсодержание\n## Глава 2 Вторая\nсодержание"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_russian_prose_is_not_a_chapter_heading(self):
+        """An inflected form or a different word (Главная) is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("В этой главе мы обсудим") is None
+        assert _chapter_number("Главная страница") is None
+        assert _chapter_number("Глава") is None
+
     # ── Korean chapter headings ────────────────────────────────────────────
 
     def test_korean_je_n_jang(self):
