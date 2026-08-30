@@ -39,11 +39,10 @@ jobs:
           python-version: "3.12"
       - name: Install ruff
         run: pip install ruff
-      - name: Ruff check
-        # High-value gate: syntax errors (E9, e.g. IndentationError) + pyflakes
-        # (F: undefined names, unused imports). Style rules are intentionally
-        # not gated yet to avoid blocking on cosmetic churn.
+      - name: Ruff check (E9,F — syntax/pyflakes)
         run: ruff check --select E9,F --target-version py310 book_to_skill/ scripts/ tests/ tools/
+      - name: Ruff full (blocking — lightweight gate per governance)
+        run: ruff check .
 
   smoke:
     name: smoke (dependency-free extraction)
@@ -74,18 +73,13 @@ jobs:
           python-version: "3.12"
       - name: Install scanners
         run: pip install bandit zizmor
-      - name: Bandit — gate on HIGH severity
-        # Hard gate: only HIGH-severity / MEDIUM-confidence findings fail CI, to
-        # avoid blocking on the known-acceptable subprocess (pip install) calls.
-        # Ratchet down to medium once the open B314 docx-XML finding is hardened.
-        run: bandit -q -r book_to_skill scripts tools --severity-level high --confidence-level medium
-      - name: Bandit — report MEDIUM+ (informational)
+      - name: Bandit — gate on MEDIUM severity (blocking — ADAPT Loop 1)
+        # Hardened: B314 docx XML now uses defusedxml when available (parsers/docx.py:50) + DTD pre-scan
+        run: bandit -q -r book_to_skill scripts tools --severity-level medium --confidence-level medium
+      - name: Bandit — report LOW (informational)
         run: bandit -q -r book_to_skill scripts tools -ll || true
-      - name: Zizmor — workflow audit (informational)
-        # Surfaces GitHub Actions risks (injection, pull_request_target misuse).
-        # Currently only flags unpinned-uses (tags vs SHA) — non-blocking until
-        # the actions are pinned to SHAs (Dependabot follow-up).
-        run: zizmor .github/workflows/ || true
+      - name: Zizmor — workflow audit (blocking on high, per governance)
+        run: zizmor .github/workflows/
 
   validate-skill:
     name: validate SKILL.md (Claude Code rules)
@@ -100,6 +94,24 @@ jobs:
         # description, a tool restriction that omits Bash while the skill shells
         # out). Cross-agent metadata Claude ignores is reported as WARN only.
         run: python3 tools/validate_skill.py SKILL.md
+
+  evidence:
+    name: evidence (discovery_tax + bloat cap)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+      - name: Validate discovery_tax harness + bloat cap
+        run: |
+          set -euo pipefail
+          test -f tools/discovery_tax.py
+          python3 -m pytest tests/test_discovery_tax.py -q
+          python3 tools/validate_skill.py SKILL.md
+          LINES=$(wc -l < SKILL.md)
+          echo "SKILL.md lines: $LINES (soft WARN >500, hard cap >750 per DEBT D4)"
+          if [ "$LINES" -gt 750 ]; then echo "FAIL SKILL.md >750 hard cap per DEBT D4"; exit 1; fi
 
   dependency-review:
     name: dependency review (PR)

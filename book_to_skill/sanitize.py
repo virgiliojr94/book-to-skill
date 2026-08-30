@@ -138,11 +138,20 @@ def is_invisible_codepoint(codepoint: int) -> bool:
 
 def sanitize_extracted_text(text: str) -> tuple[str, int]:
     """Remove invisible code points used for document-borne prompt injection."""
+    # Fast-path: pure ASCII (<0x80) cannot contain any invisible codepoint in our sets
+    # (lowest is 0xAD, but ASCII path is >90% of Latin books — saves is_invisible checks).
+    # Minimal perf fix per DEBT D3 — deterministic, no prompt lengthening.
+    if text.isascii():
+        return text, 0
     kept: list[str] = []
     removed = 0
 
     for character in text:
-        if is_invisible_codepoint(ord(character)):
+        cp = ord(character)
+        if cp < 0x80:
+            kept.append(character)
+            continue
+        if is_invisible_codepoint(cp):
             removed += 1
             continue
         kept.append(character)
