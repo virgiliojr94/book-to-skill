@@ -261,6 +261,45 @@ def test_non_hermes_host_keeps_original_personal_precedence(tmp_path):
     assert Path(result.stdout).resolve() == personal.resolve()
 
 
+def test_hermes_project_candidates_require_enclosing_git_root(tmp_path):
+    home = tmp_path / "home"
+    hermes_home = tmp_path / "hermes-profile"
+    project = tmp_path / "not-a-git-repository"
+    project.mkdir()
+
+    personal = (
+        hermes_home
+        / "skills"
+        / "productivity"
+        / "book-to-skill"
+        / "scripts"
+        / "extract.py"
+    )
+    project_local = (
+        project
+        / ".hermes"
+        / "skills"
+        / "productivity"
+        / "book-to-skill"
+        / "scripts"
+        / "extract.py"
+    )
+    for extractor in (personal, project_local):
+        extractor.parent.mkdir(parents=True)
+        extractor.touch()
+
+    env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
+    result = subprocess.run(
+        ["bash", "-c", _extract_probe_script()],
+        cwd=project,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert Path(result.stdout).resolve() == personal.resolve()
+
+
 def test_hermes_destination_and_project_roots_are_documented():
     assert "**Hermes Agent**" in SKILL
     assert "$HERMES_HOME/skills/<category>" in SKILL

@@ -134,9 +134,10 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 HERMES_HOME_RESOLVED="${HERMES_HOME:-$HOME/.hermes}"
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 HERMES_PROJECT_TRUSTED=false
-if [ "${HERMES_AGENT:-}" = true ] && command -v hermes >/dev/null 2>&1 && \
+if [ -n "$PROJECT_ROOT" ] && [ "${HERMES_AGENT:-}" = true ] && \
+  command -v hermes >/dev/null 2>&1 && \
   command -v python3 >/dev/null 2>&1 && \
   hermes config get skills.trusted_project_dirs --json 2>/dev/null | PROJECT_ROOT="$PROJECT_ROOT" python3 -c 'import json, os, pathlib, sys; root=pathlib.Path(os.environ["PROJECT_ROOT"]).resolve(); sys.exit(not any(pathlib.Path(p).expanduser().resolve() == root for p in json.load(sys.stdin)))' 2>/dev/null
 then
