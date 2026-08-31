@@ -134,19 +134,43 @@ Run the extraction script, passing the input paths:
 ```bash
 SCRIPT_PATH=""
 HERMES_HOME_RESOLVED="${HERMES_HOME:-$HOME/.hermes}"
-for candidate in \
-  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.agents/skills/book-to-skill/scripts/extract.py" \
-  "$HOME/.claude/skills/book-to-skill/scripts/extract.py" \
-  "$HERMES_HOME_RESOLVED/skills/book-to-skill/scripts/extract.py" \
-  "$HERMES_HOME_RESOLVED"/skills/*/book-to-skill/scripts/extract.py \
-  ".github/skills/book-to-skill/scripts/extract.py" \
-  ".claude/skills/book-to-skill/scripts/extract.py" \
-  ".agents/skills/book-to-skill/scripts/extract.py" \
-  ".hermes/skills/book-to-skill/scripts/extract.py" \
-  ".hermes/skills"/*/book-to-skill/scripts/extract.py \
-  "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py" \
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+HERMES_PROJECT_TRUSTED=false
+if [ "${HERMES_AGENT:-}" = true ] && command -v hermes >/dev/null 2>&1 && \
+  command -v python3 >/dev/null 2>&1 && \
+  hermes config get skills.trusted_project_dirs --json 2>/dev/null | PROJECT_ROOT="$PROJECT_ROOT" python3 -c 'import json, os, pathlib, sys; root=pathlib.Path(os.environ["PROJECT_ROOT"]).resolve(); sys.exit(not any(pathlib.Path(p).expanduser().resolve() == root for p in json.load(sys.stdin)))' 2>/dev/null
+then
+  HERMES_PROJECT_TRUSTED=true
+fi
+
+CANDIDATES=(
+  "$HOME/.copilot/skills/book-to-skill/scripts/extract.py"
+  "$HOME/.agents/skills/book-to-skill/scripts/extract.py"
+  "$HOME/.claude/skills/book-to-skill/scripts/extract.py"
+  "$HERMES_HOME_RESOLVED/skills/book-to-skill/scripts/extract.py"
+  "$HERMES_HOME_RESOLVED"/skills/*/book-to-skill/scripts/extract.py
+)
+if [ "${HERMES_AGENT:-}" != true ]; then
+  CANDIDATES+=(
+    ".github/skills/book-to-skill/scripts/extract.py"
+    ".claude/skills/book-to-skill/scripts/extract.py"
+    ".agents/skills/book-to-skill/scripts/extract.py"
+  )
+fi
+CANDIDATES+=(
+  "$HOME/.config/agents/skills/book-to-skill/scripts/extract.py"
   "$HOME/.config/amp/skills/book-to-skill/scripts/extract.py"
+)
+if [ "$HERMES_PROJECT_TRUSTED" = true ]; then
+  CANDIDATES=(
+    "$PROJECT_ROOT/.hermes/skills/book-to-skill/scripts/extract.py"
+    "$PROJECT_ROOT/.hermes/skills"/*/book-to-skill/scripts/extract.py
+    "$PROJECT_ROOT/.agents/skills/book-to-skill/scripts/extract.py"
+    "$PROJECT_ROOT/.agents/skills"/*/book-to-skill/scripts/extract.py
+    "${CANDIDATES[@]}"
+  )
+fi
+for candidate in "${CANDIDATES[@]}"
 do
   if [ -f "$candidate" ]; then
     SCRIPT_PATH="$candidate"
