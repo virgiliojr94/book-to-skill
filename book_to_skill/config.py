@@ -45,6 +45,7 @@ SUPPORTED_EXTENSIONS = {
 }
 
 PYTHON_DEPENDENCIES = {
+    "pdf_inspector": "pdf-inspector>=1.15,<2",
     "docling": "docling",
     "pypdf": "pypdf",
     "pdfminer": "pdfminer.six",
