@@ -16,7 +16,7 @@ book-to-skill = "book_to_skill.cli:main"
 [project.optional-dependencies]
 html = ["trafilatura"]
 epub = ["ebooklib", "beautifulsoup4"]
-pdf = ["pypdf", "pdfminer.six"]
+pdf = ["pdf-inspector>=1.15,<2", "pypdf", "pdfminer.six"]
 docx = ["python-docx"]
 rtf = ["striprtf"]
 technical = ["docling"]
@@ -24,6 +24,7 @@ all = [
     "trafilatura",
     "ebooklib",
     "beautifulsoup4",
+    "pdf-inspector>=1.15,<2",
     "pypdf",
     "pdfminer.six",
     "python-docx",
