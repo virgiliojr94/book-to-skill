@@ -689,6 +689,26 @@ class TestDetectStructure:
         assert _chapter_number("Главная страница") is None
         assert _chapter_number("Глава") is None
 
+    def test_detects_greek_chapters(self):
+        """Greek headings: `Κεφάλαιο N`, incl. all-caps (accent-dropped) ΚΕΦΑΛΑΙΟ."""
+        text = (
+            "Κεφάλαιο 1 Εισαγωγή\nπεριεχόμενο\n"
+            "ΚΕΦΑΛΑΙΟ 2 Μέθοδοι\nπεριεχόμενο\n"
+            "Κεφάλαιο 3 Αποτελέσματα\nπεριεχόμενο"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_greek_markdown_prefix(self):
+        text = "## Κεφάλαιο 1 Πρώτο\nπεριεχόμενο\n## Κεφάλαιο 2 Δεύτερο\nπεριεχόμενο"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_greek_prose_is_not_a_chapter_heading(self):
+        """`κεφάλαιο` used in prose (no number, or mid-sentence) is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("Σε αυτό το κεφάλαιο θα δούμε") is None
+        assert _chapter_number("Κεφάλαιο") is None
+
     # ── Korean chapter headings ────────────────────────────────────────────
 
     def test_korean_je_n_jang(self):
