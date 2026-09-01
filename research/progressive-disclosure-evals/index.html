@@ -1,0 +1,1824 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI and Amp — frameworks and decision rules, loaded on demand.">
+      
+      
+      
+        <link rel="canonical" href="https://booktoskill.is-a.dev/research/progressive-disclosure-evals/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    <title>Progressive Disclosure Evaluation Plan - book-to-skill</title>
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    <meta property="og:type" content="website">
+  <meta property="og:site_name" content="book-to-skill">
+  <meta property="og:title" content="Progressive Disclosure Evaluation Plan - book-to-skill">
+  <meta property="og:description" content="Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI and Amp — frameworks and decision rules, loaded on demand.">
+  <meta property="og:url" content="https://booktoskill.is-a.dev/research/progressive-disclosure-evals/">
+  <meta property="og:image" content="https://booktoskill.is-a.dev/assets/og-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="book-to-skill — Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI and Amp — frameworks and decision rules, loaded on demand.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Progressive Disclosure Evaluation Plan - book-to-skill">
+  <meta name="twitter:description" content="Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI and Amp — frameworks and decision rules, loaded on demand.">
+  <meta name="twitter:image" content="https://booktoskill.is-a.dev/assets/og-card.jpg">
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#progressive-disclosure-evaluation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="book-to-skill" class="md-header__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            book-to-skill
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Progressive Disclosure Evaluation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../guide/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../how-it-works/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  How it works
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../usage/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Usage
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../install/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Install
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../performance/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Performance
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../skill-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Skill Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="book-to-skill" class="md-nav__button md-logo" aria-label="book-to-skill" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    book-to-skill
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/virgiliojr94/book-to-skill" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    virgiliojr94/book-to-skill
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How it works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../skill-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Skill Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-why-this-work-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Why this work exists
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-the-paper-supports-vs-what-remains-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. What the paper supports vs. what remains open
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. What the paper supports vs. what remains open">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#supported-by-this-paper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported by this paper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important-nuance-from-the-appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important nuance from the appendix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-questions-for-this-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open questions for this repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-research-rules-keep-causal-questions-separable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Research rules: keep causal questions separable
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-cost-discipline-no-more-expensive-runs-without-a-decision-they-can-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Cost discipline: no more expensive runs without a decision they can change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-planned-repository-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Planned repository shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-core-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Core metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Core metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#routingnavigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing/navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outcome
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Efficiency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#representation-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Representation diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-task-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Task ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-task-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Task specifications
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Task specifications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pd-00-freeze-current-baseline-and-evaluation-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-00 — Freeze current baseline and evaluation contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-01-deterministic-run-manifest-hashing-and-budgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-01 — Deterministic run manifest, hashing, and budgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-02-fixturereplay-scorer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-02 — Fixture/replay scorer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-03-paper-flat-baseline-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-03 — Paper-flat baseline builder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-04-runner-contract-first-live-harness-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-04 — Runner contract + first live harness adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-05-representation-experiment-highest-priority-research-question" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-05 — Representation experiment (highest-priority research question)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-06-automatic-vs-explicit-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-06 — Automatic vs explicit activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-07-routing-metadata-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-07 — Routing metadata ablation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-08-technicalnon-narrative-replication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-08 — Technical/non-narrative replication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-09-library-scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-09 — Library scaling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-10-optional-hybrid-rag-reference-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-10 — Optional Hybrid RAG reference baseline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-11-chunking-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-11 — Chunking ablation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pd-12-evidence-review-and-production-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PD-12 — Evidence review and production decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-evidence-ledger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Evidence Ledger
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-claims-guardrail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Claims guardrail
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-agent-instruction-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Agent instruction compatibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-definition-of-complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Definition of complete
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="progressive-disclosure-evaluation-plan">Progressive Disclosure Evaluation Plan<a class="headerlink" href="#progressive-disclosure-evaluation-plan" title="Permanent link">&para;</a></h1>
+<p>Status: <strong>ACTIVE PLAN — planning only; no paper-derived production change is authorized by this document</strong></p>
+<p>Primary source: <a href="https://arxiv.org/abs/2607.17598">He et al., <em>Is Progressive Disclosure All You Need for Long-Context Agents?</em></a></p>
+<p>This plan converts the paper's useful findings into a sequence of falsifiable, low-waste experiments for <code>book-to-skill</code>. It is intentionally written so another coding agent can resume from the repository, locate the next task, implement it, prove it, record evidence, and continue without reconstructing the entire discussion.</p>
+<p>The goal is not to copy the paper's implementation. The goal is to answer the questions the paper leaves open for the <strong>current</strong> <code>book-to-skill</code> architecture.</p>
+<hr />
+<h2 id="1-why-this-work-exists">1. Why this work exists<a class="headerlink" href="#1-why-this-work-exists" title="Permanent link">&para;</a></h2>
+<p>The repository already has <code>tools/discovery_tax.py</code>, which models context cost using real extracted chapter sizes. That tool is useful, but its own documentation correctly says the discovery-loop numbers are a <strong>model</strong>, not a measurement of a real agent trajectory.</p>
+<p>The next useful step is therefore not another token-saving claim or another generation feature. It is a small evaluation system that can tell us, with evidence:</p>
+<ol>
+<li>whether the agent finds the right source/book/chapter;</li>
+<li>whether the representation helps after the correct material is reached;</li>
+<li>what files/tools the agent used;</li>
+<li>what the run cost in tokens/calls;</li>
+<li>whether a proposed change beats the existing behavior under the same conditions.</li>
+</ol>
+<p>Only after those measurements should a paper-inspired idea change production <code>SKILL.md</code> behavior.</p>
+<hr />
+<h2 id="2-what-the-paper-supports-vs-what-remains-open">2. What the paper supports vs. what remains open<a class="headerlink" href="#2-what-the-paper-supports-vs-what-remains-open" title="Permanent link">&para;</a></h2>
+<h3 id="supported-by-this-paper">Supported by this paper<a class="headerlink" href="#supported-by-this-paper" title="Permanent link">&para;</a></h3>
+<p>The plan may treat these as findings of the cited experiment, with the paper's scope limitations intact:</p>
+<ul>
+<li>The authors evaluate a <strong>controlled recipe based on book-to-skill</strong>, not this repository's full current generator. Their recipe chunks by document structure (fallback ~4,000 words), generates a short summary plus <code>KEY_ELEMENTS</code>, and routes to raw chunk text.</li>
+<li>A single-level/flat skill pack is the best default in the study overall; pushing chunk descriptions into always-loaded child skills can create context pressure and can hurt.</li>
+<li>The value of progressive disclosure depends on the harness. On a single book, a strong navigator such as the tested Codex setup can reconstruct <code>grep -&gt; locate -&gt; read</code> itself, reducing the accuracy benefit of the pre-built pack.</li>
+<li>At multi-book scale, especially English open QA in the tested setup, flat disclosure degrades more slowly than raw navigation.</li>
+<li>The paper's <code>KEY_ELEMENTS</code> field was <strong>used</strong>, but its independent contribution was <strong>not ablated</strong>.</li>
+<li>The paper does <strong>not</strong> validate the current <code>book-to-skill</code> semantic representation: frameworks, mental models, anti-patterns, decision rules, glossary/patterns/cheatsheet, and the current chapter template were not the independent variable.</li>
+<li>The paper explicitly does not establish transfer to code, technical manuals, or other non-narrative corpora.</li>
+<li>Cost results such as the K=20 En.QA <code>68.3M</code> vs <code>32.5M</code> token comparison are condition-specific uncached measurements, not a universal 2x claim.</li>
+</ul>
+<h3 id="important-nuance-from-the-appendix">Important nuance from the appendix<a class="headerlink" href="#important-nuance-from-the-appendix" title="Permanent link">&para;</a></h3>
+<p>Do not encode the slogan "hierarchy never helps" as a product invariant. The paper's appendix contains task/scale-specific cells where deeper routing recovers or leads (for example some Pi open-QA conditions). The safe design conclusion is:</p>
+<blockquote>
+<p><strong>Flat is the default to beat. Deeper routing is an experiment, not a forbidden architecture and not a production requirement.</strong></p>
+</blockquote>
+<h3 id="open-questions-for-this-repository">Open questions for this repository<a class="headerlink" href="#open-questions-for-this-repository" title="Permanent link">&para;</a></h3>
+<p>These are hypotheses until this plan produces evidence:</p>
+<ul>
+<li>Does the current structured representation improve <strong>application/decision</strong> tasks compared with the paper-style <code>summary + key elements + raw chunk</code> representation?</li>
+<li>Does adding exact routing terms/entities improve routing enough to justify extra always/activation-loaded context?</li>
+<li>Can explicit/forced activation separate routing failure from representation/reasoning failure?</li>
+<li>Do the paper's scaling patterns reproduce on technical books, documentation, or SOP-like material?</li>
+<li>Is a library-level index useful for actual <code>book-to-skill</code> collections?</li>
+<li>Does a structured chapter plus access to source evidence outperform either structure-only or raw-only?</li>
+<li>Does different chunk granularity matter after routing and representation are controlled?</li>
+</ul>
+<hr />
+<h2 id="3-research-rules-keep-causal-questions-separable">3. Research rules: keep causal questions separable<a class="headerlink" href="#3-research-rules-keep-causal-questions-separable" title="Permanent link">&para;</a></h2>
+<p>Do not change multiple design axes in the same comparison.</p>
+<p>Use this decomposition:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>SOURCE
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  -&gt; CHUNKING
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  -&gt; ROUTING METADATA
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  -&gt; DISCLOSURE DEPTH
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  -&gt; ON-DEMAND REPRESENTATION
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  -&gt; HARNESS ACTIVATION/NAVIGATION
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  -&gt; ANSWER/DECISION
+</code></pre></div>
+<p>A valid experiment changes one highlighted axis while holding the others fixed as far as the harness allows.</p>
+<p>Examples:</p>
+<ul>
+<li>To test <strong>representation</strong>, keep chunk boundaries and routing index identical; change only the payload opened after routing.</li>
+<li>To test <strong>routing metadata</strong>, keep chunk payloads identical; change only index metadata.</li>
+<li>To test <strong>activation</strong>, keep the pack identical; compare automatic discovery with explicit activation where the harness supports it.</li>
+<li>To test <strong>chunking</strong>, keep the routing/representation recipe fixed while changing boundaries.</li>
+</ul>
+<p>If a harness cannot hold a variable constant, record the confound rather than claiming causal isolation.</p>
+<hr />
+<h2 id="4-cost-discipline-no-more-expensive-runs-without-a-decision-they-can-change">4. Cost discipline: no more expensive runs without a decision they can change<a class="headerlink" href="#4-cost-discipline-no-more-expensive-runs-without-a-decision-they-can-change" title="Permanent link">&para;</a></h2>
+<p>Every live-model run must have a pre-run config/manifest containing:</p>
+<ul>
+<li>source/corpus ID and hash;</li>
+<li>condition name;</li>
+<li>question set ID and hash;</li>
+<li>model and harness;</li>
+<li>generation model if different from answer model;</li>
+<li>prompt/config hashes;</li>
+<li>repetition/seed information when supported;</li>
+<li><code>max_calls</code>;</li>
+<li><code>max_input_tokens</code>;</li>
+<li><code>max_output_tokens</code>;</li>
+<li>optional <code>max_cost_usd</code> if current pricing is supplied by the operator;</li>
+<li>reason this run is necessary and what decision it can change.</li>
+</ul>
+<p>The runner must stop rather than silently exceed a configured hard ceiling.</p>
+<p>Run order for any new experiment:</p>
+<ol>
+<li>unit tests / fixture replay;</li>
+<li>one or a few smoke questions;</li>
+<li>smallest discriminating corpus;</li>
+<li>repeat only if variance/instability requires it;</li>
+<li>larger K or broader sweep only after the smaller run produces a reason to continue.</li>
+</ol>
+<p>Never start with a 20-book sweep.</p>
+<p>Generated packs should be reused when source/config/model/prompt identity matches. Do not pay to regenerate identical inputs.</p>
+<hr />
+<h2 id="5-planned-repository-shape">5. Planned repository shape<a class="headerlink" href="#5-planned-repository-shape" title="Permanent link">&para;</a></h2>
+<p>This is the intended shape, not existing code. A task may adjust paths if the repository changes, but the plan must be updated before diverging.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tools/evals/
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  manifest.py          # stable run manifest + hashes + budget fields
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  score.py             # deterministic metrics where possible
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  replay.py            # replay recorded/synthetic trajectories without APIs
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  paper_flat.py        # paper-style baseline pack builder
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  run.py               # experiment orchestration / dry-run / budget gate
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  adapters/            # live harness adapters, added only when justified
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>tests/evals/
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  ...                  # deterministic unit/integration tests
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>evals/
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  fixtures/            # synthetic/public-domain/licensed tiny fixtures only
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  configs/             # committed experiment configs, no secrets
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  results/             # small aggregate summaries/manifests only
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>.eval-work/            # local raw trajectories, generated packs, private corpora; gitignored
+</code></pre></div>
+<p>Evaluation code must not become a runtime dependency of <code>book-to-skill</code> unless a later production decision explicitly promotes part of it.</p>
+<hr />
+<h2 id="6-core-metrics">6. Core metrics<a class="headerlink" href="#6-core-metrics" title="Permanent link">&para;</a></h2>
+<p>Do not reduce an experiment to final answer accuracy.</p>
+<p>Record what the harness exposes, including:</p>
+<h3 id="routingnavigation">Routing/navigation<a class="headerlink" href="#routingnavigation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>skill discovered/activated (when observable);</li>
+<li>target book selected;</li>
+<li>target chapter/chunk selected;</li>
+<li>files opened;</li>
+<li>irrelevant files opened before target;</li>
+<li>tool calls (<code>grep</code>, read/open, search, etc. when observable);</li>
+<li>time/calls until first relevant evidence.</li>
+</ul>
+<h3 id="outcome">Outcome<a class="headerlink" href="#outcome" title="Permanent link">&para;</a></h3>
+<ul>
+<li>exact/deterministic answer score where a gold answer exists;</li>
+<li>task-specific rubric result for application/decision tasks;</li>
+<li>whether correct source evidence was reached before an incorrect answer.</li>
+</ul>
+<h3 id="efficiency">Efficiency<a class="headerlink" href="#efficiency" title="Permanent link">&para;</a></h3>
+<ul>
+<li>input tokens;</li>
+<li>output tokens;</li>
+<li>total calls;</li>
+<li>elapsed time when comparable;</li>
+<li>current estimated monetary cost only when pricing is explicitly recorded with a date/source;</li>
+<li>cached vs uncached usage separately if the host exposes it.</li>
+</ul>
+<h3 id="representation-diagnostics">Representation diagnostics<a class="headerlink" href="#representation-diagnostics" title="Permanent link">&para;</a></h3>
+<p>When the correct chunk was opened but the answer is wrong, classify only when supported by observable evidence:</p>
+<ul>
+<li>evidence present but reasoning/answer failed;</li>
+<li>structured representation omitted required evidence;</li>
+<li>routing chose the wrong material;</li>
+<li>unknown/ambiguous.</li>
+</ul>
+<p>Do not infer hidden reasoning from an answer string.</p>
+<hr />
+<h2 id="7-task-ledger">7. Task ledger<a class="headerlink" href="#7-task-ledger" title="Permanent link">&para;</a></h2>
+<p>Status values:</p>
+<ul>
+<li><code>READY</code> — dependencies complete; next agent may take it.</li>
+<li><code>BLOCKED</code> — wait for listed dependencies.</li>
+<li><code>IN_PROGRESS</code> — one agent owns it; include branch/PR in Evidence Ledger.</li>
+<li><code>DONE</code> — all acceptance gates proven.</li>
+<li><code>REJECTED</code> — hypothesis/approach failed; preserve evidence and reason.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Status</th>
+<th>Task</th>
+<th>Depends on</th>
+<th>Production change?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PD-00</td>
+<td>DONE</td>
+<td>Freeze current baseline and evaluation contract</td>
+<td>none</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-01</td>
+<td>DONE</td>
+<td>Implement deterministic manifest + hashing + budget schema</td>
+<td>PD-00</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-02</td>
+<td>DONE</td>
+<td>Implement fixture/replay scorer with trajectory metrics</td>
+<td>PD-01</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-03</td>
+<td>DONE</td>
+<td>Implement paper-flat baseline pack builder</td>
+<td>PD-01</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-04</td>
+<td>BLOCKED</td>
+<td>Add dry-run/live runner contract and first harness adapter</td>
+<td>PD-02, PD-03</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-05</td>
+<td>BLOCKED</td>
+<td>Representation experiment: raw payload vs structured B2S payload</td>
+<td>PD-04</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-06</td>
+<td>BLOCKED</td>
+<td>Automatic vs explicit activation experiment</td>
+<td>PD-04</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-07</td>
+<td>BLOCKED</td>
+<td>Routing metadata ablation</td>
+<td>PD-04</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-08</td>
+<td>BLOCKED</td>
+<td>Technical/non-narrative corpus replication</td>
+<td>PD-05, PD-07</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-09</td>
+<td>BLOCKED</td>
+<td>Library scaling experiment</td>
+<td>PD-04, PD-08</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-10</td>
+<td>BLOCKED</td>
+<td>Optional Hybrid RAG reference baseline</td>
+<td>PD-04</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-11</td>
+<td>BLOCKED</td>
+<td>Chunking ablation</td>
+<td>PD-08</td>
+<td>no</td>
+</tr>
+<tr>
+<td>PD-12</td>
+<td>BLOCKED</td>
+<td>Evidence review and production decision(s)</td>
+<td>relevant experiments</td>
+<td><strong>decision only</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-task-specifications">8. Task specifications<a class="headerlink" href="#8-task-specifications" title="Permanent link">&para;</a></h2>
+<h3 id="pd-00-freeze-current-baseline-and-evaluation-contract">PD-00 — Freeze current baseline and evaluation contract<a class="headerlink" href="#pd-00-freeze-current-baseline-and-evaluation-contract" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Create a zero-API baseline snapshot before writing new eval infrastructure.</p>
+<p><strong>Required actions</strong></p>
+<ol>
+<li>Run current repository checks.</li>
+<li>Run/inspect <code>tools/discovery_tax.py</code> on a license-safe fixture or existing allowed local source if available; do not commit copyrighted source text.</li>
+<li>Record what the current tool measures vs models.</li>
+<li>Record current generator architecture from <code>docs/architecture.md</code> and <code>SKILL.md</code> without changing them.</li>
+<li>Choose a tiny synthetic/public-domain fixture set for deterministic eval development.</li>
+</ol>
+<p><strong>Acceptance</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pytest<span class="w"> </span>-q
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ruff<span class="w"> </span>check<span class="w"> </span>.
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python3<span class="w"> </span>tools/validate_skill.py<span class="w"> </span>SKILL.md
+</code></pre></div>
+<p>Plus a committed small baseline note/manifest that contains no raw copyrighted material and clearly labels modeled vs measured numbers.</p>
+<p><strong>Do not</strong> modify production generation behavior in this task.</p>
+<hr />
+<h3 id="pd-01-deterministic-run-manifest-hashing-and-budgets">PD-01 — Deterministic run manifest, hashing, and budgets<a class="headerlink" href="#pd-01-deterministic-run-manifest-hashing-and-budgets" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Make every later result attributable and reusable.</p>
+<p><strong>Minimum fields</strong></p>
+<ul>
+<li>schema version / run ID;</li>
+<li>source IDs + content hashes;</li>
+<li>condition;</li>
+<li>question-set hash;</li>
+<li>model/harness identifiers;</li>
+<li>prompt/config hashes;</li>
+<li>seed/repetition fields with explicit <code>unsupported</code> where applicable;</li>
+<li>token/call/cost ceilings;</li>
+<li>code version/commit SHA if available;</li>
+<li>artifact/result paths.</li>
+</ul>
+<p><strong>Requirements</strong></p>
+<ul>
+<li>standard-library implementation unless a dependency is demonstrably needed;</li>
+<li>stable serialization;</li>
+<li>deterministic hash tests;</li>
+<li>no secrets in committed manifests;</li>
+<li>invalid/missing required fields fail clearly.</li>
+</ul>
+<p><strong>Acceptance</strong></p>
+<p>Targeted tests prove identical inputs generate identical identities and meaningful config changes alter the identity. Full <code>pytest -q</code> and <code>ruff check .</code> pass.</p>
+<hr />
+<h3 id="pd-02-fixturereplay-scorer">PD-02 — Fixture/replay scorer<a class="headerlink" href="#pd-02-fixturereplay-scorer" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Prove scoring and trajectory accounting without spending model tokens.</p>
+<p>Use tiny synthetic trajectories that represent:</p>
+<ul>
+<li>correct routing + correct answer;</li>
+<li>wrong book/chapter routing;</li>
+<li>correct evidence reached + wrong answer;</li>
+<li>multiple irrelevant opens before target;</li>
+<li>missing/unknown observability.</li>
+</ul>
+<p><strong>Output</strong></p>
+<p>Machine-readable aggregate and per-question results. The scorer must not guess unobserved states.</p>
+<p><strong>Acceptance</strong></p>
+<p>Tests cover every classification above and token/call aggregation. A replay command produces stable JSON on repeated runs.</p>
+<hr />
+<h3 id="pd-03-paper-flat-baseline-builder">PD-03 — Paper-flat baseline builder<a class="headerlink" href="#pd-03-paper-flat-baseline-builder" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Create a reproducible baseline matching the paper's <em>experimental representation</em> closely enough for controlled comparisons, without pretending it is the repository's current generator.</p>
+<p><strong>Baseline structure</strong></p>
+<ul>
+<li>one root <code>SKILL.md</code>;</li>
+<li>book-level description for discovery;</li>
+<li>activation-time table/index of chunk path + short description;</li>
+<li>per-chunk <code>SUMMARY</code> and optional <code>KEY_ELEMENTS</code> metadata in the index;</li>
+<li>raw chunk payload files loaded on demand;</li>
+<li>source-structure chapter split with an explicit fallback policy.</li>
+</ul>
+<p>Generation of summary/KEY_ELEMENTS may require a model in live mode; tests must use fixed fixture outputs so CI remains offline/deterministic.</p>
+<p><strong>Critical rule</strong></p>
+<p>Do not add this representation to production <code>SKILL.md</code>. It is an experiment baseline.</p>
+<p><strong>Acceptance</strong></p>
+<p>Given the same fixture and fixed metadata, builder output is stable and contains exactly one routing level. Tests verify no child-skill hierarchy is introduced.</p>
+<hr />
+<h3 id="pd-04-runner-contract-first-live-harness-adapter">PD-04 — Runner contract + first live harness adapter<a class="headerlink" href="#pd-04-runner-contract-first-live-harness-adapter" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Run <code>raw</code>, <code>paper-flat</code>, and a provided/frozen current-B2S pack under the same question/config envelope and record observable trajectory/cost data.</p>
+<p><strong>Before choosing an adapter</strong></p>
+<p>Inspect available upstream tooling. Prefer compatibility with an existing agent protocol/environment (for example ACP/LOONGDOC if accessible and reusable) over inventing a bespoke harness.</p>
+<p><strong>Runner must support</strong></p>
+<ul>
+<li><code>--dry-run</code> with planned conditions/calls/budgets and no model calls;</li>
+<li>hard call/token budget gates where host usage data allows enforcement;</li>
+<li>local work directory outside git;</li>
+<li>one condition at a time;</li>
+<li>result/manifest emission even on controlled failure;</li>
+<li>adapter capability declaration (files opened observable? activation observable? tokens observable? forced activation supported?).</li>
+</ul>
+<p><strong>Acceptance</strong></p>
+<p>Fixture/replay adapter is green first. Then one intentionally tiny live smoke run may be performed within a declared budget. No large sweep.</p>
+<hr />
+<h3 id="pd-05-representation-experiment-highest-priority-research-question">PD-05 — Representation experiment (highest-priority research question)<a class="headerlink" href="#pd-05-representation-experiment-highest-priority-research-question" title="Permanent link">&para;</a></h3>
+<p><strong>Question</strong></p>
+<p>Once routing is held constant, does the current structured <code>book-to-skill</code> payload help an agent <em>apply</em> knowledge better than raw chapter text or a simple representation?</p>
+<p><strong>Conditions</strong></p>
+<p>Keep the same source, chunk boundaries, root routing metadata, harness, model, questions, and activation condition. Change only on-demand payload:</p>
+<ol>
+<li><code>RAW_CHUNK</code> — raw chunk text;</li>
+<li><code>SIMPLE</code> — simple summary representation;</li>
+<li><code>B2S_STRUCTURED</code> — current structured chapter representation;</li>
+<li><code>B2S_STRUCTURED_WITH_SOURCE_FALLBACK</code> — structured representation plus access to source evidence, if the harness can make this comparison without changing routing.</li>
+</ol>
+<p>If condition 4 cannot be isolated cleanly, defer it rather than contaminate the primary comparison.</p>
+<p><strong>Task families</strong></p>
+<p>Use questions that distinguish representation types:</p>
+<ul>
+<li>factual retrieval;</li>
+<li>explanation/understanding;</li>
+<li>application to a scenario;</li>
+<li>decision/trade-off using source criteria;</li>
+<li>anti-pattern/counter-example.</li>
+</ul>
+<p><strong>Promotion rule</strong></p>
+<p>No production claim from one dataset/cell. Record task-family-specific effects and variance. A null result is a valid outcome.</p>
+<hr />
+<h3 id="pd-06-automatic-vs-explicit-activation">PD-06 — Automatic vs explicit activation<a class="headerlink" href="#pd-06-automatic-vs-explicit-activation" title="Permanent link">&para;</a></h3>
+<p><strong>Question</strong></p>
+<p>How much failure comes from discovering/routing to the Skill versus using the knowledge after the correct Skill is made available?</p>
+<p>Run the same pack/questions under:</p>
+<ul>
+<li><code>AUTO</code> — normal host discovery/activation;</li>
+<li><code>FORCED</code> — correct Skill explicitly activated/provided, <strong>only if the harness supports a clean forced condition</strong>.</li>
+</ul>
+<p>If forced activation is not supported, mark the adapter capability false and do not simulate a supposedly equivalent mechanism without documenting the difference.</p>
+<p><strong>Output</strong></p>
+<p>Separate routing/activation success from downstream answer performance as far as observability allows.</p>
+<hr />
+<h3 id="pd-07-routing-metadata-ablation">PD-07 — Routing metadata ablation<a class="headerlink" href="#pd-07-routing-metadata-ablation" title="Permanent link">&para;</a></h3>
+<p><strong>Question</strong></p>
+<p>Which metadata earns its context cost?</p>
+<p>Keep the same chunk payload and boundaries. Compare, in order:</p>
+<ol>
+<li><code>SUMMARY_ONLY</code>;</li>
+<li><code>SUMMARY_EXACT_TERMS</code>;</li>
+<li><code>SUMMARY_KEY_ELEMENTS</code> (paper-style);</li>
+<li><code>CURRENT_B2S_INDEX</code> or a precisely defined projection of it.</li>
+</ol>
+<p>Record both routing success and metadata token overhead.</p>
+<p><strong>Important</strong></p>
+<p><code>KEY_ELEMENTS</code> is not a validated production requirement. This experiment exists because the paper did not isolate its effect.</p>
+<p><strong>Production gate candidate</strong></p>
+<p>Only consider adding/changing routing metadata if improvement repeats on more than one appropriate corpus/task family and the added context cost is reported. Otherwise keep the current behavior.</p>
+<hr />
+<h3 id="pd-08-technicalnon-narrative-replication">PD-08 — Technical/non-narrative replication<a class="headerlink" href="#pd-08-technicalnon-narrative-replication" title="Permanent link">&para;</a></h3>
+<p><strong>Question</strong></p>
+<p>Do the useful paper effects transfer to the material <code>book-to-skill</code> is commonly designed to structure: technical books, docs, standards, and SOP-like content?</p>
+<p><strong>Corpus requirements</strong></p>
+<ul>
+<li>public-domain, permissively licensed, synthetic, or explicitly authorized;</li>
+<li>at least two different structural/content types before drawing a product conclusion;</li>
+<li>avoid famous material as the only benchmark because parametric memory can hide retrieval/navigation failures.</li>
+</ul>
+<p>Prefer held-out/synthetic facts for routing tests where practical.</p>
+<p><strong>Acceptance</strong></p>
+<p>Run the already-defined conditions; do not add new features during the replication. Publish aggregate manifests/results that are legally safe to commit.</p>
+<hr />
+<h3 id="pd-09-library-scaling">PD-09 — Library scaling<a class="headerlink" href="#pd-09-library-scaling" title="Permanent link">&para;</a></h3>
+<p><strong>Question</strong></p>
+<p>When does a collection-level index become useful for real non-narrative <code>book-to-skill</code> material?</p>
+<p>Do not implement <code>library-to-skill</code> in production first.</p>
+<p>Experimental conditions may include:</p>
+<ol>
+<li>no library index;</li>
+<li>one-line-per-source index similar to the paper's <code>corpus-index.md</code> setup;</li>
+<li>richer semantic library index, only after condition 2 is measured.</li>
+</ol>
+<p><strong>Scale discipline</strong></p>
+<p>Start K=1 and K=5. Proceed to K=10 only if the smaller run leaves a scaling question unresolved or shows a meaningful divergence. Proceed to K=20 only with a written justification and budget.</p>
+<p><strong>Production gate candidate</strong></p>
+<p>A library feature is justified only if the index provides reproducible benefit on real target-domain corpora and does not merely move excessive context into an always-loaded layer.</p>
+<hr />
+<h3 id="pd-10-optional-hybrid-rag-reference-baseline">PD-10 — Optional Hybrid RAG reference baseline<a class="headerlink" href="#pd-10-optional-hybrid-rag-reference-baseline" title="Permanent link">&para;</a></h3>
+<p><strong>Goal</strong></p>
+<p>Provide an external retrieval reference, not a runtime feature.</p>
+<p>The paper's reference stack used BM25 + BGE-M3 dense retrieval + reciprocal-rank fusion + BGE cross-encoder reranking. Reproduce or reuse that stack only when the agentic conditions are already stable enough that the comparison will answer a decision.</p>
+<p><strong>Rules</strong></p>
+<ul>
+<li>keep heavy ML dependencies evaluation-only;</li>
+<li>prefer a separate optional environment/requirements file;</li>
+<li>do not claim "Skills beat RAG" from this baseline;</li>
+<li>report the exact retriever/embedding/reranker versions and budgets.</li>
+</ul>
+<p>If this task costs more maintenance than the decision is worth, it may be explicitly <code>REJECTED</code> with rationale.</p>
+<hr />
+<h3 id="pd-11-chunking-ablation">PD-11 — Chunking ablation<a class="headerlink" href="#pd-11-chunking-ablation" title="Permanent link">&para;</a></h3>
+<p>Run only after representation/routing tests stabilize.</p>
+<p>Compare a small set such as:</p>
+<ul>
+<li>source chapter/section boundaries;</li>
+<li>fixed-size paragraph-preserving chunks;</li>
+<li>structure-aware technical sections if the extractor exposes them reliably.</li>
+</ul>
+<p>Hold routing metadata recipe and payload representation constant. Do not change extraction, routing, and representation simultaneously.</p>
+<hr />
+<h3 id="pd-12-evidence-review-and-production-decisions">PD-12 — Evidence review and production decisions<a class="headerlink" href="#pd-12-evidence-review-and-production-decisions" title="Permanent link">&para;</a></h3>
+<p>This is not a coding task. It is the gate that decides whether any experimental idea enters the product.</p>
+<p>For each candidate, write one of:</p>
+<ul>
+<li><code>ADOPT</code> — evidence justifies a focused production PR;</li>
+<li><code>KEEP EXPERIMENTAL</code> — useful in some regimes, not a safe default;</li>
+<li><code>REJECT</code> — no demonstrated value or unacceptable cost/complexity;</li>
+<li><code>INSUFFICIENT EVIDENCE</code> — more data required, with the exact missing comparison.</li>
+</ul>
+<p>Candidate decisions:</p>
+<table>
+<thead>
+<tr>
+<th>Candidate production idea</th>
+<th>Minimum evidence before <code>ADOPT</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add exact terms / KEY_ELEMENTS-style routing metadata</td>
+<td>PD-07 repeated benefit + context overhead measured</td>
+</tr>
+<tr>
+<td>Change chapter representation/template</td>
+<td>PD-05 task-family benefit without unacceptable retrieval regression</td>
+</tr>
+<tr>
+<td>Add explicit library mode/index</td>
+<td>PD-09 target-domain scaling benefit</td>
+</tr>
+<tr>
+<td>Add deeper/adaptive hierarchy</td>
+<td>Specific repeated task/scale benefit that beats flat after context cost</td>
+</tr>
+<tr>
+<td>Add generation/eval manifest to normal product output</td>
+<td>Demonstrated user/reproducibility value beyond eval tooling</td>
+</tr>
+<tr>
+<td>Make RAG superiority claims</td>
+<td><strong>Never universal</strong>; only condition-specific benchmark statements with exact setup</td>
+</tr>
+</tbody>
+</table>
+<p>Any adopted feature gets its own focused PR with new tests and before/after evidence. Do not mutate multiple production surfaces in PD-12 itself.</p>
+<hr />
+<h2 id="9-evidence-ledger">9. Evidence Ledger<a class="headerlink" href="#9-evidence-ledger" title="Permanent link">&para;</a></h2>
+<p>Agents update this table when a task changes status. Keep entries short; link to PR/commit/result paths rather than pasting long logs.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Status</th>
+<th>PR / commit</th>
+<th>Evidence</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PD-00</td>
+<td>DONE</td>
+<td>—</td>
+<td>—</td>
+<td>Baseline documented</td>
+</tr>
+<tr>
+<td>PD-01</td>
+<td>DONE</td>
+<td>—</td>
+<td><code>tests/evals/test_manifest.py</code></td>
+<td>Deterministic manifest, source SHA-256, budget/secret validation</td>
+</tr>
+<tr>
+<td>PD-02</td>
+<td>DONE</td>
+<td>—</td>
+<td><code>tests/evals/test_score.py</code>, <code>test_replay.py</code></td>
+<td>Offline trajectory scorer and replay runner</td>
+</tr>
+<tr>
+<td>PD-03</td>
+<td>DONE</td>
+<td>—</td>
+<td><code>tests/evals/test_paper_flat.py</code></td>
+<td>Synthetic paper-flat baseline builder</td>
+</tr>
+<tr>
+<td>PD-04</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>waits for PD-02/03</td>
+</tr>
+<tr>
+<td>PD-05</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>primary representation experiment</td>
+</tr>
+<tr>
+<td>PD-06</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>host capability dependent</td>
+</tr>
+<tr>
+<td>PD-07</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>no production metadata change before this</td>
+</tr>
+<tr>
+<td>PD-08</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>target-domain replication</td>
+</tr>
+<tr>
+<td>PD-09</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>no library feature before this</td>
+</tr>
+<tr>
+<td>PD-10</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>optional reference baseline</td>
+</tr>
+<tr>
+<td>PD-11</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>late ablation</td>
+</tr>
+<tr>
+<td>PD-12</td>
+<td>BLOCKED</td>
+<td>—</td>
+<td>—</td>
+<td>production decision gate</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-claims-guardrail">10. Claims guardrail<a class="headerlink" href="#10-claims-guardrail" title="Permanent link">&para;</a></h2>
+<p>Until evidence changes, do <strong>not</strong> publish or encode these as established facts:</p>
+<ul>
+<li>"The paper validated the full current book-to-skill generator."</li>
+<li>"KEY_ELEMENTS improves routing." (It was used, not independently ablated.)</li>
+<li>"book-to-skill uses 2x fewer tokens." (The cited ~2x result is one specific K=20 En.QA condition.)</li>
+<li>"Skills beat RAG." (The paper compared a specific hybrid baseline under specific tasks.)</li>
+<li>"Flat always beats hierarchy." (Flat is the best default overall; appendix effects are task/scale-specific.)</li>
+<li>"The results apply to technical books/code." (The paper explicitly leaves non-narrative transfer open.)</li>
+<li>"Structured frameworks/mental models/anti-patterns are better than summaries." (That is PD-05's question.)</li>
+</ul>
+<p>Safe language must name the condition or say the question remains open.</p>
+<hr />
+<h2 id="11-agent-instruction-compatibility">11. Agent instruction compatibility<a class="headerlink" href="#11-agent-instruction-compatibility" title="Permanent link">&para;</a></h2>
+<p>This repository now uses root <code>AGENTS.md</code> as the canonical agent execution contract.</p>
+<p>Rationale based on current tooling documentation:</p>
+<ul>
+<li>The open <a href="https://agents.md/">AGENTS.md</a> format is intended for repository instructions consumed by coding agents.</li>
+<li>OpenAI Codex scopes root <code>AGENTS.md</code> to the repository tree and allows deeper files to override narrower subtrees.</li>
+<li>Claude Code currently reads <code>CLAUDE.md</code>, not <code>AGENTS.md</code> directly, so the repository contains a minimal <code>CLAUDE.md</code> importing <code>AGENTS.md</code> rather than duplicating rules. See Anthropic's project-memory documentation: <a href="https://code.claude.com/docs/en/memory">https://code.claude.com/docs/en/memory</a>.</li>
+</ul>
+<p>Keep the root instruction file compact. Detailed initiative state belongs here, not duplicated into every agent's always-loaded context.</p>
+<hr />
+<h2 id="12-definition-of-complete">12. Definition of complete<a class="headerlink" href="#12-definition-of-complete" title="Permanent link">&para;</a></h2>
+<p>This research initiative is complete only when:</p>
+<ol>
+<li>deterministic evaluation infrastructure exists and is tested;</li>
+<li>at least one real harness produces inspectable trajectory/cost results under controlled conditions;</li>
+<li>paper-flat and current-B2S comparisons have been run on legal/appropriate corpora;</li>
+<li>routing vs representation is separated as far as supported by the harness;</li>
+<li>technical/non-narrative replication has been attempted;</li>
+<li>library scaling is either measured or explicitly rejected as not worth the cost;</li>
+<li>every production candidate receives an <code>ADOPT / KEEP EXPERIMENTAL / REJECT / INSUFFICIENT EVIDENCE</code> decision;</li>
+<li>any adopted behavior is implemented in separate focused PRs with tests/evidence;</li>
+<li>public claims are updated only to what the measurements actually support.</li>
+</ol>
+<p>The success criterion is <strong>not</strong> "all proposed features shipped." The success criterion is that we can identify which ideas earn their complexity and which should not enter <code>book-to-skill</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.instant", "navigation.top", "navigation.footer", "toc.follow", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
