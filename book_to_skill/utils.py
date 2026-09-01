@@ -314,6 +314,9 @@ _TOC_HEADERS = (
     "inhaltsverzeichnis",                                   # German
     "indice", "sommario",                                   # Italian (no accent — distinct from índice above)
     "inhoudsopgave",                                        # Dutch
+    "глава", "оглавление",                                  # Russian (Глава/Оглавление)
+    "สารบัญ",                                               # Thai (table of contents)
+    "विषय सूची", "विषय-सूची", "अनुक्रम",                    # Hindi (table of contents variants)
 )
 _TOC_CJK_PATTERN = r"目[ \t\u3000]*(?:录|錄|次)"
 _TOC_PATTERN = re.compile(
@@ -1145,6 +1148,16 @@ def main():
     consolidated_structure["has_toc"] = any(
         src["has_toc"] for src in extracted_sources
     )
+    # Multi-source chapters: sum per-source distinct, not global set (IP-003)
+    # Two books both Chapter 1-3 would otherwise collapse to 3 via set() — sum is correct for corpus.
+    if len(extracted_sources) > 1:
+        consolidated_structure["chapters_detected"] = sum(src["chapters_detected"] for src in extracted_sources)
+        # Preserve sample as union of per-source samples
+        consolidated_structure["chapter_headings_sample"] = [h for src in extracted_sources for h in src.get("chapter_headings_sample", [])][:10]
+        if any(src["chapters_method"] != "numeric" for src in extracted_sources):
+            consolidated_structure["chapters_method"] = "sum-mixed"
+        else:
+            consolidated_structure["chapters_method"] = "sum-numeric"
     
     metadata = {
         "source_file": "Consolidated from multiple sources" if len(extracted_sources) > 1 else extracted_sources[0]["source_file"],

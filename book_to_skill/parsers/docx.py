@@ -47,11 +47,14 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
     # DOCTYPE/ENTITY declarations before the XML ever reaches the parser.
     validate_docx_xml_safety(docx_path)
     try:
-        import xml.etree.ElementTree as ET
+        try:
+            import defusedxml.ElementTree as ET  # hardened B314
+        except ImportError:
+            import xml.etree.ElementTree as ET  # nosec B314 - DTD pre-scan validates
 
         with zipfile.ZipFile(docx_path) as zf:
             xml_bytes = zf.read("word/document.xml")
-        root = ET.fromstring(xml_bytes)
+        root = ET.fromstring(xml_bytes)  # nosec B314 - ET is defusedxml when available, else DTD pre-scan validates
         ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         parts: list[str] = []
 
@@ -94,7 +97,25 @@ def validate_docx_xml_safety(docx_path: str) -> None:
     """Scan all XML files in the DOCX zip archive to prevent XML Entity Expansion (Billion Laughs) and XXE injections."""
     try:
         with zipfile.ZipFile(docx_path) as zf:
-            for name in zf.namelist():
+            # Zip-bomb guard — deterministic, lightweight (IP-001) — must run before any read()
+            names = zf.namelist()
+            if len(names) > 10000:
+                raise ExtractionError(f"Security validation failed: DOCX archive has too many entries ({len(names)} > 10000) — possible zip-bomb.")
+            # file_size is decompressed size; sum >100MB or ratio >100 signals bomb
+            try:
+                total_uncompressed = sum(info.file_size for info in zf.infolist())
+                if total_uncompressed > 100 * 1024 * 1024:
+                    raise ExtractionError(f"Security validation failed: DOCX uncompressed size {total_uncompressed} > 100MB — possible zip-bomb.")
+                for info in zf.infolist():
+                    if info.file_size > 0 and info.compress_size > 0 and info.file_size / max(1, info.compress_size) > 200:
+                        # Single file with extreme ratio (e.g. 1KB -> 10MB) — classic bomb shape
+                        if info.file_size > 1024 * 1024:
+                            raise ExtractionError(f"Security validation failed: entry '{info.filename}' has suspicious compression ratio — possible zip-bomb.")
+            except ExtractionError:
+                raise
+            except Exception:
+                pass  # info stats unavailable — fall through to DTD scan
+            for name in names:
                 if name.endswith(".xml") or name.endswith(".rels"):
                     xml_bytes = zf.read(name)
                     for encoding in ("utf-8", "utf-16", "utf-16le", "utf-16be", "utf-32"):
