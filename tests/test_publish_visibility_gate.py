@@ -1,4 +1,4 @@
-"""Regression tests for the Step 11 publish visibility gate in SKILL.md.
+"""Regression tests for the Step 11 publish visibility gate in GENERATION.md.
 
 Step 11 creates a GitHub repository from book-derived content. Its safety
 property is that `gh repo create` runs with `--private` unless the user gives a
@@ -6,14 +6,18 @@ bare-word `public` answer to a question asked solely about repository
 visibility. A regression here is invisible in review and only surfaces as a
 public repository that should not exist, so the rule is asserted two ways:
 
-1. the prose in SKILL.md still states the rule the model is meant to follow;
+1. the prose in GENERATION.md still states the rule the model is meant to follow;
 2. a reference implementation of that rule rejects the inputs a naive
    substring check would wrongly accept.
 
-Test 2 does not execute anything from SKILL.md - nothing in this project does.
-It pins the intended semantics next to the prose, so that a future edit
+Test 2 does not execute anything from GENERATION.md - nothing in this project
+does. It pins the intended semantics next to the prose, so that a future edit
 loosening the wording fails test 1 while test 2 still shows what the wording
 was supposed to mean.
+
+Step 11 moved from SKILL.md into GENERATION.md (a lazy-loaded reference file,
+since nothing past Step 6 is needed until generation is confirmed) - the
+gate's prose itself is unchanged, only its file moved.
 """
 
 from pathlib import Path
@@ -22,17 +26,17 @@ import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SKILL_MD = REPO_ROOT / "SKILL.md"
+GENERATION_MD = REPO_ROOT / "GENERATION.md"
 
 
 def _step_11() -> str:
-    """The Step 11 section of SKILL.md, up to the next top-level heading."""
-    if not SKILL_MD.is_file():
-        pytest.skip("SKILL.md not present (e.g. installed sdist)")
-    text = SKILL_MD.read_text(encoding="utf-8")
+    """The Step 11 section of GENERATION.md, up to the next top-level heading."""
+    if not GENERATION_MD.is_file():
+        pytest.skip("GENERATION.md not present (e.g. installed sdist)")
+    text = GENERATION_MD.read_text(encoding="utf-8")
     marker = "## Step 11"
     start = text.find(marker)
-    assert start != -1, "SKILL.md no longer has a Step 11 section"
+    assert start != -1, "GENERATION.md no longer has a Step 11 section"
     end = text.find("\n## ", start + len(marker))
     return text[start:] if end == -1 else text[start:end]
 
