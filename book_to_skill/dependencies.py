@@ -157,12 +157,21 @@ def offer_dependency_install(
     module_names: list[str],
     fallback: str | None,
     install_mode: str,
+    any_of_modules: bool = False,
 ) -> None:
-    packages = missing_python_packages(module_names)
-    if not packages:
+    missing_packages = missing_python_packages(module_names)
+    if not missing_packages or (
+        any_of_modules and len(missing_packages) < len(module_names)
+    ):
         return
 
-    message = f"{feature} uses {', '.join(packages)} if installed"
+    package_choices = [PYTHON_DEPENDENCIES[name] for name in module_names]
+    if any_of_modules:
+        message = f"{feature} uses one of {', '.join(package_choices)} if installed"
+        packages = missing_packages[:1]
+    else:
+        message = f"{feature} uses {', '.join(missing_packages)} if installed"
+        packages = missing_packages
     if fallback:
         message += f", otherwise {fallback}"
     message += "."
@@ -187,7 +196,12 @@ def offer_dependency_install(
 
     if install_python_packages(packages):
         still_missing = missing_python_packages(module_names)
-        if not still_missing:
+        dependencies_satisfied = (
+            len(still_missing) < len(module_names)
+            if any_of_modules
+            else not still_missing
+        )
+        if dependencies_satisfied:
             print("Package installation complete.")
             return
         print(f"Package installation incomplete; still missing: {', '.join(still_missing)}", file=sys.stderr)
@@ -213,6 +227,7 @@ def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> N
             module_names=["pypdf", "pdfminer"],
             fallback="any installed Python PDF parser; extraction fails if none are available",
             install_mode=install_mode,
+            any_of_modules=True,
         )
 
     if ext == ".epub":
@@ -226,9 +241,10 @@ def prepare_dependencies(ext: str, extraction_mode: str, install_mode: str) -> N
     if ext in HTML_EXTENSIONS:
         offer_dependency_install(
             feature="HTML extraction",
-            module_names=["bs4"],
+            module_names=["trafilatura", "bs4"],
             fallback="a stdlib HTML parser",
             install_mode=install_mode,
+            any_of_modules=True,
         )
 
     if ext == ".docx":
