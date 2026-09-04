@@ -668,6 +668,26 @@ class TestDetectStructure:
         assert _chapter_number("এই অধ্যায়ে আমরা আলোচনা করব") is None
         assert _chapter_number("অধ্যায়") is None
 
+    def test_detects_tamil_chapters(self):
+        """Tamil headings: `அத்தியாயம் N`, with Tamil or Arabic digits."""
+        text = (
+            "அத்தியாயம் ௧ முன்னுரை\nஉள்ளடக்கம்\n"
+            "அத்தியாயம் ௨ முறைகள்\nஉள்ளடக்கம்\n"
+            "அத்தியாயம் 3 முடிவுகள்\nஉள்ளடக்கம்"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_tamil_markdown_prefix(self):
+        text = "## அத்தியாயம் ௧ முதல்\nஉள்ளடக்கம்\n## அத்தியாயம் ௨ இரண்டாம்\nஉள்ளடக்கம்"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_tamil_prose_is_not_a_chapter_heading(self):
+        """An inflected form (அத்தியாயத்தில்) or a bare word is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("இந்த அத்தியாயத்தில் நாம் பார்ப்போம்") is None
+        assert _chapter_number("அத்தியாயம்") is None
+
     def test_detects_russian_chapters(self):
         """Russian headings: `Глава N`, case-insensitive, with Arabic digits."""
         text = (
