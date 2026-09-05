@@ -15,7 +15,7 @@
 > 查看差异：`git log 907be50..master -- README.md`
 
 <p align="center">
-  <strong>将任意技术书籍、文档文件夹或资料集合，转换为统一的 Agent Skill——可在 GitHub Copilot CLI、Amp、Claude Code 或 Hermes Agent 中随时学习、查阅并在工作中使用。</strong>
+  <strong>将任意技术书籍、文档文件夹或资料集合，转换为统一的 Agent Skill——可在 GitHub Copilot CLI、Amp、Claude Code、Hermes Agent 或 OpenClaw 中随时学习、查阅并在工作中使用。</strong>
 </p>
 
 <p align="center">
@@ -71,13 +71,13 @@
 
 安装后，输入 `/your-book-slug replication`，Agent 会读取对应章节，基于实际内容回答。没有幻觉，不用翻 PDF。书成为你工作流的一部分。
 
-兼容任何支持开放 [Agent Skills](https://github.com/agentskills/agentskills) 标准的宿主 —— GitHub Copilot CLI、Amp、Claude Code 和 Hermes Agent 都读取相同的 `SKILL.md` 格式。
+兼容任何支持开放 [Agent Skills](https://github.com/agentskills/agentskills) 标准的宿主 —— GitHub Copilot CLI、Amp、Claude Code、Hermes Agent 和 OpenClaw 都读取相同的 `SKILL.md` 格式。
 
 ---
 
 ## 📦 生成内容
 
-运行 `/book-to-skill your-book.pdf`（或文件夹、glob、文件列表）后，会在 Agent 的 skills 目录下生成完整 skill（Copilot CLI：`~/.copilot/skills/<slug>/`；Amp 或跨 Agent：`~/.agents/skills/<slug>/`；Claude Code：`~/.claude/skills/<slug>/`；Hermes Agent：`$HERMES_HOME/skills/<category>/<slug>/`）：
+运行 `/book-to-skill your-book.pdf`（或文件夹、glob、文件列表）后，会在 Agent 的 skills 目录下生成完整 skill（Copilot CLI：`~/.copilot/skills/<slug>/`；Amp 或跨 Agent：`~/.agents/skills/<slug>/`；Claude Code：`~/.claude/skills/<slug>/`；Hermes Agent：`$HERMES_HOME/skills/<category>/<slug>/`；OpenClaw：`~/.openclaw/skills/<slug>/`）：
 
 | 文件 | 用途 | 大小 |
 |------|------|------|
@@ -140,6 +140,7 @@ npx skills add virgiliojr94/book-to-skill
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 # （Copilot CLI：~/.copilot/skills/ · Amp/跨 Agent：~/.agents/skills/）
 # （Hermes Agent：${HERMES_HOME:-$HOME/.hermes}/skills/<category>/）
+# （OpenClaw：~/.openclaw/skills/ 或 ~/.agents/skills/）
 ```
 
 📥 **所有宿主、可选提取器与独立 CLI → [docs/install.md](docs/install.md)**

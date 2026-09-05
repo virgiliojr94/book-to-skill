@@ -37,13 +37,15 @@ document into clean text + metadata; the agent turns that into a structured skil
             └────────────────────────────────────────────────────────────────┘
                                    │
                                    ▼
-                <SKILLS_HOME>/<slug>/  ← chosen per host:
+                 <SKILLS_HOME>/<slug>/  ← chosen per host:
                   ~/.copilot/skills/   GitHub Copilot CLI
-                  ~/.agents/skills/    Copilot CLI or Amp (cross-agent)
+                  ~/.agents/skills/    Copilot CLI or Amp or OpenClaw (cross-agent)
                   ~/.claude/skills/    Claude Code
+                  ~/.openclaw/skills/  OpenClaw
                   $HERMES_HOME/skills/<category>/  Hermes Agent
                   .github/skills/ | .claude/skills/ | .agents/skills/  project-local
                   .hermes/skills/<category>/                         Hermes project-local
+                  skills/ | .agents/skills/                          OpenClaw project/workspace
                   SKILL.md         core frameworks + chapter & topic index (~4K)
                   chapters/*.md    on-demand, loaded only when asked
                   glossary.md      terms
@@ -75,7 +77,7 @@ document into clean text + metadata; the agent turns that into a structured skil
 | `book_to_skill/dependencies.py` | optional-dependency probing + `--check` |
 | `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text (see Security) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
-| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes`) |
+| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw`) |
 | `tools/scan_generated_skill.py` | advisory prompt-injection scan of a generated skill (see Security) |
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 
