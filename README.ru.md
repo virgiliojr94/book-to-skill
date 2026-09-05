@@ -16,7 +16,7 @@
 > Чтобы увидеть drift: `git log 903d102..master -- README.md`
 
 <p align="center">
-  <strong>Превратите любую техническую книгу, папку документов или набор источников в единый agent skill — чтобы изучать, ссылаться и использовать в GitHub Copilot CLI, Amp, Claude Code или Hermes Agent.</strong>
+  <strong>Превратите любую техническую книгу, папку документов или набор источников в единый agent skill — чтобы изучать, ссылаться и использовать в GitHub Copilot CLI, Amp, Claude Code, Hermes Agent или OpenClaw.</strong>
 </p>
 
 <p align="center">
@@ -71,13 +71,13 @@
 
 После установки: `/your-book-slug replication` — агент читает нужную главу и отвечает из текста. Без галлюцинаций и копания в PDF.
 
-Работает с хостами open [Agent Skills](https://github.com/agentskills/agentskills) — GitHub Copilot CLI, Amp, Claude Code и Hermes Agent (общий формат `SKILL.md`).
+Работает с хостами open [Agent Skills](https://github.com/agentskills/agentskills) — GitHub Copilot CLI, Amp, Claude Code, Hermes Agent и OpenClaw (общий формат `SKILL.md`).
 
 ---
 
 ## 📦 Что получается
 
-`/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/` или `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent):
+`/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/`, `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent, или `~/.openclaw/skills/<slug>/` для OpenClaw):
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -141,6 +141,7 @@ npx skills add virgiliojr94/book-to-skill
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 # (Copilot: ~/.copilot/skills/ · Amp: ~/.agents/skills/)
 # (Hermes Agent: ${HERMES_HOME:-$HOME/.hermes}/skills/<category>/)
+# (OpenClaw: ~/.openclaw/skills/ или ~/.agents/skills/)
 ```
 
 📥 **Все хосты → [docs/install.md](docs/install.md)**
