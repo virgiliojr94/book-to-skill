@@ -394,7 +394,9 @@ The per-chapter budget scales with `BOOK_TYPE` and `DEPTH`. Technical chapters n
 - **Expand the "How" of each framework** into explicit steps or criteria, not a one-liner.
 - **Add a short "Why it works / failure mode" note** to the top 1–2 frameworks.
 
-If a chapter genuinely has no worked example and resists expansion, let it land below the study floor rather than padding — and note that the chapter is thin in its Core Idea. A `reference`-depth chapter, by contrast, deliberately omits worked examples and keeps only the decision-ready essentials.
+**Grounding rule (hard).** Worked examples and framework names must be reproduced from the chapter text you actually read — never from memory, and never from material outside that chapter's span in `full_text.txt`. A case that sounds canonical because the author is famous for it elsewhere (a classic study the book does not tell) is still an import and will be flagged by Step 9.5b. Numbers that count the material (schools, types, stages, forces, …) must agree both with the book's own wording and with the list you then enumerate — Step 9.5b compares them mechanically.
+
+If a chapter genuinely has no worked example in its text and resists expansion, it MUST say so — write "this chapter offers no single worked example in the source" in its Core Idea and omit the `## Worked Example` section — and land below the study floor rather than pad. A `reference`-depth chapter, by contrast, deliberately omits worked examples and keeps only the decision-ready essentials.
 
 For EACH chapter/major section identified in Step 3:
 
@@ -453,6 +455,18 @@ Create `$SKILLS_HOME/<skill_name>/chapters/ch<NN>-<slug>.md` using the structure
 ## Connects To
 - **Ch N**: <why this chapter relates>
 - **<Concept>**: <external concept or standard it connects with>
+```
+
+After the last chapter file is written, record a **grounding manifest** in the same work directory that holds `full_text.txt`, so Step 9.5b can verify every chapter against the source:
+
+- `chapters` — one entry per chapter/major section, keyed by its two-digit number, with the 1-based inclusive `start`/`end` **line numbers** of that chapter's span in `full_text.txt` (from the offsets you located when reading it) and its `title`.
+- `claims` — at least one entry per chapter that asserts specifics; `terms` must include every proper noun and distinctive multi-word phrase the chapter file asserts: every named case in a Worked Example, framework names, quoted names, and the count-carrying taxonomy phrases.
+
+```json
+{
+  "chapters": {"01": {"start": 1183, "end": 4152, "title": "..."}, "02": {"start": 4153, "end": 6603, "title": "..."}},
+  "claims": [{"id": "c02", "chapter": "02", "claim": "worked example: ...", "terms": ["..."]}]
+}
 ```
 
 ---
@@ -571,6 +585,20 @@ SKILL_CONVERTER_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 ```
 
 If the scanner exits non-zero, stop and ask a human to review its file/line findings. Do not silently rewrite the generated files, and do not load or publish the skill until the findings are resolved or explicitly accepted.
+
+---
+
+## Step 9.5b — Ground the skill in the source text
+
+Before reporting success, run the fidelity check: every claim the chapters make must actually appear inside its declared chapter's span in `full_text.txt`, and every Worked Example must have recorded grounding terms for it (Step 7). This catches the failure mode where a demanded worked example or a taxonomy count is filled from the model's memory instead of from the chapter text — plausible-sounding content the reader cannot spot as invented.
+
+```bash
+SKILL_CONVERTER_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+"$PYTHON_BIN" "$SKILL_CONVERTER_ROOT/tools/ground_check.py" "$SKILLS_HOME/<skill_name>" \
+  --source "$WORKDIR/full_text.txt" --grounding "$WORKDIR/grounding.json"
+```
+
+Treat its exit status like the Step 9.5 scan: exit 2 means the inputs are wrong (fix the manifest paths or spans), exit 1 means the skill is not grounded — fix the offending chapters **against the source text** (rewrite the imported case to what the book actually tells, correct the count, or relocate the example to the chapter the book discusses it in), then re-run until it passes. Do not make the check pass by editing `grounding.json` to hide a finding, and do not load or publish until it is green.
 
 ---
 

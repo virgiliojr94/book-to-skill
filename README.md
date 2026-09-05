@@ -216,6 +216,8 @@ book-to-skill/
 ├── tools/
 │   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
 │   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp)
+│   ├── scan_generated_skill.py  # advisory scan of a generated skill for prompt injection / embedded commands
+│   └── ground_check.py   # fidelity gate: claims land in their chapters + counts match lists (Step 9.5b)
 ├── tests/                # pytest suite (extraction, detection, discovery tax)
 ├── docs/
 │   ├── performance.md    # measured benchmarks, discovery tax, cost
