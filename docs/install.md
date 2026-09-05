@@ -76,7 +76,11 @@ Or manually using standard `git clone` (ensures modular engine files are fetched
 
 ```bash
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
+# Project-local (share with team via git):
+# git clone https://github.com/virgiliojr94/book-to-skill.git .claude/skills/book-to-skill
 ```
+
+> **Generated book skills — where do they go?** By default the converter asks: **Personal (global)** `~/.claude/skills/<slug>/` etc. vs **Project-local** `.claude/skills/<slug>/`, `.agents/skills/<slug>/`, `.github/skills/<slug>/`. Project-local is preferred for project-specific skills (check into git), but requires host approval to write inside the project. Set `BOOK_TO_SKILL_SCOPE=project` or `personal` to skip the prompt (useful for automation).
 
 Then in any agent session:
 
