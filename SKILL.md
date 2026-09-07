@@ -671,8 +671,8 @@ Usage:
 
 Discoverable by: <only what is true for the chosen destination — see below>
 
-Somewhere else?  mv ~/.agents/skills/<skill_name> <dest> \
-                   && ln -sfn <dest> ~/.claude/skills/<skill_name>
+Somewhere else?  mv ~/.agents/skills/<skill_name> <dest_root>/<skill_name> \
+                   && ln -sfn <dest_root>/<skill_name> ~/.claude/skills/<skill_name>
 
 Prompted for permission on every file? That is your host gating writes outside the
 working directory. Say "save it in this project" and re-run to write inside it.
@@ -695,10 +695,10 @@ Fill the "Discoverable by" line from `CLAUDE_STATUS` (the read-back result), nev
 - Hermes Agent personal root → "Hermes Agent (from `$HERMES_HOME/skills/<category>`)"; no symlink claim, and no cross-agent claim, because the other hosts do not scan the Hermes root
 - other host-private or project-local root → name only the host(s) that scan that root; no symlink claim
 
-The "Somewhere else?" relocation line must be correct for the path actually taken, so it never breaks the symlink the run just created:
-- `~/.agents/skills` + symlink → `mv ~/.agents/skills/<skill_name> <dest> && ln -sfn <dest> ~/.claude/skills/<skill_name>`
-- host-private root, Hermes Agent included → `mv <src_root>/<skill_name> <dest>`
-- project-local root → `mv <project_root>/<skill_name> <dest>`
+The "Somewhere else?" relocation line must be correct for the path actually taken, so it never breaks the symlink the run just created. **`mv` always targets the final skill directory, `<dest_root>/<skill_name>`, never `<dest_root>` itself.** `mv ~/.agents/skills/mybook ~/.copilot/skills && ln -sfn ~/.copilot/skills ~/.claude/skills/mybook` reads as valid and is not: the skill lands at `~/.copilot/skills/mybook` while the link points one level up at the root, so Claude Code resolves to a directory with no `SKILL.md`, which is the exact breakage this line exists to avoid. Substitute the destination the user actually named, so the printed command carries real paths and there is nothing left to interpret:
+- `~/.agents/skills` + symlink → `mv ~/.agents/skills/<skill_name> <dest_root>/<skill_name> && ln -sfn <dest_root>/<skill_name> ~/.claude/skills/<skill_name>`
+- host-private root, Hermes Agent included → `mv <src_root>/<skill_name> <dest_root>/<skill_name>`
+- project-local root → `mv <project_root>/<skill_name> <dest_root>/<skill_name>`
 
 The "Prompted for permission on every file?" line is the answer to a host that gates writes outside the working directory (any personal-scope root is out-of-cwd): the destination was announced above, and the one-line fix — re-run asking for the project-local root — sits next to it. Keep it only for personal-scope installs; drop it when the user already chose project-local.
 
