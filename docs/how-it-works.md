@@ -41,6 +41,9 @@ scripts/extract.py <paths…> --mode <technical|text>
             ~/.claude/skills/<slug>/    (symlink → above, attempted under
                                          Claude Code and verified by
                                          read-back; report states the result)
+            $HERMES_HOME/skills/<category>/<slug>/
+                                        (Hermes Agent: its own personal root,
+                                         not the cross-agent one, no symlink)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
 

@@ -356,7 +356,7 @@ Selection rules:
 3. **Hermes Agent personal installs use the Hermes row above**, not the cross-agent root, and take no symlink.
 4. If the user explicitly asks for a host-private root (`~/.copilot/skills`, `~/.claude/skills`, `~/.config/agents/skills`, `~/.config/amp/skills`), honor it and skip the symlink.
 5. If the user explicitly asked for project-local output, use the project-local row for their host.
-6. If the choice requires knowing the host (project-local output, the Hermes personal root, or the Claude Code symlink) and you cannot identify it, ask: "Which agent are you running this in — GitHub Copilot CLI, Amp, Codex, Claude Code, or Hermes Agent?"
+6. If the choice requires knowing the host (project-local output, the Hermes personal root, or the Claude Code symlink) and you cannot identify it, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists. On Claude Code, also check whether `~/.claude/skills/<skill_name>` exists as a **real directory** (not a symlink) — a previous install may live there; if so, offer to migrate it (move the directory into `~/.agents/skills/` and replace the original path with the symlink) before continuing.
 If the skill already exists, prompt the user to choose:
@@ -692,11 +692,12 @@ Fill the "Discoverable by" line from `CLAUDE_STATUS` (the read-back result), nev
 - `linked` → "Copilot CLI, Amp, Codex (natively); Claude Code via symlink ~/.claude/skills/<skill_name>"
 - `skipped-realdir` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — migrate the real directory at ~/.claude/skills/<skill_name> first"
 - `copy` or `absent` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — the host could not create the symlink (a plain copy drifts on the next Update/Fold-in). Enable Developer Mode / create the link manually, or run the skill from ~/.agents/skills"
-- host-private or project-local root → name only the host(s) that scan that root; no symlink claim
+- Hermes Agent personal root → "Hermes Agent (from `$HERMES_HOME/skills/<category>`)"; no symlink claim, and no cross-agent claim, because the other hosts do not scan the Hermes root
+- other host-private or project-local root → name only the host(s) that scan that root; no symlink claim
 
 The "Somewhere else?" relocation line must be correct for the path actually taken, so it never breaks the symlink the run just created:
 - `~/.agents/skills` + symlink → `mv ~/.agents/skills/<skill_name> <dest> && ln -sfn <dest> ~/.claude/skills/<skill_name>`
-- host-private root → `mv <src_root>/<skill_name> <dest>`
+- host-private root, Hermes Agent included → `mv <src_root>/<skill_name> <dest>`
 - project-local root → `mv <project_root>/<skill_name> <dest>`
 
 The "Prompted for permission on every file?" line is the answer to a host that gates writes outside the working directory (any personal-scope root is out-of-cwd): the destination was announced above, and the one-line fix — re-run asking for the project-local root — sits next to it. Keep it only for personal-scope installs; drop it when the user already chose project-local.
