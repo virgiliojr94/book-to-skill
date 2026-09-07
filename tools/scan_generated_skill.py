@@ -50,6 +50,30 @@ _CONTENT_RULES = (
         "contains a system-like message prefix",
     ),
     (
+        "prompt.fake_assistant_prefix",
+        re.compile(r"^\s*(?:[-*]\s*)?assistant\s*:", re.IGNORECASE),
+        "contains an assistant-like message prefix",
+    ),
+    (
+        "prompt.ai_directive",
+        re.compile(
+            r"\b(?:you|the\s+assistant|the\s+agent|the\s+AI)\s+"
+            r"(?:must|should|need\s+to|are\s+required\s+to)\b",
+            re.IGNORECASE,
+        ),
+        "contains a directive addressed to an AI agent",
+    ),
+    (
+        "prompt.ignore_instructions",
+        re.compile(
+            r"\b(?:ignore|disregard)\s+(?:(?:all|the)\s+)?"
+            r"(?:above|these|those|the\s+following)\s+"
+            r"(?:instructions?|directions?|rules?)\b",
+            re.IGNORECASE,
+        ),
+        "contains an instruction-disregard phrase",
+    ),
+    (
         "prompt.system_tag",
         re.compile(r"<\s*/?\s*system\b[^>]*>", re.IGNORECASE),
         "contains a system-message tag",
@@ -95,6 +119,12 @@ _OUTBOUND_TERM = re.compile(
 _SENSITIVE_TERM = re.compile(
     r"(?:\.env\b|\bbase64\b|\bsecrets?\b|\bcredentials?\b|\bapi[_ -]?keys?\b)",
     re.IGNORECASE,
+)
+_RAW_URL = re.compile(r"https?://\S+", re.IGNORECASE)
+_MARKDOWN_URL = re.compile(r"\]\(\s*https?://", re.IGNORECASE)
+_ENCODED_BLOB = re.compile(
+    r"(?<![A-Za-z0-9])[A-Fa-f0-9]{32,}(?![A-Za-z0-9])"
+    r"|(?<![A-Za-z0-9])[A-Za-z0-9+/]{40,}={0,2}(?![A-Za-z0-9])"
 )
 
 
@@ -263,6 +293,26 @@ def _scan_text(relative_path: str, text: str) -> list[Finding]:
                     line_number,
                     "tool.exfiltration_shape",
                     "contains exfiltration-shaped tool or sensitive-data language",
+                )
+            )
+
+        if _RAW_URL.search(line) and not _MARKDOWN_URL.search(line):
+            findings.append(
+                Finding(
+                    relative_path,
+                    line_number,
+                    "prompt.raw_url",
+                    "contains a raw URL requiring source-citation review",
+                )
+            )
+
+        if _ENCODED_BLOB.search(line):
+            findings.append(
+                Finding(
+                    relative_path,
+                    line_number,
+                    "prompt.encoded_blob",
+                    "contains a base64- or hex-like encoded blob",
                 )
             )
 
