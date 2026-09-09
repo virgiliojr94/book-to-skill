@@ -176,6 +176,8 @@ The extractor tries tools in order per format and uses the first available. If n
 > ocrmypdf input.pdf output.pdf
 > ```
 
+> **A book that lives on the web — or in a lecture video — never reaches `/book-to-skill`.** The source has to be a local text-layer file, a folder, or a glob first. A book only published as a web page, a talk's video/recording, or a scan you'd rather not OCR by hand can't be pointed at directly. Run those through [cue-omni-reader](https://github.com/sensedeal/cue-skills/tree/main/cue-omni-reader) first to get Markdown — web pages including in-page video/attachments, plus authorized local documents, audio, or video; several local files at once — then point `/book-to-skill` at the resulting text. Install: `npx skills add sensedeal/cue-skills --skill cue-omni-reader` (MIT; may bill).
+
 **EPUB:**
 
 | Tool | Install | Quality |

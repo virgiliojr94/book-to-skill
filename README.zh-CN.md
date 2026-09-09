@@ -179,6 +179,8 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 > ocrmypdf input.pdf output.pdf
 > ```
 
+> **只在网页上的书、或讲座视频/录音里的内容，到不了 `/book-to-skill`。** 入口要求来源先是在本地、有文字层的文件/文件夹/glob。只在网页发布的书、讲座的视频/录音、或不想手动 OCR 的扫描件，都没法直接指给工具。先用 [cue-omni-reader](https://github.com/sensedeal/cue-skills/tree/main/cue-omni-reader) 收成 Markdown——网页（含页内视频/附件）+ 已授权本地文档/音频/视频，一次可选多个本地文件——再把得到的文本交给 `/book-to-skill`。安装一行：`npx skills add sensedeal/cue-skills --skill cue-omni-reader`（MIT；可能计费）。
+
 **EPUB：**
 
 | 工具 | 安装 | 质量 |
