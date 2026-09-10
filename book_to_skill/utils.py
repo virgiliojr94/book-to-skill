@@ -6,6 +6,11 @@ import os
 import re
 import statistics
 import sys
+
+# Keep a deployed skill directory clean: importing the package below would
+# otherwise write __pycache__/*.pyc beside the sources, leaving build artifacts
+# inside the skill. Must be set BEFORE `book_to_skill` is imported.
+sys.dont_write_bytecode = True
 import shutil
 import zipfile
 from pathlib import Path
