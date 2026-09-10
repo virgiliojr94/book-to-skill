@@ -76,6 +76,11 @@ def _artifacts() -> list[str]:
     )
 
 
+def _supports_help(entry: str) -> bool:
+    """`--help` is only safe on modules that define an argparse CLI."""
+    return "argparse" in (REPO_ROOT / entry).read_text(encoding="utf-8")
+
+
 def _run(argv: list[str], *, cwd: Path, env: dict) -> subprocess.CompletedProcess:
     return subprocess.run(
         argv,
@@ -114,22 +119,32 @@ def test_entry_point_writes_no_bytecode(clean_tree, entry):
     env["PYTHONPATH"] = str(REPO_ROOT)
 
     argv = [sys.executable, str(script)]
-    if entry != "book_to_skill/utils.py":
+    if _supports_help(entry):
         argv.append("--help")
 
     _run(argv, cwd=REPO_ROOT, env=env)
-
     dirty = _artifacts()
 
-    # Make sure we exercised a real import rather than a path that bailed out
-    # early (a crash before importing the package would leave no bytecode and
-    # pass vacuously).
-    if entry != "book_to_skill/utils.py":
-        probe = _run(argv, cwd=REPO_ROOT, env=env)
-        assert probe.returncode == 0, (
-            f"{entry} exited {probe.returncode}; the test would pass only "
-            f"because the import never happened: {probe.stderr.strip()[:200]}"
-        )
+    # The import must really have happened, or the test passes vacuously: a
+    # crash before importing the package writes no bytecode. Proved by
+    # importing the package in-process and checking it is loaded, which holds
+    # for every entry point including ones with no CLI flags.
+    probe = _run(
+        [
+            sys.executable,
+            "-c",
+            "import book_to_skill, sys;"
+            " assert 'book_to_skill' in sys.modules;"
+            " assert 'book_to_skill.utils' in sys.modules;"
+            " print('imported')",
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+    )
+    assert probe.returncode == 0 and "imported" in probe.stdout, (
+        f"could not import book_to_skill for {entry} "
+        f"(exit {probe.returncode}): {probe.stderr.strip()[:200]}"
+    )
 
     assert dirty == [], f"{entry} left build artifacts: {dirty[:5]}"
 
