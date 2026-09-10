@@ -37,7 +37,7 @@ scripts/extract.py <paths…> --mode <technical|text>
                │
                ▼
           Skill written to:
-            ~/.agents/skills/<slug>/    (cross-agent: Copilot CLI, Amp, Codex)
+            ~/.agents/skills/<slug>/    (cross-agent: Copilot CLI, Amp, Codex, OpenCode)
             ~/.claude/skills/<slug>/    (symlink → above, attempted under
                                          Claude Code and verified by
                                          read-back; report states the result)
@@ -47,6 +47,10 @@ scripts/extract.py <paths…> --mode <technical|text>
             $HERMES_HOME/skills/<category>/<slug>/
                                         (Hermes Agent: its own personal root,
                                          not the cross-agent one, no symlink)
+            ~/.config/opencode/skills/<slug>/
+                                        (OpenCode: its own managed root,
+                                         used on request; the cross-agent
+                                         root above is the default)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
 

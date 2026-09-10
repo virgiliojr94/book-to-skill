@@ -1,13 +1,12 @@
 ---
-description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent and OpenClaw, or as a standalone pip CLI. Every host path and optional extractor covered."
-seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, Hermes, OpenClaw, or pip"
----
+description: "Install book-to-skill as an agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent and OpenCode, OpenClaw, or as a standalone pip CLI. Every host path and optional extractor covered."
+
+seo_title: "Install book-to-skill - Claude Code, Copilot CLI, Amp, Hermes, OpenCode, OpenClaw, or pip"---
 
 ## 📥 Install
 
 > **Two ways to use it, do not confuse them:**
-> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Codex, Hermes Agent, or OpenClaw) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.
-> - **As a standalone CLI** (just the text extractor) → `pip install` it from the repository, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
+> - **As an agent skill** (the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Codex, Hermes Agent, OpenCode, or OpenClaw) → **`git clone` into your skills folder** (below). This is what gives you the slash command and the full convert-a-book flow.> - **As a standalone CLI** (just the text extractor) → `pip install` it from the repository, then `book-to-skill --help`. This does **not** register the agent skill; it only installs the extraction engine. See [the CLI section](#standalone-cli-pip).
 
 The skill follows the open [Agent Skills](https://github.com/agentskills/agentskills) standard, so a single install works for any compatible host.
 
@@ -55,6 +54,20 @@ The converter probes the active OpenClaw state root and workspace `skills/` layo
 ```bash
 openclaw skills list
 ```
+**OpenCode**: it scans the shared cross-agent root natively, so the clone above is all it needs:
+
+```bash
+# Cross-agent root (shared with Copilot CLI, Amp and Codex) — recommended:
+git clone https://github.com/virgiliojr94/book-to-skill.git ~/.agents/skills/book-to-skill
+# Or OpenCode's own managed root, if you'd rather keep it separate:
+# git clone https://github.com/virgiliojr94/book-to-skill.git ~/.config/opencode/skills/book-to-skill
+```
+
+OpenCode discovers skills from `~/.agents/skills`, `~/.config/opencode/skills` and
+`~/.claude/skills` (global) and `.opencode/skills`, `.agents/skills`,
+`.claude/skills` (project-local, walking up from your working directory to the
+git worktree). Discovery is automatic — no trust step required. Start a new
+OpenCode session if the skill does not appear immediately.
 
 **Hermes Agent**:
 

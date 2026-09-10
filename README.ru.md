@@ -16,8 +16,7 @@
 > Чтобы увидеть drift: `git log 903d102..master -- README.md`
 
 <p align="center">
-  <strong>Превратите любую техническую книгу, папку документов или набор источников в единый agent skill — чтобы изучать, ссылаться и использовать в GitHub Copilot CLI, Amp, Claude Code, Hermes Agent или OpenClaw.</strong>
-</p>
+<strong>Превратите любую техническую книгу, папку документов или набор источников в единый agent skill — чтобы изучать, ссылаться и использовать в GitHub Copilot CLI, Amp, Claude Code, Hermes Agent или OpenCode, OpenClaw.</strong></p>
 
 <p align="center">
   <a href="https://github.com/virgiliojr94/book-to-skill/releases"><img src="https://img.shields.io/github/v/release/virgiliojr94/book-to-skill?style=for-the-badge&color=blueviolet" alt="Latest release"></a>
@@ -71,13 +70,13 @@
 
 После установки: `/your-book-slug replication` — агент читает нужную главу и отвечает из текста. Без галлюцинаций и копания в PDF.
 
-Работает с хостами open [Agent Skills](https://github.com/agentskills/agentskills) — GitHub Copilot CLI, Amp, Claude Code, Hermes Agent и OpenClaw (общий формат `SKILL.md`).
-
+Работает с хостами open [Agent Skills](https://github.com/agentskills/agentskills) — GitHub Copilot CLI, Amp, Claude Code, Hermes Agent и OpenCode, OpenClaw (общий формат `SKILL.md`).
 ---
 
 ## 📦 Что получается
 
 `/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/`, `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent, или `${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/skills/<slug>/` для OpenClaw):
+`/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/` `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent или `~/.config/opencode/skills/<slug>/` для OpenCode):
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -142,6 +141,7 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 # (Copilot: ~/.copilot/skills/ · Amp: ~/.agents/skills/)
 # (Hermes Agent: ${HERMES_HOME:-$HOME/.hermes}/skills/<category>/)
 # (OpenClaw: ${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/skills/; ~/.agents/skills/ только в состоянии по умолчанию)
+# (OpenCode: ~/.agents/skills/ — также читает ~/.config/opencode/skills/)
 ```
 
 📥 **Все хосты → [docs/install.md](docs/install.md)**

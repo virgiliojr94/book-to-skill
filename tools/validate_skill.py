@@ -11,6 +11,7 @@ Lenses:
   amp      — Sourcegraph Amp rules
   hermes   — Hermes Agent rules
   openclaw — OpenClaw rules
+  opencode — OpenCode rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
@@ -28,6 +29,11 @@ Refs:
    OpenClaw   https://docs.openclaw.ai/tools/skills
 
 Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|openclaw] [path/to/SKILL.md]
+  Amp        https://ampcode.com/manual#skills
+   Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+   OpenCode   https://opencode.ai/docs/skills
+
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|opencode] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -112,6 +118,13 @@ LENSES = {
             "name", "description", "allowed-tools", "license", "metadata",
             "homepage", "user-invocable", "disable-model-invocation",
             "command-dispatch", "command-tool", "command-arg-mode",
+    "opencode": {
+        "label": "OpenCode",
+        "tools": set(),
+        # OpenCode recognizes only these five keys; unknown frontmatter is
+        # silently ignored (https://opencode.ai/docs/skills#write-frontmatter).
+        "recognized_keys": {
+            "name", "description", "license", "compatibility", "metadata",
         },
         "reserved_name_words": set(),
         "bash_tool_names": set(),
@@ -119,6 +132,16 @@ LENSES = {
         "enforces_allowed_tools": False,
         "name_pattern": r"[a-z0-9][a-z0-9-]*",
         "name_charset": "lowercase letters/digits/hyphens and start with a letter or digit",
+        # OpenCode grants tool access through `permission.skill` in
+        # opencode.json, not through `allowed-tools`.
+        "enforces_allowed_tools": False,
+        # Official pattern: 1-64 chars, lowercase alphanumeric with single
+        # hyphen separators (no leading/trailing `-`, no `--`, no dots or
+        # underscores). Stricter than the general Agent Skills default.
+        "name_pattern": r"[a-z0-9]+(-[a-z0-9]+)*",
+        "name_charset": (
+            "1-64 lowercase letters/digits with single hyphen separators"
+        ),
     },
 }
 
