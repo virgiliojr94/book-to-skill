@@ -118,8 +118,15 @@ def test_opencode_extractor_probe_discovers_supported_layouts(tmp_path, layout):
     extractor = roots[layout] / "scripts" / "extract.py"
     _touch(extractor)
 
-    raw = _run_probe(nested, _env(tmp_path, home))
-    assert _resolve(nested, raw) == extractor.resolve()
+    # Personal roots are probed as absolute `$HOME/...` paths, so they resolve
+    # from any depth. Project-local roots other than Hermes' are probed
+    # CWD-relative (`.opencode/skills/...`), matching `.github/`, `.claude/` and
+    # `.agents/` — only the Hermes block rewrites them against $PROJECT_ROOT.
+    # So the project layout is exercised from the project root, and the personal
+    # layouts from a nested CWD to prove they do not depend on it.
+    cwd = project if layout == "project-opencode" else nested
+    raw = _run_probe(cwd, _env(tmp_path, home))
+    assert _resolve(cwd, raw) == extractor.resolve()
 
 
 @pytest.mark.parametrize("project_skill_dir", [".opencode", ".agents", ".claude"])
