@@ -78,7 +78,7 @@ This converter can run from multiple skill systems. When looking for this conver
 9. Hermes Agent personal skills: `$HERMES_HOME/skills/` (defaults to `~/.hermes/skills/`)
 10. Hermes Agent project skills: `.hermes/skills/` or `.agents/skills/`
 
-For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists, ask the user once and remember the answer for the session — do not silently default.
+For **generated** book skills, pick a destination that the user's host agent can actually discover (see Step 5). When more than one valid root exists — or when both personal and project-local roots are valid — ask the user once which scope to use and remember the answer for the session — do not silently default. Set `BOOK_TO_SKILL_SCOPE=project` or `personal` to skip the prompt (e.g. for automation).
 
 ---
 
@@ -338,7 +338,17 @@ Otherwise, propose two options and let the user choose:
 
 Default to author-concept format if the book has a strong methodological identity.
 
-Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem for existing skill homes and pick by **the host the user is running in**:
+Choose the destination skill root (`SKILLS_HOME`). First resolve **scope**, then probe **host**:
+
+**Scope** — personal (global, available in every project) vs project-local (only this project, shareable via git):
+1. If the user already said "project-local", "project", "personal" or "global" in the current conversation, or if `BOOK_TO_SKILL_SCOPE` is set to `project` or `personal`, use that scope — do not re-ask.
+2. Otherwise ask once and remember for the session:
+   > "Where should this skill be saved?
+   > 1. **Personal (global)** — `~/.claude/skills`, `~/.agents/skills`, etc. — available everywhere, no extra approval.
+   > 2. **Project-local** — `.claude/skills`, `.agents/skills`, `.github/skills` — only this project, check into git for team sharing (requires host approval to write inside the project)."
+   Project-local is preferred for project-specific skills; personal is preferred for reusable knowledge. If unsure, default to personal.
+
+Probe the filesystem for existing skill homes and pick by **the host the user is running in** within the chosen scope:
 
 | Host agent | Personal skill root (probe in order) | Project-local root |
 |---|---|---|
@@ -350,10 +360,10 @@ Choose the destination skill root (`SKILLS_HOME`). Probe the user's filesystem f
 
 For Hermes Agent, use the active profile's `HERMES_HOME` and choose a category that matches the generated skill's subject. Do not construct profile paths manually. If the user selects a project-local Hermes root, run `hermes skills trust <project-root>` after generation and verify discovery with `hermes skills list`; project skills remain unavailable until the project is trusted.
 
-Selection rules:
-1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
-2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
-3. If the user explicitly asked for project-local output, prefer the project-local row.
+Selection rules (within chosen scope):
+1. If **exactly one** candidate root for this scope exists on disk, use it without asking.
+2. If **none** exist (fresh machine), create the first root in the table for this scope after confirming with the user — present the host-appropriate options and remember the choice. Do not silently pick.
+3. If **multiple** roots exist in the chosen scope, ask the user which one to use and remember for the session.
 4. If you cannot identify the host, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists.

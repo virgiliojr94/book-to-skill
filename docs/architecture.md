@@ -37,13 +37,14 @@ document into clean text + metadata; the agent turns that into a structured skil
             └────────────────────────────────────────────────────────────────┘
                                    │
                                    ▼
-                <SKILLS_HOME>/<slug>/  ← chosen per host:
-                  ~/.copilot/skills/   GitHub Copilot CLI
-                  ~/.agents/skills/    Copilot CLI or Amp (cross-agent)
-                  ~/.claude/skills/    Claude Code
-                  $HERMES_HOME/skills/<category>/  Hermes Agent
-                  .github/skills/ | .claude/skills/ | .agents/skills/  project-local
+                 <SKILLS_HOME>/<slug>/  ← chosen per host + scope:
+                  ~/.copilot/skills/   GitHub Copilot CLI (personal)
+                  ~/.agents/skills/    Copilot CLI or Amp (cross-agent, personal)
+                  ~/.claude/skills/    Claude Code (personal)
+                  $HERMES_HOME/skills/<category>/  Hermes Agent (personal)
+                  .github/skills/ | .claude/skills/ | .agents/skills/  project-local (any host)
                   .hermes/skills/<category>/                         Hermes project-local
+                  scope: personal vs project-local (Step 5, BOOK_TO_SKILL_SCOPE)
                   SKILL.md         core frameworks + chapter & topic index (~4K)
                   chapters/*.md    on-demand, loaded only when asked
                   glossary.md      terms
