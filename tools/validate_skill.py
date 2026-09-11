@@ -10,6 +10,7 @@ Lenses:
   copilot  — GitHub Copilot CLI rules
   amp      — Sourcegraph Amp rules
   hermes   — Hermes Agent rules
+  openclaw — OpenClaw rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
@@ -22,10 +23,11 @@ Refs:
              https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
-  Amp        https://ampcode.com/manual#skills
-  Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+   Amp        https://ampcode.com/manual#skills
+   Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+   OpenClaw   https://docs.openclaw.ai/tools/skills
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes] [path/to/SKILL.md]
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|openclaw] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -102,6 +104,21 @@ LENSES = {
         "name_charset": (
             "lowercase letters/digits/hyphens/dots/underscores and start with a letter or digit"
         ),
+    },
+    "openclaw": {
+        "label": "OpenClaw",
+        "tools": set(),
+        "recognized_keys": {
+            "name", "description", "allowed-tools", "license", "metadata",
+            "homepage", "user-invocable", "disable-model-invocation",
+            "command-dispatch", "command-tool", "command-arg-mode",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": set(),
+        "unknown_tool_severity": "warn",
+        "enforces_allowed_tools": False,
+        "name_pattern": r"[a-z0-9][a-z0-9-]*",
+        "name_charset": "lowercase letters/digits/hyphens and start with a letter or digit",
     },
 }
 

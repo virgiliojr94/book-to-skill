@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in GitHub Copilot CLI, Amp, Claude Code, or Hermes Agent.</strong>
+  <strong>Turn any technical book, document folder, or collection of sources into a unified agent skill — ready to study, reference, and use while you work in GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, or OpenClaw.</strong>
 </p>
 
 <p align="center">
@@ -67,13 +67,13 @@ The usual workarounds don't help:
 
 Once installed, you just type `/your-book-slug replication` and the agent reads the right chapter and answers from the actual content. No hallucination. No digging through PDFs. The book becomes part of your workflow.
 
-Works with any host that supports the open [Agent Skills](https://github.com/agentskills/agentskills) standard — GitHub Copilot CLI, Amp, Claude Code, and Hermes Agent all read the same `SKILL.md` format.
+Works with any host that supports the open [Agent Skills](https://github.com/agentskills/agentskills) standard — GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, and OpenClaw all read the same `SKILL.md` format.
 
 ---
 
 ## 📦 What it generates
 
-Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code, or `$HERMES_HOME/skills/<category>/<slug>/` for Hermes Agent):
+Running `/book-to-skill your-book.pdf` (or a folder, glob, or list of files) creates a full skill in your agent's skills directory (`~/.copilot/skills/<slug>/` for Copilot CLI, `~/.agents/skills/<slug>/` for Amp or cross-agent, `~/.claude/skills/<slug>/` for Claude Code, `$HERMES_HOME/skills/<category>/<slug>/` for Hermes Agent, or `~/.openclaw/skills/<slug>/` for OpenClaw):
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -137,6 +137,7 @@ npx skills add virgiliojr94/book-to-skill
 git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/book-to-skill
 # (Copilot CLI: ~/.copilot/skills/ · Amp/cross-agent: ~/.agents/skills/)
 # (Hermes Agent: ${HERMES_HOME:-$HOME/.hermes}/skills/<category>/)
+# (OpenClaw: ~/.openclaw/skills/ or ~/.agents/skills/)
 ```
 
 📥 **All hosts, optional extractors, and the standalone CLI → [docs/install.md](docs/install.md)**
