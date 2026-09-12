@@ -197,6 +197,7 @@ the relevant chapter file before answering.
 This skill covers the book content only. For hands-on implementation in your codebase,
 combine with project-specific tools. For topics beyond this book, check related skills
 or ask the agent directly.
+<if images_dropped > 5: state that N source images were not read>
 ```
 
 ---
