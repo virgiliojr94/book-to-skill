@@ -157,6 +157,19 @@ CANDIDATES=(
   "$HERMES_HOME_RESOLVED"/skills/*/book-to-skill/scripts/extract.py
 )
 if [ "${HERMES_AGENT:-}" != true ]; then
+  # Project-local roots are resolved against the git worktree, not the current
+  # directory: an agent can be invoked from anywhere inside the project (e.g.
+  # `src/nested`) and these roots still have to be found — that is how OpenCode
+  # and the other hosts discover project skills. The CWD-relative forms are kept
+  # so the probe also works outside a git repository.
+  if [ -n "$PROJECT_ROOT" ]; then
+    CANDIDATES+=(
+      "$PROJECT_ROOT/.github/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.claude/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.agents/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.opencode/skills/book-to-skill/scripts/extract.py"
+    )
+  fi
   CANDIDATES+=(
     ".github/skills/book-to-skill/scripts/extract.py"
     ".claude/skills/book-to-skill/scripts/extract.py"
