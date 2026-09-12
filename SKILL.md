@@ -96,6 +96,7 @@ Throughout the workflow:
 - If the last argument is not a file, folder, or glob that exists or matches any files, and it looks like a skill slug (e.g. lowercase hyphens, alphanumeric), treat it as `SKILL_NAME`.
 - Treat all other arguments as the list of `INPUT_PATHS`.
 - If any input path is an existing skill directory (contains `SKILL.md` and a `chapters/` sub-folder), or if `SKILL_NAME` matches an existing skill slug in `SKILLS_HOME`, flag this run as an **Update/Fold-in** operation (Mode 4).
+- **Re-run guard.** Before starting extraction for a Full Conversion, derive the prospective skill slug under Step 5's naming options — the author-concept form, the by-title form, and any `SKILL_NAME` given — and check `SKILLS_HOME` for an existing match. On a match, STOP and ask the user: "`<skill-name>` already exists. Choose: (1) Update/Fold-in (Mode 4), (2) verify the existing skill is complete and stop, or (3) force full regeneration." Do not re-extract until the user chooses. On context recovery after an interrupted run (network cut-off, replayed or continued conversation), reuse the existing extraction work directory and resume; never restart extraction from scratch.
 
 ---
 
