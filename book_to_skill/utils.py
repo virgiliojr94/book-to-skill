@@ -198,6 +198,18 @@ _BN_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?অধ্যায়\s*([0-9{_BN_DIGITS}]+)\b"
 )
 
+# Tamil chapter headings: "அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2".
+# அத்தியாயம் ("chapter") + a number. Tamil digits (U+0BE6-U+0BEF) are positional
+# like the Devanagari/Bengali blocks above, so only a digit remap is needed.
+# Optional Markdown "#" prefix. Requiring a number keeps prose that merely uses
+# the word (or an inflected form like "அத்தியாயத்தில்", which is a different stem)
+# from matching.
+_TA_DIGITS = "௦-௯"
+_TA_DIGIT_MAP = str.maketrans("௦௧௨௩௪௫௬௭௮௯", "0123456789")
+_TA_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?அத்தியாயம்\s*([0-9{_TA_DIGITS}]+)\b"
+)
+
 # Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
 # "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
 # unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
@@ -206,6 +218,15 @@ _BN_CHAPTER = re.compile(
 # there. Requiring whitespace then a number keeps prose that merely uses an
 # inflected form ("В этой главе…", "Главная страница") from matching.
 _RU_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?глава\s+([0-9]+)\b", re.IGNORECASE)
+
+# Greek chapter headings: "Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2".
+# "Κεφάλαιο" ("chapter") + a number. Greek uses ordinary Arabic digits, so — like
+# the Russian block above — no digit remap is needed. The 4th letter is written
+# [άα] because all-caps Greek drops the accent ("ΚΕΦΑΛΑΙΟ" has plain Α, not Ά),
+# and case-folding alone would not bridge Ά↔Α. Requiring whitespace then a number
+# keeps prose that merely uses the word (also "capital", "Το κεφάλαιο αυτό…") from
+# matching.
+_EL_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?κεφ[άα]λαιο\s+([0-9]+)\b", re.IGNORECASE)
 
 # Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
 # 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
@@ -572,9 +593,15 @@ def _match_chapter_number(line: str) -> int | None:
     bm = _BN_CHAPTER.match(s)
     if bm:
         return int(bm.group(1).translate(_BN_DIGIT_MAP))
+    tam = _TA_CHAPTER.match(s)
+    if tam:
+        return int(tam.group(1).translate(_TA_DIGIT_MAP))
     rum = _RU_CHAPTER.match(s)
     if rum:
         return int(rum.group(1))
+    elm = _EL_CHAPTER.match(s)
+    if elm:
+        return int(elm.group(1))
 
     km = _KO_CHAPTER.match(s)
     if km:
@@ -595,7 +622,9 @@ def _chapter_number(line: str) -> int | None:
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
     "## บทที่ ๑"), Hindi ("अध्याय 1", "अध्याय १", "## अध्याय 2"),
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
+    Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
     Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
+    Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
     "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each

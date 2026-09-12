@@ -36,10 +36,14 @@ scripts/extract.py <paths…> --mode <technical|text>
           Generates master SKILL.md with core mental models
                │
                ▼
-          Skill written to one of:
-            ~/.copilot/skills/<slug>/   (GitHub Copilot CLI)
-            ~/.agents/skills/<slug>/    (Copilot CLI or Amp, cross-agent)
-            ~/.claude/skills/<slug>/    (Claude Code)
+          Skill written to:
+            ~/.agents/skills/<slug>/    (cross-agent: Copilot CLI, Amp, Codex)
+            ~/.claude/skills/<slug>/    (symlink → above, attempted under
+                                         Claude Code and verified by
+                                         read-back; report states the result)
+            $HERMES_HOME/skills/<category>/<slug>/
+                                        (Hermes Agent: its own personal root,
+                                         not the cross-agent one, no symlink)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
 

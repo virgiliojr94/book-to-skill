@@ -217,6 +217,38 @@ If the scanner exits non-zero, stop and ask a human to review its file/line find
 
 ## Step 10 — Cleanup and report
 
+If the host is Claude Code and `SKILLS_HOME` is `~/.agents/skills` (the default personal install), expose the skill to Claude Code with a symlink — Claude Code only scans `~/.claude/skills`:
+
+```bash
+mkdir -p "$HOME/.claude/skills"
+LINK="$HOME/.claude/skills/<skill_name>"
+TARGET="$HOME/.agents/skills/<skill_name>"
+if [ -d "$LINK" ] && [ ! -L "$LINK" ]; then
+  CLAUDE_STATUS="skipped-realdir"                 # Step 5 migration declined; leave the old dir
+else
+  ln -sfn "$TARGET" "$LINK" 2>/dev/null || true
+  # Read the link back — do NOT trust that `ln` did what was asked. On Windows/MSYS
+  # `ln -s` may COPY instead of link (or need Developer Mode / an elevated shell), and
+  # PowerShell/cmd have no `ln` at all. The report must reflect what is on disk, not the
+  # fact that the command ran.
+  if [ -L "$LINK" ] && [ "$(readlink "$LINK")" = "$TARGET" ]; then
+    CLAUDE_STATUS="linked"
+  elif [ -e "$LINK" ]; then
+    CLAUDE_STATUS="copy"                           # a real file/dir landed instead of a link
+  else
+    CLAUDE_STATUS="absent"                         # ln unavailable or refused
+  fi
+fi
+```
+
+The real-directory guard is required: `ln -sfn` into an existing real directory would nest the link *inside* it (`~/.claude/skills/<skill_name>/<skill_name>`), leaving Claude Code loading the stale copy. If the user declined the Step 5 migration, skip the symlink and say so in the report — Claude Code keeps using the old directory until it is migrated.
+
+**Read the link back before you report anything about it.** The symlink is a claim, not a fact: fill the "Discoverable by" line from `CLAUDE_STATUS` (what is actually on disk), never from "the command was issued". **Do not hard-fail when the link is missing or is a copy** — the skill exists at the hub and every other host still finds it; the honest report is "written to `~/.agents/skills/<skill_name>`; Claude Code will not see it until the link is created", not an abort. (Windows lead, unverified: a directory junction — `mklink /J` in an elevated `cmd`, or `New-Item -ItemType Junction` in PowerShell — needs neither Developer Mode nor a symlink privilege; if you attempt it, it does not change the read-back-then-report rule.)
+
+Skip this when the user chose a host-private or project-local root (Step 5, rules 3-4).
+
+Then clean up the extraction workdir:
+
 ```bash
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
@@ -276,6 +308,14 @@ Usage:
   Ask <skill_name> about <topic>        → find and explain a topic
   Ask <skill_name> for ch<N>            → dive into a specific chapter
 
+Discoverable by: <only what is true for the chosen destination — see below>
+
+Somewhere else?  mv ~/.agents/skills/<skill_name> <dest_root>/<skill_name> \
+                   && ln -sfn <dest_root>/<skill_name> ~/.claude/skills/<skill_name>
+
+Prompted for permission on every file? That is your host gating writes outside the
+working directory. Say "save it in this project" and re-run to write inside it.
+
 Reload (if your agent doesn't auto-detect new skills):
   GitHub Copilot CLI:  /skills reload
   Claude Code:         restart the session
@@ -286,6 +326,20 @@ Share this skill (optional):
   GitHub repo, installable on any host (Step 11):  say "publish"
   Copilot ecosystem:  gh skill publish $SKILLS_HOME/<skill_name>
 ```
+
+Fill the "Discoverable by" line from `CLAUDE_STATUS` (the read-back result), never from the fact that `ln` ran — for `~/.agents/skills` installs:
+- `linked` → "Copilot CLI, Amp, Codex (natively); Claude Code via symlink ~/.claude/skills/<skill_name>"
+- `skipped-realdir` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — migrate the real directory at ~/.claude/skills/<skill_name> first"
+- `copy` or `absent` → "Copilot CLI, Amp, Codex (natively); **NOT** Claude Code — the host could not create the symlink (a plain copy drifts on the next Update/Fold-in). Enable Developer Mode / create the link manually, or run the skill from ~/.agents/skills"
+- Hermes Agent personal root → "Hermes Agent (from `$HERMES_HOME/skills/<category>`)"; no symlink claim, and no cross-agent claim, because the other hosts do not scan the Hermes root
+- other host-private or project-local root → name only the host(s) that scan that root; no symlink claim
+
+The "Somewhere else?" relocation line must be correct for the path actually taken, so it never breaks the symlink the run just created. **`mv` always targets the final skill directory, `<dest_root>/<skill_name>`, never `<dest_root>` itself.** `mv ~/.agents/skills/mybook ~/.copilot/skills && ln -sfn ~/.copilot/skills ~/.claude/skills/mybook` reads as valid and is not: the skill lands at `~/.copilot/skills/mybook` while the link points one level up at the root, so Claude Code resolves to a directory with no `SKILL.md`, which is the exact breakage this line exists to avoid. Substitute the destination the user actually named, so the printed command carries real paths and there is nothing left to interpret:
+- `~/.agents/skills` + symlink → `mv ~/.agents/skills/<skill_name> <dest_root>/<skill_name> && ln -sfn <dest_root>/<skill_name> ~/.claude/skills/<skill_name>`
+- host-private root, Hermes Agent included → `mv <src_root>/<skill_name> <dest_root>/<skill_name>`
+- project-local root → `mv <project_root>/<skill_name> <dest_root>/<skill_name>`
+
+The "Prompted for permission on every file?" line is the answer to a host that gates writes outside the working directory (any personal-scope root is out-of-cwd): the destination was announced above, and the one-line fix — re-run asking for the project-local root — sits next to it. Keep it only for personal-scope installs; drop it when the user already chose project-local.
 
 ---
 

@@ -2,6 +2,8 @@ import json
 import sys
 from types import SimpleNamespace
 
+import pytest
+
 import book_to_skill.pdf_inspector_integration as integration
 
 
@@ -53,6 +55,51 @@ def test_inspect_pdf_rejects_native_markdown_when_ocr_is_recommended(monkeypatch
     assert metadata["ocr_reasons_by_page"] == [
         {"page": 7, "reasons": ["suspected_garbled_text"]}
     ]
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"confidence": "not-a-number"},
+        {"page_count": "not-an-integer"},
+        {"pages_needing_ocr": object()},
+    ],
+)
+def test_inspect_pdf_falls_back_on_invalid_metadata(monkeypatch, capsys, overrides):
+    fake_module = SimpleNamespace(
+        process_pdf=lambda _path: _fake_result(**overrides)
+    )
+    monkeypatch.setitem(sys.modules, "pdf_inspector", fake_module)
+
+    assert integration.inspect_pdf("book.pdf") == (None, None)
+    assert "pdf-inspector preflight failed" in capsys.readouterr().err
+
+
+def test_hook_uses_existing_pipeline_when_inspector_metadata_is_invalid(
+    tmp_path, monkeypatch
+):
+    integration._reset_state_for_tests()
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF-1.7\nfixture")
+    fake_module = SimpleNamespace(
+        process_pdf=lambda _path: _fake_result(confidence="not-a-number")
+    )
+    monkeypatch.setitem(sys.modules, "pdf_inspector", fake_module)
+
+    original_calls = []
+
+    def original(*args):
+        original_calls.append(args)
+        return {"extraction_method": "legacy"}
+
+    fake_utils = SimpleNamespace(extract_single_file=original)
+
+    integration.install_pdf_inspector_hook(fake_utils)
+    result = fake_utils.extract_single_file(pdf, "text", "no")
+
+    assert result == {"extraction_method": "legacy"}
+    assert original_calls == [(pdf, "text", "no")]
+    assert integration._INSPECTIONS == {}
 
 
 def test_hook_uses_inspector_for_clean_text_pdf(tmp_path, monkeypatch):

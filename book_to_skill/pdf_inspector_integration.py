@@ -58,6 +58,41 @@ def inspect_pdf(path: str | Path) -> tuple[str | None, dict[str, Any] | None]:
 
     try:
         result = pdf_inspector.process_pdf(str(path))
+        pdf_type = _normalise_pdf_type(getattr(result, "pdf_type", None))
+        confidence = float(getattr(result, "confidence", 0.0) or 0.0)
+        pages_needing_ocr = list(getattr(result, "pages_needing_ocr", None) or [])
+        has_encoding_issues = bool(getattr(result, "has_encoding_issues", False))
+        markdown = getattr(result, "markdown", None)
+
+        native_markdown_trusted = bool(
+            isinstance(markdown, str)
+            and markdown.strip()
+            and pdf_type == "text_based"
+            and confidence >= _MIN_NATIVE_CONFIDENCE
+            and not pages_needing_ocr
+            and not has_encoding_issues
+        )
+
+        metadata: dict[str, Any] = {
+            "engine": "pdf-inspector",
+            "version": _package_version(),
+            "pdf_type": pdf_type,
+            "confidence": round(confidence, 4),
+            "native_markdown_trusted": native_markdown_trusted,
+            "pages_needing_ocr": pages_needing_ocr,
+            "ocr_reasons_by_page": _ocr_reasons(
+                getattr(result, "ocr_reasons_by_page", None)
+            ),
+            "pages_with_tables": list(
+                getattr(result, "pages_with_tables", None) or []
+            ),
+            "pages_with_columns": list(
+                getattr(result, "pages_with_columns", None) or []
+            ),
+            "has_encoding_issues": has_encoding_issues,
+            "is_complex_layout": bool(getattr(result, "is_complex_layout", False)),
+            "page_count": int(getattr(result, "page_count", 0) or 0),
+        }
     except Exception as exc:
         print(
             f"  [warn] pdf-inspector preflight failed: {type(exc).__name__}: {exc}",
@@ -65,37 +100,6 @@ def inspect_pdf(path: str | Path) -> tuple[str | None, dict[str, Any] | None]:
         )
         return None, None
 
-    pdf_type = _normalise_pdf_type(getattr(result, "pdf_type", None))
-    confidence = float(getattr(result, "confidence", 0.0) or 0.0)
-    pages_needing_ocr = list(getattr(result, "pages_needing_ocr", None) or [])
-    has_encoding_issues = bool(getattr(result, "has_encoding_issues", False))
-    markdown = getattr(result, "markdown", None)
-
-    native_markdown_trusted = bool(
-        isinstance(markdown, str)
-        and markdown.strip()
-        and pdf_type == "text_based"
-        and confidence >= _MIN_NATIVE_CONFIDENCE
-        and not pages_needing_ocr
-        and not has_encoding_issues
-    )
-
-    metadata: dict[str, Any] = {
-        "engine": "pdf-inspector",
-        "version": _package_version(),
-        "pdf_type": pdf_type,
-        "confidence": round(confidence, 4),
-        "native_markdown_trusted": native_markdown_trusted,
-        "pages_needing_ocr": pages_needing_ocr,
-        "ocr_reasons_by_page": _ocr_reasons(
-            getattr(result, "ocr_reasons_by_page", None)
-        ),
-        "pages_with_tables": list(getattr(result, "pages_with_tables", None) or []),
-        "pages_with_columns": list(getattr(result, "pages_with_columns", None) or []),
-        "has_encoding_issues": has_encoding_issues,
-        "is_complex_layout": bool(getattr(result, "is_complex_layout", False)),
-        "page_count": int(getattr(result, "page_count", 0) or 0),
-    }
     return (markdown if native_markdown_trusted else None), metadata
 
 
