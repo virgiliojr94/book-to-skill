@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 import book_to_skill.pdf_inspector_integration as integration
+from book_to_skill.exceptions import ExtractionError
 
 
 def _fake_result(**overrides):
@@ -183,6 +184,48 @@ def test_hook_uses_inspector_for_clean_text_pdf(tmp_path, monkeypatch):
     assert result["pages"] == 12
     assert original_calls == []
     assert integration._INSPECTIONS[str(pdf.resolve())] == inspection
+
+
+def test_hook_translates_post_extraction_stat_failure(tmp_path, monkeypatch):
+    integration._reset_state_for_tests()
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF-1.7\nfixture")
+
+    fake_utils = SimpleNamespace(
+        extract_single_file=lambda *_args: {"extraction_method": "legacy"},
+        sanitize_extracted_text=lambda text: (text, 0),
+        detect_structure=lambda _text: {
+            "chapters_detected": 1,
+            "chapters_method": "numeric",
+            "chapter_headings_sample": ["Chapter 1"],
+            "has_toc": False,
+        },
+        count_pages=lambda _path: 12,
+        estimate_tokens=lambda _text: 42,
+    )
+    inspection = {
+        "confidence": 0.99,
+        "page_count": 12,
+        "pdf_type": "text_based",
+        "native_markdown_trusted": True,
+        "pages_needing_ocr": [],
+        "has_encoding_issues": False,
+    }
+    monkeypatch.setattr(
+        integration,
+        "inspect_pdf",
+        lambda _path: ("Chapter 1\nBody", inspection),
+    )
+
+    def fail_getsize(_path):
+        raise PermissionError("unavailable")
+
+    monkeypatch.setattr(integration.os.path, "getsize", fail_getsize)
+
+    integration.install_pdf_inspector_hook(fake_utils)
+
+    with pytest.raises(ExtractionError, match="Could not read file size"):
+        fake_utils.extract_single_file(pdf, "text", "no")
 
 
 def test_hook_keeps_technical_mode_on_existing_pipeline(tmp_path, monkeypatch):

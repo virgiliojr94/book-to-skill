@@ -1015,7 +1015,12 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         f"  chapters: {structure['chapters_detected']} "
         f"({structure['chapters_method']})"
     )
-    file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
+    try:
+        file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
+    except OSError as exc:
+        raise ExtractionError(
+            f"Could not read file size for {input_path.name}: {exc}"
+        ) from exc
     
     return {
         "source_file": str(input_path.resolve()),

@@ -101,3 +101,52 @@ def test_readable_unknown_suffix_still_rejected_by_format(tmp_path):
     with pytest.raises(ExtractionError) as excinfo:
         extract_single_file(odd, "text", "no")
     assert "Unsupported format" in str(excinfo.value)
+
+
+def test_post_extraction_stat_failure_raises_extraction_error(tmp_path, monkeypatch):
+    source = tmp_path / "book.md"
+    source.write_text("Chapter 1\nContent", encoding="utf-8")
+
+    def fail_getsize(_path):
+        raise PermissionError("file became unavailable")
+
+    monkeypatch.setattr(os.path, "getsize", fail_getsize)
+
+    with pytest.raises(ExtractionError, match="Could not read file size"):
+        extract_single_file(source, "text", "no")
+
+
+def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
+    bad = tmp_path / "a.md"
+    good = tmp_path / "b.md"
+    bad.write_text("Chapter 1\nFirst source", encoding="utf-8")
+    good.write_text("Chapter 2\nSecond source", encoding="utf-8")
+
+    real_getsize = os.path.getsize
+
+    def flaky_getsize(path):
+        if Path(path) == bad:
+            raise PermissionError("file became unavailable")
+        return real_getsize(path)
+
+    monkeypatch.setattr(os.path, "getsize", flaky_getsize)
+
+    workdir = tmp_path / "work"
+    import book_to_skill.config as config
+    import book_to_skill.utils as utils
+
+    for module in (config, utils):
+        monkeypatch.setattr(module, "OUTPUT_DIR", workdir, raising=False)
+        monkeypatch.setattr(module, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
+        monkeypatch.setattr(module, "OUTPUT_META", workdir / "metadata.json", raising=False)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extract.py", str(bad), str(good), "--install-missing", "no"],
+    )
+
+    main()
+
+    text = (workdir / "full_text.txt").read_text(encoding="utf-8")
+    assert "Second source" in text
+    assert "First source" not in text

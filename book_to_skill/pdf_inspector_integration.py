@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from book_to_skill.exceptions import ExtractionError
+
 _MIN_NATIVE_CONFIDENCE = 0.90
 _INSPECTIONS: dict[str, dict[str, Any]] = {}
 
@@ -143,7 +145,12 @@ def _result_from_inspector(
 
     pages = inspection.get("page_count") or utils_module.count_pages(str(input_path))
     tokens = utils_module.estimate_tokens(text)
-    file_size_mb = os.path.getsize(input_path) / (1024 * 1024)
+    try:
+        file_size_mb = os.path.getsize(input_path) / (1024 * 1024)
+    except OSError as exc:
+        raise ExtractionError(
+            f"Could not read file size for {input_path.name}: {exc}"
+        ) from exc
 
     return {
         "source_file": str(input_path.resolve()),
