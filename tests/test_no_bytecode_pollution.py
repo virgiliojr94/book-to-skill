@@ -133,10 +133,12 @@ def test_entry_point_writes_no_bytecode(clean_tree, entry):
         [
             sys.executable,
             "-c",
-            "import book_to_skill, sys;"
-            " assert 'book_to_skill' in sys.modules;"
-            " assert 'book_to_skill.utils' in sys.modules;"
-            " print('imported')",
+            (
+                "import book_to_skill, sys\n"
+                "assert 'book_to_skill' in sys.modules\n"
+                "assert 'book_to_skill.utils' in sys.modules\n"
+                "print('imported')\n"
+            ),
         ],
         cwd=REPO_ROOT,
         env=env,
