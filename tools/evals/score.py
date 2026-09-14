@@ -12,6 +12,16 @@ def _state(value: Any) -> Any:
     return value if isinstance(value, bool) else UNKNOWN
 
 
+def _count(value: Any) -> Any:
+    """Keep only explicit integer counts; absence remains unknown.
+
+    ``bool`` is a subclass of ``int``, so a JSON ``true`` would otherwise pass an
+    ``isinstance(value, int)`` test and then be summed as 1 -- inventing a usage
+    number this module promises never to estimate.
+    """
+    return value if isinstance(value, int) and not isinstance(value, bool) else UNKNOWN
+
+
 def score_trajectory(trajectory: Dict[str, Any]) -> Dict[str, Any]:
     """Score one trajectory without loading files or deriving missing observations."""
     expected = trajectory.get("expected", {})
@@ -22,6 +32,16 @@ def score_trajectory(trajectory: Dict[str, Any]) -> Dict[str, Any]:
         any(opened == target for opened in opens)
         if isinstance(opens, list) and target is not None
         else UNKNOWN
+    )
+    # Where the target appears among the opens, or None when it does not appear
+    # at all. `opens.index(target)` was called unguarded further down, so a
+    # harness that recorded route_correct itself -- while `opens` did not contain
+    # the target verbatim (an empty list, a "./" prefix, any path normalisation
+    # difference) -- raised ValueError and killed the whole scoring run.
+    target_position = (
+        opens.index(target)
+        if isinstance(opens, list) and target is not None and target in opens
+        else None
     )
     answer_correct = _state(observed.get("answer_correct"))
     route_correct = _state(observed.get("route_correct"))
@@ -37,7 +57,7 @@ def score_trajectory(trajectory: Dict[str, Any]) -> Dict[str, Any]:
         classification = "wrong_routing"
     elif not answer_correct:
         classification = "wrong_answer"
-    elif isinstance(opens, list) and target is not None and opens.index(target) > 0:
+    elif target_position is not None and target_position > 0:
         classification = "irrelevant_opens_before_target"
     else:
         classification = "correct"
@@ -50,7 +70,7 @@ def score_trajectory(trajectory: Dict[str, Any]) -> Dict[str, Any]:
         "routing_correct": route_correct,
         "evidence_reached": evidence_reached,
         "answer_correct": answer_correct,
-        "usage": {key: usage.get(key) if isinstance(usage.get(key), int) else UNKNOWN
+        "usage": {key: _count(usage.get(key))
                   for key in ("input_tokens", "output_tokens", "calls")},
     }
 
