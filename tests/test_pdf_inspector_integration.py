@@ -102,6 +102,43 @@ def test_hook_uses_existing_pipeline_when_inspector_metadata_is_invalid(
     assert integration._INSPECTIONS == {}
 
 
+def test_failed_reinspection_does_not_reuse_stale_metadata(tmp_path, monkeypatch):
+    integration._reset_state_for_tests()
+    pdf = tmp_path / "book.pdf"
+    pdf.write_bytes(b"%PDF-1.7\nfixture")
+    inspections = iter(
+        [
+            (None, {"engine": "pdf-inspector", "confidence": 0.5}),
+            (None, None),
+        ]
+    )
+    monkeypatch.setattr(integration, "inspect_pdf", lambda _path: next(inspections))
+
+    fake_utils = SimpleNamespace(
+        extract_single_file=lambda *_args: {"extraction_method": "legacy"}
+    )
+    integration.install_pdf_inspector_hook(fake_utils)
+
+    fake_utils.extract_single_file(pdf, "text", "no")
+    fake_utils.extract_single_file(pdf, "text", "no")
+
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "total_sources": 1,
+                "sources": [{"source_file": str(pdf.resolve())}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    integration.enrich_pdf_inspector_metadata(metadata_path)
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+    assert "pdf_inspector" not in metadata
+    assert "pdf_inspector" not in metadata["sources"][0]
+
+
 def test_hook_uses_inspector_for_clean_text_pdf(tmp_path, monkeypatch):
     integration._reset_state_for_tests()
     pdf = tmp_path / "book.pdf"
