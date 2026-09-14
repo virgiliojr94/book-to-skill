@@ -44,6 +44,7 @@ scripts/extract.py <paths…> --mode <technical|text>
             $HERMES_HOME/skills/<category>/<slug>/
                                         (Hermes Agent: its own personal root,
                                          not the cross-agent one, no symlink)
+             ~/.config/opencode/skills/<slug>/  (OpenCode: its own managed root)
           /tmp/book_skill_work/         🗑️  cleaned up
 ```
 

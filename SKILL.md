@@ -1,6 +1,6 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, Claude Code, or Hermes Agent, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, or OpenCode, apply an author's frameworks while working, or build a reusable knowledge base from a file."
 ---
 
 <!--
@@ -8,7 +8,9 @@ Cross-agent notes (informational; ignored by host agents):
   - Compatible skill roots: GitHub Copilot CLI (~/.copilot/skills, ~/.agents/skills,
     .github/skills, .claude/skills, .agents/skills), Amp (.agents/skills,
     ~/.config/agents/skills, ~/.config/amp/skills), Claude Code (~/.claude/skills),
-    Hermes Agent ($HERMES_HOME/skills, .hermes/skills, .agents/skills).
+    Hermes Agent ($HERMES_HOME/skills, .hermes/skills, .agents/skills),
+    OpenCode (~/.config/opencode/skills, .opencode/skills, ~/.agents/skills,
+    .agents/skills).
   - `allowed-tools` is intentionally omitted to stay agent-neutral: Copilot CLI uses
     `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
     adds `shell_command`. The skill needs shell (to run extract.py) and file
@@ -22,7 +24,7 @@ Transform written knowledge into actionable agent skills by extracting structure
 
 ## Philosophy
 
-Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, or another compatible agent can leverage repeatedly.
+Books contain crystallized expertise: frameworks, principles, and techniques that took years to develop. This skill extracts that knowledge into a format GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, OpenCode, or another compatible agent can leverage repeatedly.
 
 **Extract structure, not summaries.** A skill isn't a book report. It's a toolkit of:
 - Named frameworks (mental models with clear application)
@@ -77,6 +79,8 @@ This converter can run from multiple skill systems. When looking for this conver
 8. Amp legacy global skills: `~/.config/amp/skills/`
 9. Hermes Agent personal skills: `$HERMES_HOME/skills/` (defaults to `~/.hermes/skills/`)
 10. Hermes Agent project skills: `.hermes/skills/` or `.agents/skills/`
+11. OpenCode personal skills: `~/.config/opencode/skills/` or `~/.agents/skills/`
+12. OpenCode project skills: `.opencode/skills/` or `.agents/skills/`
 
 For **generated** book skills, prefer the user-level cross-agent root `~/.agents/skills/` — one physical copy serves every supported host. Copilot CLI and Amp discover it natively; Claude Code needs a symlink from `~/.claude/skills/<skill_name>` (created in Step 10, see Step 5 for the rules). Pick a host-private or project-local root only when the user asks for one.
 
@@ -148,14 +152,29 @@ CANDIDATES=(
   "$HOME/.copilot/skills/book-to-skill/scripts/extract.py"
   "$HOME/.agents/skills/book-to-skill/scripts/extract.py"
   "$HOME/.claude/skills/book-to-skill/scripts/extract.py"
+  "$HOME/.config/opencode/skills/book-to-skill/scripts/extract.py"
   "$HERMES_HOME_RESOLVED/skills/book-to-skill/scripts/extract.py"
   "$HERMES_HOME_RESOLVED"/skills/*/book-to-skill/scripts/extract.py
 )
 if [ "${HERMES_AGENT:-}" != true ]; then
+  # Project-local roots are resolved against the git worktree, not the current
+  # directory: an agent can be invoked from anywhere inside the project (e.g.
+  # `src/nested`) and these roots still have to be found — that is how OpenCode
+  # and the other hosts discover project skills. The CWD-relative forms are kept
+  # so the probe also works outside a git repository.
+  if [ -n "$PROJECT_ROOT" ]; then
+    CANDIDATES+=(
+      "$PROJECT_ROOT/.github/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.claude/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.agents/skills/book-to-skill/scripts/extract.py"
+      "$PROJECT_ROOT/.opencode/skills/book-to-skill/scripts/extract.py"
+    )
+  fi
   CANDIDATES+=(
     ".github/skills/book-to-skill/scripts/extract.py"
     ".claude/skills/book-to-skill/scripts/extract.py"
     ".agents/skills/book-to-skill/scripts/extract.py"
+    ".opencode/skills/book-to-skill/scripts/extract.py"
   )
 fi
 CANDIDATES+=(
@@ -346,17 +365,26 @@ Choose the destination skill root (`SKILLS_HOME`). For **personal** (user-level)
 | **Amp** | `~/.agents/skills` (discovered natively) | `.agents/skills` |
 | **OpenAI Codex** | `~/.agents/skills` (discovered natively; follows symlinks) | `.agents/skills` |
 | **Hermes Agent** | `$HERMES_HOME/skills/<category>` (defaults to `~/.hermes/skills/<category>`) | `.hermes/skills/<category>` → `.agents/skills` |
+HEAD
 | **Claude Code** | `~/.agents/skills` + symlink from `~/.claude/skills/<skill_name>` | `.claude/skills` |
+| **OpenCode** | `~/.config/opencode/skills` → `~/.agents/skills` → `~/.claude/skills` | `.opencode/skills` → `.agents/skills` → `.claude/skills` |
 
 Hermes Agent is the one host that keeps its own personal root: it partitions personal skills by category and does not scan the cross-agent root. Use the active profile's `HERMES_HOME` and choose a category that matches the generated skill's subject. Do not construct profile paths manually. If the user selects a project-local Hermes root, run `hermes skills trust <project-root>` after generation and verify discovery with `hermes skills list`; project skills remain unavailable until the project is trusted.
 
+For OpenCode, prefer the OpenCode-managed `~/.config/opencode/skills` root; `~/.agents/skills` and `~/.claude/skills` also work because OpenCode loads those compatibility roots. OpenCode discovers skills automatically by walking up from the working directory to the git worktree, so no trust step is needed — start a new session after generation if the skill does not appear.
+
 Selection rules:
+HEAD
 1. Personal install: set `SKILLS_HOME` to `~/.agents/skills` (create the directory if missing). One exception, so the default does not invent a convention in someone else's house: if `~/.agents/skills` does not exist **and** the host's private root already contains skills, use the private root instead and say why in the report.
 2. **Claude Code does not scan `~/.agents/skills`** — after generation completes, Step 10 links the skill in with `ln -sfn "$HOME/.agents/skills/<skill_name>" "$HOME/.claude/skills/<skill_name>"`.
 3. **Hermes Agent personal installs use the Hermes row above**, not the cross-agent root, and take no symlink.
 4. If the user explicitly asks for a host-private root (`~/.copilot/skills`, `~/.claude/skills`, `~/.config/agents/skills`, `~/.config/amp/skills`), honor it and skip the symlink.
 5. If the user explicitly asked for project-local output, use the project-local row for their host.
 6. If the choice requires knowing the host (project-local output, the Hermes personal root, or the Claude Code symlink) and you cannot identify it, ask: "Which agent are you running this in — Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
+1. If **exactly one** of the host's candidate roots exists on disk, use it without asking.
+2. If **none** exist (fresh machine), ask the user which root to create — present the host-appropriate options and remember the choice for the session. Do not silently pick.
+3. If the user explicitly asked for project-local output, prefer the project-local row.
+4. If you cannot identify the host, ask: "Which agent are you running this in — OpenCode, Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code?"
 
 Set `SKILLS_HOME` to the selected root and check if `$SKILLS_HOME/<skill_name>/` already exists. On Claude Code, also check whether `~/.claude/skills/<skill_name>` exists as a **real directory** (not a symlink) — a previous install may live there; if so, offer to migrate it (move the directory into `~/.agents/skills/` and replace the original path with the symlink) before continuing.
 If the skill already exists, prompt the user to choose:
@@ -682,6 +710,7 @@ Reload (if your agent doesn't auto-detect new skills):
   Claude Code:         restart the session
   Amp:                 restart the session
   Hermes Agent:         start a new session
+  OpenCode:             start a new session
 
 Share this skill (optional):
   GitHub repo, installable on any host (Step 11):  say "publish"
