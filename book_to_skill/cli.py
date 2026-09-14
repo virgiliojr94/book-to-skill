@@ -1,4 +1,9 @@
 import sys
+
+# Keep a deployed skill directory clean: importing the package below would
+# otherwise write __pycache__/*.pyc beside the sources, leaving build artifacts
+# inside the skill. Must be set BEFORE `book_to_skill` is imported.
+sys.dont_write_bytecode = True
 from book_to_skill.utils import main as utils_main
 from book_to_skill.pdf_inspector_integration import (
     enrich_pdf_inspector_metadata,

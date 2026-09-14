@@ -7,6 +7,11 @@ Backward-compatible entrypoint wrapper.
 import os
 import sys
 
+# Keep a deployed skill directory clean: importing the package below would
+# otherwise write __pycache__/*.pyc beside the sources, leaving build artifacts
+# inside the skill. Must be set BEFORE `book_to_skill` is imported.
+sys.dont_write_bytecode = True
+
 # Force UTF-8 stdout/stderr so extracted text, the attribution line's separators
 # and the dependency-check glyphs (✓ / ✗) don't raise UnicodeEncodeError on Windows
 # consoles that default to a legacy code page (e.g. GBK / cp936).
