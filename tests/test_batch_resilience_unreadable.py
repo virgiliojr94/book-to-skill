@@ -20,8 +20,8 @@ import pytest
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
+import book_to_skill.utils as utils  # noqa: E402
 from book_to_skill.exceptions import ExtractionError  # noqa: E402
-from book_to_skill.utils import extract_single_file, main  # noqa: E402
 
 
 def _make_unreadable(path: Path) -> Path:
@@ -43,7 +43,7 @@ def test_unreadable_unknown_suffix_raises_extraction_error(tmp_path):
     bad = _make_unreadable(tmp_path / "mystery.dat")
     try:
         with pytest.raises(ExtractionError) as excinfo:
-            extract_single_file(bad, "text", "no")
+            utils.extract_single_file(bad, "text", "no")
         assert "mystery.dat" in str(excinfo.value)
     finally:
         bad.chmod(stat.S_IRUSR | stat.S_IWUSR)
@@ -61,8 +61,6 @@ def test_batch_survives_unreadable_source(tmp_path, monkeypatch, capsys):
     # config caches OUTPUT_* at import time; point the module constants at the
     # temp workdir so the run does not touch the shared default.
     import book_to_skill.config as config
-    import book_to_skill.utils as utils
-
     for module in (config, utils):
         monkeypatch.setattr(module, "OUTPUT_DIR", workdir, raising=False)
         monkeypatch.setattr(module, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
@@ -73,7 +71,7 @@ def test_batch_survives_unreadable_source(tmp_path, monkeypatch, capsys):
     )
 
     try:
-        main()
+        utils.main()
     finally:
         bad.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
@@ -89,7 +87,7 @@ def test_batch_survives_unreadable_source(tmp_path, monkeypatch, capsys):
 def test_missing_file_still_reports_not_found(tmp_path):
     """The pre-existing not-found path is unchanged."""
     with pytest.raises(ExtractionError) as excinfo:
-        extract_single_file(tmp_path / "nope.dat", "text", "no")
+        utils.extract_single_file(tmp_path / "nope.dat", "text", "no")
     assert "File not found" in str(excinfo.value)
 
 
@@ -99,7 +97,7 @@ def test_readable_unknown_suffix_still_rejected_by_format(tmp_path):
     odd.write_bytes(b"not a pdf or a zip")
 
     with pytest.raises(ExtractionError) as excinfo:
-        extract_single_file(odd, "text", "no")
+        utils.extract_single_file(odd, "text", "no")
     assert "Unsupported format" in str(excinfo.value)
 
 
@@ -113,7 +111,7 @@ def test_post_extraction_stat_failure_raises_extraction_error(tmp_path, monkeypa
     monkeypatch.setattr(os.path, "getsize", fail_getsize)
 
     with pytest.raises(ExtractionError, match="Could not read file size"):
-        extract_single_file(source, "text", "no")
+        utils.extract_single_file(source, "text", "no")
 
 
 def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
@@ -133,8 +131,6 @@ def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
 
     workdir = tmp_path / "work"
     import book_to_skill.config as config
-    import book_to_skill.utils as utils
-
     for module in (config, utils):
         monkeypatch.setattr(module, "OUTPUT_DIR", workdir, raising=False)
         monkeypatch.setattr(module, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
@@ -145,7 +141,7 @@ def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
         ["extract.py", str(bad), str(good), "--install-missing", "no"],
     )
 
-    main()
+    utils.main()
 
     text = (workdir / "full_text.txt").read_text(encoding="utf-8")
     assert "Second source" in text
