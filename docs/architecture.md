@@ -44,6 +44,8 @@ document into clean text + metadata; the agent turns that into a structured skil
                   $HERMES_HOME/skills/<category>/  Hermes Agent (personal)
                   .github/skills/ | .claude/skills/ | .agents/skills/  project-local (any host)
                   .hermes/skills/<category>/                         Hermes project-local
+                  ~/.config/opencode/skills/                         OpenCode (own root; on request)
+                  .opencode/skills/                                  OpenCode project-local
                   scope: personal vs project-local (Step 5, BOOK_TO_SKILL_SCOPE)
                   SKILL.md         core frameworks + chapter & topic index (~4K)
                   chapters/*.md    on-demand, loaded only when asked
@@ -76,7 +78,7 @@ document into clean text + metadata; the agent turns that into a structured skil
 | `book_to_skill/dependencies.py` | optional-dependency probing + `--check` |
 | `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text (see Security) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
-| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes`) |
+| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|opencode`) |
 | `tools/scan_generated_skill.py` | advisory prompt-injection scan of a generated skill (see Security) |
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 

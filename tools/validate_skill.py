@@ -10,6 +10,7 @@ Lenses:
   copilot  — GitHub Copilot CLI rules
   amp      — Sourcegraph Amp rules
   hermes   — Hermes Agent rules
+  opencode — OpenCode rules
 
 The SKILL.md format itself is an open standard
 (https://github.com/agentskills/agentskills) — `name` + `description` are the
@@ -23,9 +24,10 @@ Refs:
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
   Amp        https://ampcode.com/manual#skills
-  Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+   Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+   OpenCode   https://opencode.ai/docs/skills
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes] [path/to/SKILL.md]
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|opencode] [path/to/SKILL.md]
 """
 import argparse
 import re
@@ -101,6 +103,28 @@ LENSES = {
         "name_pattern": r"[a-z0-9][a-z0-9._-]*",
         "name_charset": (
             "lowercase letters/digits/hyphens/dots/underscores and start with a letter or digit"
+        ),
+    },
+    "opencode": {
+        "label": "OpenCode",
+        "tools": set(),
+        # OpenCode recognizes only these five keys; unknown frontmatter is
+        # silently ignored (https://opencode.ai/docs/skills#write-frontmatter).
+        "recognized_keys": {
+            "name", "description", "license", "compatibility", "metadata",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": set(),
+        "unknown_tool_severity": "warn",
+        # OpenCode grants tool access through `permission.skill` in
+        # opencode.json, not through `allowed-tools`.
+        "enforces_allowed_tools": False,
+        # Official pattern: 1-64 chars, lowercase alphanumeric with single
+        # hyphen separators (no leading/trailing `-`, no `--`, no dots or
+        # underscores). Stricter than the general Agent Skills default.
+        "name_pattern": r"[a-z0-9]+(-[a-z0-9]+)*",
+        "name_charset": (
+            "1-64 lowercase letters/digits with single hyphen separators"
         ),
     },
 }
