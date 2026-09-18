@@ -254,3 +254,29 @@ def test_importing_the_library_does_not_mutate_the_embedding_process(deployed):
         "importing book_to_skill mutated the embedding process: "
         f"sys.dont_write_bytecode is {completed.stdout.strip()!r}"
     )
+
+
+def test_negative_control_broken_entry_point_is_reported_as_failure(deployed):
+    """Prove the assertions above can fail — the old test could not.
+
+    A deliberately broken entry point (body immediately raises SystemExit(1),
+    printing nothing) is run through the *same* helper the real tests use. The
+    helper must report failure rather than pass on a discarded return code, so
+    `pytest.raises(AssertionError)` here is the guarantee that "returncode is
+    discarded" is no longer possible.
+    """
+    broken = deployed / "scripts" / "_negative_control_entry.py"
+    broken.write_text("raise SystemExit(1)\n", encoding="utf-8")
+
+    env = _env()
+    env["PYTHONPATH"] = str(deployed)
+    raw = _run([sys.executable, str(broken)], cwd=deployed, env=env)
+    assert raw.returncode != 0, "negative control must actually fail to run"
+    assert raw.stdout.strip() == "", "negative control must produce no output"
+
+    with pytest.raises(AssertionError):
+        _run_entry(
+            deployed,
+            "scripts/_negative_control_entry.py",
+            ENTRY_POINTS["scripts/extract.py"],
+        )
