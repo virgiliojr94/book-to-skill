@@ -1899,6 +1899,30 @@ class TestEpubSpineOrder:
         )
         assert "SUBDIR" in out
 
+    def test_manifest_href_fragment_is_not_part_of_archive_name(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c1" href="chapter.xhtml#section-2" '
+            'media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/></spine></package>'
+        )
+        files = {"chapter.xhtml": self._doc("FRAGMENT")}
+        out = extract_with_zipfile(self._make_epub(tmp_path, opf, files))
+        assert "FRAGMENT" in out
+
+    def test_manifest_href_percent_encoding_maps_to_archive_name(self, tmp_path):
+        opf = (
+            '<package xmlns="http://www.idpf.org/2007/opf" version="3.0"><manifest>'
+            '<item id="c1" href="Text/Chapter%201.xhtml" '
+            'media-type="application/xhtml+xml"/>'
+            '</manifest><spine><itemref idref="c1"/></spine></package>'
+        )
+        files = {"OEBPS/Text/Chapter 1.xhtml": self._doc("ENCODED")}
+        out = extract_with_zipfile(
+            self._make_epub(tmp_path, opf, files, opf_name="OEBPS/content.opf")
+        )
+        assert "ENCODED" in out
+
     def test_non_self_closing_item_tag(self, tmp_path):
         # <item ...></item> (non-self-closing) is parsed via its opening tag.
         opf = (
