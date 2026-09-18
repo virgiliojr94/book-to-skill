@@ -1799,6 +1799,22 @@ class TestDocxTableReconstruction:
         out = extract_docx_with_zipfile(self._make_docx(tmp_path, body))
         assert out == "Just a paragraph\nAnd another"
 
+    def test_inline_tabs_are_preserved(self, tmp_path):
+        body = (
+            "<w:p><w:r><w:t>Term</w:t><w:tab/><w:t>Definition</w:t>"
+            "</w:r></w:p>"
+        )
+        out = extract_docx_with_zipfile(self._make_docx(tmp_path, body))
+        assert out == "Term\tDefinition"
+
+    def test_inline_breaks_are_preserved(self, tmp_path):
+        body = (
+            "<w:p><w:r><w:t>First line</w:t><w:br/><w:t>Second line</w:t>"
+            "<w:cr/><w:t>Third line</w:t></w:r></w:p>"
+        )
+        out = extract_docx_with_zipfile(self._make_docx(tmp_path, body))
+        assert out == "First line\nSecond line\nThird line"
+
     def test_empty_cell_still_tab_joined(self, tmp_path):
         body = (
             "<w:tbl><w:tr>" + self._cell("A")

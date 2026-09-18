@@ -55,6 +55,18 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
         ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         parts: list[str] = []
 
+        def inline_text(elem) -> str:
+            """Rebuild text runs without dropping explicit DOCX separators."""
+            text_parts: list[str] = []
+            for node in elem.iter():
+                if node.tag == f"{ns}t" and node.text:
+                    text_parts.append(node.text)
+                elif node.tag == f"{ns}tab":
+                    text_parts.append("\t")
+                elif node.tag in {f"{ns}br", f"{ns}cr"}:
+                    text_parts.append("\n")
+            return "".join(text_parts)
+
         def emit_block(elem) -> None:
             # Walk block content in document order. Paragraphs join their runs;
             # tables emit one tab-joined line per row (same row format as the
@@ -68,15 +80,14 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
             for child in elem:
                 tag = child.tag
                 if tag == f"{ns}p":
-                    texts = [t.text for t in child.iter(f"{ns}t") if t.text]
-                    if texts:
-                        parts.append("".join(texts))
+                    paragraph = inline_text(child)
+                    if paragraph:
+                        parts.append(paragraph)
                 elif tag == f"{ns}tbl":
                     for row in child.iter(f"{ns}tr"):
                         cells = []
                         for cell in row.iter(f"{ns}tc"):
-                            cell_texts = [t.text for t in cell.iter(f"{ns}t") if t.text]
-                            cells.append("".join(cell_texts).strip())
+                            cells.append(inline_text(cell).strip())
                         if any(cells):
                             parts.append("\t".join(cells))
                 else:
