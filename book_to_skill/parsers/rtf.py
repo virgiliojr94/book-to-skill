@@ -1,3 +1,4 @@
+import codecs
 import html
 import re
 import sys
@@ -10,6 +11,8 @@ from book_to_skill.exceptions import ExtractionError
 # or a literal "?". Assumes the default \uc1 (one fallback char); \ucN directives
 # and multi-char/group fallbacks are not parsed (best-effort fallback only).
 _RTF_UNICODE = re.compile(r"\\u(-?\d+)[ ]?(?:\\'[0-9a-fA-F]{2}|\?)?")
+_RTF_HEX_RUN = re.compile(r"(?:\\'[0-9a-fA-F]{2})+")
+_RTF_ANSI_CODEPAGE = re.compile(r"\\ansicpg(\d+)")
 
 
 def _rtf_unicode_repl(match: re.Match) -> str:
@@ -17,6 +20,25 @@ def _rtf_unicode_repl(match: re.Match) -> str:
     if cp == 0 or 0xD800 <= cp <= 0xDFFF:   # NUL and lone surrogates: unwanted in text
         return ""
     return chr(cp)
+
+
+def _rtf_ansi_encoding(raw: str) -> str:
+    """Return the declared ANSI code page, defaulting to Windows-1252."""
+    match = _RTF_ANSI_CODEPAGE.search(raw)
+    encoding = f"cp{match.group(1)}" if match else "cp1252"
+    try:
+        codecs.lookup(encoding)
+    except LookupError:
+        return "cp1252"
+    return encoding
+
+
+def _decode_hex_run(match: re.Match, encoding: str) -> str:
+    payload = bytes(
+        int(value, 16)
+        for value in re.findall(r"[0-9a-fA-F]{2}", match.group(0))
+    )
+    return payload.decode(encoding, errors="replace")
 
 
 # RTF groups whose contents are metadata or formatting tables rather than
@@ -109,8 +131,14 @@ def strip_rtf_fallback(raw: str) -> str:
     # the control-word cleanup that would otherwise strip the markup and leave
     # the names behind as if they were prose.
     raw = _strip_destination_groups(raw)
+    ansi_encoding = _rtf_ansi_encoding(raw)
     raw = _RTF_UNICODE.sub(_rtf_unicode_repl, raw)   # decode \uN escapes first
-    raw = re.sub(r"\\'[0-9a-fA-F]{2}", " ", raw)
+    # A hex byte immediately following \uN is its compatibility fallback and
+    # was consumed by _RTF_UNICODE above. Any remaining \'hh escapes are actual
+    # document text. Decode adjacent bytes as a run so multibyte code pages work.
+    raw = _RTF_HEX_RUN.sub(
+        lambda match: _decode_hex_run(match, ansi_encoding), raw
+    )
     raw = re.sub(r"\\par[d]?", "\n", raw)
     raw = re.sub(r"\\tab", "\t", raw)
     # Park the three escaped literals ("\\", "\{", "\}") on placeholders before
