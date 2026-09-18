@@ -10,6 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+GENERATION = (ROOT / "GENERATION.md").read_text(encoding="utf-8")
 
 
 def _extract_probe_script():
@@ -309,4 +310,4 @@ def test_hermes_destination_and_project_roots_are_documented():
 
 def test_hermes_is_in_unknown_host_prompt_and_reload_guidance():
     assert "Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code" in SKILL
-    assert "Hermes Agent:         start a new session" in SKILL
+    assert "Hermes Agent:         start a new session" in GENERATION
