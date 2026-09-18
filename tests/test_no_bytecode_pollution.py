@@ -236,12 +236,12 @@ def test_importing_the_library_does_not_mutate_the_embedding_process(deployed):
             sys.executable,
             "-c",
             (
-                "import sys;"
-                " sys.dont_write_bytecode = False;"
-                " import book_to_skill, book_to_skill.utils, book_to_skill.cli;"
-                f" assert book_to_skill.__file__.startswith({str(deployed)!r}),"
-                " book_to_skill.__file__;"
-                " print(sys.dont_write_bytecode)"
+                "import sys\n"
+                "sys.dont_write_bytecode = False\n"
+                "import book_to_skill, book_to_skill.utils, book_to_skill.cli\n"
+                f"assert book_to_skill.__file__.startswith({str(deployed)!r}), "
+                "book_to_skill.__file__\n"
+                "print(sys.dont_write_bytecode)\n"
             ),
         ],
         cwd=deployed,
