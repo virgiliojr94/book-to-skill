@@ -222,6 +222,17 @@ _TE_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?అధ్యాయ(?:ము|ం)\s*([0-9{_TE_DIGITS}]+)\b"
 )
 
+# Kannada chapter headings: "ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2".
+# ಅಧ್ಯಾಯ ("chapter") + a number. Kannada digits (U+0CE6-U+0CEF) are positional
+# like the other Indic blocks above, so only a digit remap is needed. Requiring
+# the word then a number keeps prose that merely uses an inflected form
+# ("ಅಧ್ಯಾಯದಲ್ಲಿ", a case suffix) from matching.
+_KN_DIGITS = "೦-೯"
+_KN_DIGIT_MAP = str.maketrans("೦೧೨೩೪೫೬೭೮೯", "0123456789")
+_KN_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?ಅಧ್ಯಾಯ\s*([0-9{_KN_DIGITS}]+)\b"
+)
+
 # Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
 # "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
 # unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
@@ -611,6 +622,9 @@ def _match_chapter_number(line: str) -> int | None:
     tem = _TE_CHAPTER.match(s)
     if tem:
         return int(tem.group(1).translate(_TE_DIGIT_MAP))
+    knm = _KN_CHAPTER.match(s)
+    if knm:
+        return int(knm.group(1).translate(_KN_DIGIT_MAP))
     rum = _RU_CHAPTER.match(s)
     if rum:
         return int(rum.group(1))
@@ -639,6 +653,7 @@ def _chapter_number(line: str) -> int | None:
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
     Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
+    Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
     Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
