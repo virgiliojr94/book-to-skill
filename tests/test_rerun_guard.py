@@ -42,9 +42,11 @@ def test_reuse_requires_an_intact_matching_workdir():
 def test_reuse_match_covers_source_and_config():
     # Reviewer ask 1 said "matching the current source/config" — filenames alone
     # would let an in-place edit pass; the mode check covers the config half.
+    # Round 2: the content half is a recorded fingerprint, not a size.
     guard = _step0()
     guard = guard[guard.index("Re-run guard"):]
-    assert "same filenames **and sizes**" in guard
+    assert "and content fingerprint" in guard
+    assert "sha256" in guard
     assert "extraction_mode" in guard
 
 
@@ -54,7 +56,7 @@ def test_missing_or_stale_workdir_falls_back_to_fresh_extraction():
     guard = guard[guard.index("Re-run guard"):]
     assert "start a fresh extraction instead of resuming" in guard
     assert "missing (temp cleanup)" in guard
-    assert "sources or their sizes no longer match" in guard
+    assert "the sources no longer match" in guard
     assert "ask the user before discarding or resuming" in guard
 
 
@@ -71,3 +73,13 @@ def test_step0_lookups_never_use_raw_skills_home():
     # Reviewer ask 2: SKILLS_HOME is only selected in Step 5, so Step 0 must not
     # consult it — a project-local request would hit the personal root by accident.
     assert "SKILLS_HOME" not in _step0()
+
+
+def test_guard_names_the_legacy_metadata_fallback():
+    # Round-2 ask: metadata recorded before fingerprints existed cannot establish
+    # freshness, so the guard must name that fallback rather than let a
+    # sha256-less source be treated as matching.
+    guard = _step0()
+    guard = guard[guard.index("Re-run guard"):]
+    assert "no `sha256` for a source" in guard
+    assert "recorded before fingerprints existed" in guard

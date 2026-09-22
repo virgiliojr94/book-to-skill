@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import glob
+import hashlib
 import json
 import os
 import re
@@ -812,13 +813,84 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
     return unique_paths
 
 
+def _sha256_file(path: str) -> str:
+    """Streaming sha256 — constant memory for multi-GB sources."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def reuse_is_safe(current_inputs, metadata, current_mode):
+    """Decide whether an interrupted run's extraction workdir is safe to resume.
+
+    current_inputs: list of (path, fingerprint) — fingerprint is the sha256
+    hexdigest of each file as it exists NOW, recomputed by the caller
+    (hashlib.sha256(path.read_bytes()).hexdigest(); _sha256_file is available
+    for streaming on large files). Size is deliberately NOT part of matching:
+    metadata.json only records file_size_mb rounded to 2 decimals, so an
+    exact-size comparison is unimplementable — the fingerprint subsumes size
+    entirely.
+
+    metadata: the recorded run's metadata dict (parsed metadata.json).
+    current_mode: the extraction mode THIS run intends ("technical" or "text").
+
+    Returns (ok, reason). ok=True only when ALL hold:
+      - metadata["workdir"] exists and is a directory
+      - metadata["extraction_mode"] == current_mode
+      - the recorded sources match the current inputs one-to-one on
+        filename AND sha256 — the recomputed fingerprints vs the recorded ones
+    Anything else: (False, reason) — the caller must start a fresh
+    extraction (or ask the user when unsure), never resume.
+    """
+    if not isinstance(metadata, dict):
+        return False, "metadata.json unreadable or not an object"
+
+    workdir = metadata.get("workdir")
+    if not workdir or not os.path.isdir(workdir):
+        return False, "workdir missing or unreadable"
+
+    if metadata.get("extraction_mode") != current_mode:
+        return False, (
+            f"mode changed (recorded {metadata.get('extraction_mode')!r}, "
+            f"current is {current_mode!r})"
+        )
+
+    recorded = metadata.get("sources") or []
+    if len(recorded) != len(current_inputs):
+        return False, "sources changed"
+
+    current = {}
+    for path, fingerprint in current_inputs:
+        current[Path(path).name] = fingerprint
+    if len(current) != len(recorded):
+        # Duplicate filenames cannot be matched one-to-one.
+        return False, "sources changed"
+
+    for src in recorded:
+        filename = src.get("filename")
+        if filename not in current:
+            return False, f"sources changed (recorded {filename!r} is not in this run)"
+        recorded_hash = src.get("sha256")
+        if not recorded_hash:
+            return False, (
+                f"no recorded fingerprint for {filename} — legacy metadata "
+                "(recorded before fingerprints existed)"
+            )
+        if recorded_hash != current[filename]:
+            return False, f"content changed for {filename}"
+
+    return True, "workdir intact and all sources match the current inputs"
+
+
 def extract_single_file(input_path: Path, extraction_mode: str, install_mode: str) -> dict:
     """Extract text and metadata from a single file path."""
     input_str = str(input_path)
-    
+
     if not input_path.exists():
         raise ExtractionError(f"File not found: {input_str}")
-        
+
     ext = input_path.suffix.lower()
     document_format = ext.lstrip(".")
     
@@ -1017,17 +1089,18 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     )
     try:
         file_size_mb = os.path.getsize(input_str) / (1024 * 1024)
+        file_sha256 = _sha256_file(input_str)
     except OSError as exc:
         raise ExtractionError(
             f"Could not read file size for {input_path.name}: {exc}"
         ) from exc
-    
     return {
         "source_file": str(input_path.resolve()),
         "filename": input_path.name,
         "format": document_format,
         "extraction_method": method,
         "file_size_mb": round(file_size_mb, 2),
+        "sha256": file_sha256,
         pages_label: pages,
         "pages_label": pages_label,
         "pages": pages,
@@ -1221,6 +1294,7 @@ def main():
                 "format": src["format"],
                 "extraction_method": src["extraction_method"],
                 "file_size_mb": src["file_size_mb"],
+                "sha256": src["sha256"],
                 "pages": src["pages"],
                 "pages_label": src["pages_label"],
                 "chars": src["chars"],
@@ -1282,3 +1356,4 @@ def main():
             print(f"     - {path.name}: {err}")
     else:
         print_support_note()
+

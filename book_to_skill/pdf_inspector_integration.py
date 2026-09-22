@@ -147,6 +147,12 @@ def _result_from_inspector(
     tokens = utils_module.estimate_tokens(text)
     try:
         file_size_mb = os.path.getsize(input_path) / (1024 * 1024)
+        # Import lazily rather than reaching into the (possibly fake) utils
+        # namespace: existing tests pass a minimal SimpleNamespace as
+        # utils_module, and hashing is a pure function of the file on disk —
+        # it must not depend on which utils object the hook was installed with.
+        from book_to_skill.utils import _sha256_file
+        file_sha256 = _sha256_file(str(input_path))
     except OSError as exc:
         raise ExtractionError(
             f"Could not read file size for {input_path.name}: {exc}"
@@ -158,6 +164,7 @@ def _result_from_inspector(
         "format": "pdf",
         "extraction_method": "pdf-inspector",
         "file_size_mb": round(file_size_mb, 2),
+        "sha256": file_sha256,
         "pages": pages,
         "pages_label": "pages",
         "chars": len(text),
@@ -272,3 +279,4 @@ def enrich_pdf_inspector_metadata(metadata_path: str | Path | None = None) -> No
 
 def _reset_state_for_tests() -> None:
     _INSPECTIONS.clear()
+
