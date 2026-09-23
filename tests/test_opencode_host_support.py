@@ -275,5 +275,11 @@ def test_opencode_destination_and_project_roots_are_documented():
 
 
 def test_opencode_is_in_unknown_host_prompt_and_reload_guidance():
-    assert "OpenCode, Hermes Agent, GitHub Copilot CLI, Amp, Codex, or Claude Code" in SKILL
+    # The prompt lists every supported host; new hosts are added as they land
+    # (#209 added OpenClaw), so assert OpenCode's presence rather than the
+    # frozen sentence from before that host list grew.
+    prompt_line = next(
+        line for line in SKILL.splitlines() if "Which agent are you running" in line
+    )
+    assert "OpenCode" in prompt_line
     assert "OpenCode:             start a new session" in SKILL

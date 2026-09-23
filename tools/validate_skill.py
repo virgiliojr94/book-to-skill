@@ -118,6 +118,14 @@ LENSES = {
             "name", "description", "allowed-tools", "license", "metadata",
             "homepage", "user-invocable", "disable-model-invocation",
             "command-dispatch", "command-tool", "command-arg-mode",
+        },
+        "reserved_name_words": set(),
+        "bash_tool_names": set(),
+        "unknown_tool_severity": "warn",
+        "enforces_allowed_tools": False,
+        "name_pattern": r"[a-z0-9][a-z0-9-]*",
+        "name_charset": "lowercase letters/digits/hyphens and start with a letter or digit",
+    },
     "opencode": {
         "label": "OpenCode",
         "tools": set(),
@@ -129,9 +137,6 @@ LENSES = {
         "reserved_name_words": set(),
         "bash_tool_names": set(),
         "unknown_tool_severity": "warn",
-        "enforces_allowed_tools": False,
-        "name_pattern": r"[a-z0-9][a-z0-9-]*",
-        "name_charset": "lowercase letters/digits/hyphens and start with a letter or digit",
         # OpenCode grants tool access through `permission.skill` in
         # opencode.json, not through `allowed-tools`.
         "enforces_allowed_tools": False,
@@ -288,4 +293,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 

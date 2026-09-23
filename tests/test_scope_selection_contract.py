@@ -69,17 +69,31 @@ def test_skill_has_no_merge_residue():
 
 
 def test_skill_has_exactly_one_selection_rule_list():
-    """#125 replaced the ask-on-fresh-install policy; its residue must not return."""
+    """#125 replaced the ask-on-fresh-install policy; its residue must not return.
+
+    The list must be ONE contiguous block (no duplicate or orphan rules) and the
+    host-identification prompt in the final rule must name every host the spec
+    supports. The rule count itself is expected to grow as hosts are added
+    (OpenClaw added rules 7-8); asserting a frozen count made this test fail on
+    every host addition (review request, 2026-09-22).
+    """
     assert "fresh machine" not in SKILL, "pre-#125 `fresh machine` policy text reappeared"
     assert "ask the user which root to create" not in SKILL, (
         "pre-#125 `ask the user which root to create` policy text reappeared"
     )
     rules = _selection_rules()
     numbers = [int(re.match(r"^(\d+)\.", rule).group(1)) for rule in rules]
-    assert numbers == [1, 2, 3, 4, 5, 6], (
-        f"`Selection rules:` must be one contiguous 1..6 list, got {numbers}"
+    assert numbers and numbers == list(range(1, len(numbers) + 1)), (
+        f"`Selection rules:` must be ONE contiguous 1..N list with no gaps or "
+        f"duplicates, got {numbers}"
     )
-    assert "Which agent are you running this in" in rules[-1], "rule 6 host prompt is missing"
+    prompt_rules = [r for r in rules if "Which agent are you running" in r]
+    assert len(prompt_rules) == 1, (
+        f"exactly one rule must ask the user which host they are running, "
+        f"got {len(prompt_rules)}: {[r[:60] for r in prompt_rules]}"
+    )
+    for host in ("Copilot CLI", "Amp", "Codex", "Claude Code"):
+        assert host in prompt_rules[0], f"host prompt must name {host}"
 
 
 def test_personal_default_stays_cross_agent_after_opencode_support():
