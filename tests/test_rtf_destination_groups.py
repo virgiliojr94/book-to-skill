@@ -136,6 +136,24 @@ class TestExistingBehaviourPreserved:
         assert "\t" in out
 
 
+class TestHexEscapedText:
+    """Standalone RTF hex bytes are text, not Unicode fallback bytes."""
+
+    def test_default_ansi_hex_escape_decodes_cp1252(self):
+        out = strip_rtf_fallback(r"{\rtf1\ansi caf\'e9 and \'93quoted\'94.}")
+        assert out == "café and “quoted”."
+
+    def test_declared_code_page_decodes_consecutive_bytes(self):
+        escaped = "".join(f"\\'{byte:02x}" for byte in "Привет".encode("cp1251"))
+        out = strip_rtf_fallback(r"{\rtf1\ansi\ansicpg1251 " + escaped + "}")
+        assert out == "Привет"
+
+    def test_declared_multibyte_code_page_decodes_each_run_together(self):
+        escaped = "".join(f"\\'{byte:02x}" for byte in "日本".encode("cp932"))
+        out = strip_rtf_fallback(r"{\rtf1\ansi\ansicpg932 " + escaped + "}")
+        assert out == "日本"
+
+
 class TestMalformedInputIsNotTruncated:
     def test_unterminated_skipped_group_falls_back(self):
         """Losing the whole body would be worse than leaking table residue."""
