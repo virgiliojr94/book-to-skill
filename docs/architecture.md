@@ -46,6 +46,8 @@ document into clean text + metadata; the agent turns that into a structured skil
                   .github/skills/ | .claude/skills/ | .agents/skills/  project-local (any host)
                   .hermes/skills/<category>/                         Hermes project-local
                   skills/                                                   OpenClaw workspace
+                  ~/.config/opencode/skills/                         OpenCode (own root; on request)
+                  .opencode/skills/                                  OpenCode project-local
                   scope: personal vs project-local (Step 5, BOOK_TO_SKILL_SCOPE)
                   SKILL.md         core frameworks + chapter & topic index (~4K)
                   chapters/*.md    on-demand, loaded only when asked
@@ -84,6 +86,7 @@ converter does not infer arbitrary `skills.load.extraDirs`.
 | `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text (see Security) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
 | `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw`) |
+| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|opencode`) |
 | `tools/scan_generated_skill.py` | advisory prompt-injection scan of a generated skill (see Security) |
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 
