@@ -234,6 +234,19 @@ _KN_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?ಅಧ್ಯಾಯ\s*([0-9{_KN_DIGITS}]+)\b"
 )
 
+# Malayalam chapter headings: "അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2".
+# The chapter word has two common spellings — അധ്യായം (modern) and അദ്ധ്യായം
+# (older ദ്ധ orthography), differing only in that conjunct — so both stems are
+# matched. Malayalam digits (U+0D66-U+0D6F) are positional like the other Indic
+# blocks above, so only a digit remap is needed. Requiring the full word
+# (including the final ം) then a number keeps prose that merely uses an
+# inflected form like "അധ്യായത്തിൽ" from matching.
+_ML_DIGITS = "൦-൯"
+_ML_DIGIT_MAP = str.maketrans("൦൧൨൩൪൫൬൭൮൯", "0123456789")
+_ML_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?അ(?:ധ്|ദ്ധ്)യായം\s*([0-9{_ML_DIGITS}]+)\b"
+)
+
 # Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
 # "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
 # unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
@@ -626,6 +639,9 @@ def _match_chapter_number(line: str) -> int | None:
     knm = _KN_CHAPTER.match(s)
     if knm:
         return int(knm.group(1).translate(_KN_DIGIT_MAP))
+    mlm = _ML_CHAPTER.match(s)
+    if mlm:
+        return int(mlm.group(1).translate(_ML_DIGIT_MAP))
     rum = _RU_CHAPTER.match(s)
     if rum:
         return int(rum.group(1))
@@ -655,6 +671,7 @@ def _chapter_number(line: str) -> int | None:
     Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
+    Malayalam ("അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2"),
     Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
