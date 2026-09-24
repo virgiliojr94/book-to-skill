@@ -1245,6 +1245,7 @@ def main():
                 "images_dropped": src["images_dropped"],
                 "chapters_detected": src["chapters_detected"],
                 "chapters_method": src["chapters_method"],
+                "chapter_headings_sample": src["chapter_headings_sample"],
                 "has_toc": src["has_toc"]
             }
             for src in extracted_sources
