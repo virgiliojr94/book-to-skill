@@ -11,7 +11,7 @@ import pytest
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
-from book_to_skill.utils import detect_structure, extract_single_file
+from book_to_skill import utils
 
 
 def _numbered_book(title):
@@ -54,7 +54,7 @@ def test_cli_preserves_source_chapter_samples(tmp_path, texts, expected_samples)
         path.write_text(text, encoding="utf-8")
         paths.append(path)
 
-    extracted = [extract_single_file(path, "text", "no") for path in paths]
+    extracted = [utils.extract_single_file(path, "text", "no") for path in paths]
     # Establish the input-side contract independently of the JSON projection.
     assert [src["chapter_headings_sample"] for src in extracted] == expected_samples
 
@@ -74,7 +74,7 @@ def test_cli_preserves_source_chapter_samples(tmp_path, texts, expected_samples)
     for saved, original in zip(metadata["sources"], extracted):
         for key in ("source_file", "chapters_detected", "chapters_method", "has_toc"):
             assert saved[key] == original[key]
-    consolidated = detect_structure("\n\n".join(src["text"] for src in extracted))
+    consolidated = utils.detect_structure("\n\n".join(src["text"] for src in extracted))
     for key in ("chapters_detected", "chapters_method", "chapter_headings_sample"):
         assert metadata[key] == consolidated[key]
     output_text = (workdir / "full_text.txt").read_text(encoding="utf-8")
