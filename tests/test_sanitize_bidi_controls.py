@@ -53,6 +53,31 @@ OTHER_INVISIBLES = (
     "ﾠ"  # HALFWIDTH HANGUL FILLER
 )
 
+# Default_Ignorable carriers outside the ranges the predicate already covered:
+# the Mongolian free variation selectors, the Khmer inherent vowels and the
+# Duployan shorthand format controls. U+180F is unassigned before Unicode 14.0,
+# which is harmless here — the blocklist is static, so it is stripped either way.
+DEFAULT_IGNORABLE_CARRIERS = (
+    0x180B, 0x180C, 0x180D, 0x180F,
+    0x17B4, 0x17B5,
+    0x1BCA0, 0x1BCA1, 0x1BCA2, 0x1BCA3,
+)
+
+# Visible characters in the same blocks, and the Cf code points Unicode
+# subtracts from Default_Ignorable because they are meant to be seen.
+CARRIER_NEIGHBOURS_KEPT = (
+    0x180A,   # MONGOLIAN NIRUGU
+    0x17B6,   # KHMER VOWEL SIGN AA
+    0x1BC9F,  # DUPLOYAN PUNCTUATION CHINOOK FULL STOP
+    0x0600,   # ARABIC NUMBER SIGN
+    0x06DD,   # ARABIC END OF AYAH
+    0x08E2,   # ARABIC DISPUTED END OF AYAH
+    0x110BD,  # KAITHI NUMBER SIGN
+    0x110CD,  # KAITHI NUMBER SIGN ABOVE
+    0x13430,  # EGYPTIAN HIEROGLYPH VERTICAL JOINER
+    0x13431,  # EGYPTIAN HIEROGLYPH HORIZONTAL JOINER
+)
+
 
 class TestBidiControlRemoval:
     def test_all_bidi_controls_removed(self):
@@ -133,6 +158,8 @@ class TestLegitimateTextPreserved:
             "บทที่ ๓",              # Thai
             "Chapter 1: Café — naïve",  # Latin with accents and an em dash
             "hangul 한글 normal",
+            "ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ",         # Mongolian script, no free variation selector
+            "ជំពូក ១",                # Khmer "chapter 1", real inherent vowels
         ],
     )
     def test_scripts_with_no_invisibles_are_unchanged(self, sample):
@@ -239,3 +266,59 @@ class TestSmugglingChannelsBeyondTheTagBlock:
             assert _is_invisible(codepoint), (
                 f"scanner does not flag U+{codepoint:04X} but extraction strips it"
             )
+
+
+class TestDefaultIgnorableCarriers:
+    """Default_Ignorable carriers no earlier group in the predicate reached.
+
+    U+180E MONGOLIAN VOWEL SEPARATOR was stripped while the free variation
+    selectors beside it were not, so a run of them after any base character
+    passed both the extractor and the scanner untouched.
+    """
+
+    def test_carriers_are_stripped(self):
+        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
+            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+            carrier = chr(codepoint)
+            assert sanitize_extracted_text(f"a{carrier}b") == ("ab", 1)
+
+    def test_a_carrier_run_encodes_nothing_visible(self):
+        # The variation-selector trick in the Mongolian block: a run of selector
+        # values after one base character, rendering as a single letter.
+        payload = "a" + "".join(chr(cp) for cp in (0x180B, 0x180C, 0x180D, 0x180F)) * 3
+        assert sanitize_extracted_text(payload) == ("a", 12)
+
+    def test_scanner_flags_the_carriers(self):
+        from scan_generated_skill import _is_invisible
+
+        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
+            assert _is_invisible(codepoint), (
+                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
+            )
+
+    def test_visible_neighbours_and_semantic_controls_are_kept(self):
+        # The Arabic and Kaithi number signs and the hieroglyph joiners are Cf
+        # but not Default_Ignorable — Unicode subtracts them as "exceptional
+        # format characters that should be visible", the same reason #178 kept
+        # U+2800. A blanket Cf rule would take them.
+        for codepoint in CARRIER_NEIGHBOURS_KEPT:
+            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+
+    def test_legitimate_mongolian_keeps_its_letters(self):
+        # Stripping a free variation selector drops a glyph-shape hint, not a
+        # letter: the word is still there to read and index.
+        word = "ᠮᠣᠩᠭᠣᠯ"
+        sanitized, removed = sanitize_extracted_text(f"{word}{chr(0x180B)} ᠪᠢᠴᠢᠭ")
+        assert (sanitized, removed) == (f"{word} ᠪᠢᠴᠢᠭ", 1)
+
+    def test_legitimate_khmer_heading_is_untouched(self):
+        # "chapter 1" in Khmer: U+17C6 and U+17BC are real vowel signs, not the
+        # invisible inherent vowels, so the heading survives for chapter
+        # detection.
+        heading = "ជំពូក ១"
+        assert sanitize_extracted_text(heading) == (heading, 0)
+
+    def test_legitimate_duployan_shorthand_is_untouched(self):
+        # Duployan letters plus the visible Chinook full stop.
+        shorthand = "".join(chr(cp) for cp in (0x1BC02, 0x1BC1B, 0x1BC46, 0x1BC9F))
+        assert sanitize_extracted_text(shorthand) == (shorthand, 0)
