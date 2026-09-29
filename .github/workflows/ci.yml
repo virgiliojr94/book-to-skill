@@ -45,6 +45,29 @@ jobs:
         # not gated yet to avoid blocking on cosmetic churn.
         run: ruff check --select E9,F --target-version py310 book_to_skill/ scripts/ tests/ tools/
 
+  optional-deps:
+    name: test (optional deps installed)
+    # The `test` matrix installs only pytest, so the five `importorskip`-gated
+    # tests (4x trafilatura in test_html_boilerplate_extraction.py, 1x bs4 in
+    # test_html_block_boundaries.py) never execute: the three
+    # `extract_html_content()` fall-through branches and the bs4/stdlib
+    # chapter-count convergence check exist precisely to pin production
+    # behavior. One extra single-Python leg runs them; the matrix above and the
+    # dependency-free `smoke` job below are deliberately left alone, so nothing
+    # about the dependency-free guarantee changes.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install pytest and the optional test deps
+        # Test-time only, consistent with the cost discipline in AGENTS.md --
+        # no new runtime dependency is introduced.
+        run: pip install pytest beautifulsoup4 trafilatura
+      - name: Run test suite
+        run: pytest tests/ -q
+
   smoke:
     name: smoke (dependency-free extraction)
     runs-on: ubuntu-latest
