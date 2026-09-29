@@ -265,6 +265,21 @@ _ML_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?അ(?:ധ്|ദ്ധ്)യായം\s*([0-9{_ML_DIGITS}]+)\b"
 )
 
+# Gujarati chapter headings: "પ્રકરણ 1", "અધ્યાય ૧", "## પ્રકરણ 2".
+# Gujarati uses two distinct words for "chapter" — પ્રકરણ (common in modern
+# books) and અધ્યાય (classical/religious) — so both are matched. અધ્યાય shares
+# its transliteration with Devanagari अध्याय (the Hindi block above) but not its
+# codepoints (U+0A85.. vs U+0905..), so the two scripts cannot collide. Gujarati
+# digits (U+0AE6-U+0AEF) are positional like the other Indic blocks above, so
+# only a digit remap is needed. Unlike Malayalam, an inflected form keeps the
+# whole word ("પ્રકરણમાં" is the word + માં), so requiring a number right after
+# it is what keeps prose from matching.
+_GU_DIGITS = "૦-૯"
+_GU_DIGIT_MAP = str.maketrans("૦૧૨૩૪૫૬૭૮૯", "0123456789")
+_GU_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?(?:પ્રકરણ|અધ્યાય)\s*([0-9{_GU_DIGITS}]+)\b"
+)
+
 # Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
 # "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
 # unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
@@ -693,6 +708,9 @@ def _match_chapter_number(
     mlm = _ML_CHAPTER.match(s)
     if mlm:
         return int(mlm.group(1).translate(_ML_DIGIT_MAP))
+    gum = _GU_CHAPTER.match(s)
+    if gum:
+        return int(gum.group(1).translate(_GU_DIGIT_MAP))
     rum = _RU_CHAPTER.match(s)
     if rum:
         return int(rum.group(1))
@@ -726,6 +744,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
     Malayalam ("അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2"),
+    Gujarati ("પ્રકરણ 1", "અધ્યાય ૧", "## પ્રકરણ 2"),
     Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
