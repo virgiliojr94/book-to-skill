@@ -68,8 +68,7 @@ def clean_pdftotext(text: str) -> str:
         text = "\n".join(kept)
     else:
         text = text.replace("\f", "\n")
-    # ponytail: naive dehyphenation; may join a genuinely-hyphenated wrapped
-    # compound ("well-\nknown" -> "wellknown"). Dictionary-aware split if it bites.
+    # minimal: ceiling >5% technical books with hyphen-wrapped compounds misjoined (e.g. well-known->wellknown), upgrade: dictionary-aware splitter — D1 DEBT.md
     return _PDF_HYPHEN_WRAP.sub(r"\1\2", text)
 
 
