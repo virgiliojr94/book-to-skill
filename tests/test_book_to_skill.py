@@ -748,6 +748,35 @@ class TestDetectStructure:
         assert _chapter_number("ഈ അധ്യായത്തിൽ നാം ചർച്ച ചെയ്യുന്നു") is None
         assert _chapter_number("അധ്യായം") is None
 
+    def test_detects_gujarati_chapters(self):
+        """Gujarati headings: both words (પ્રકરણ/અધ્યાય), Gujarati or Arabic digits."""
+        text = (
+            "પ્રકરણ ૧ પરિચય\nસારાંશ\n"
+            "અધ્યાય ૨ પદ્ધતિઓ\nસારાંશ\n"
+            "પ્રકરણ 3 પરિણામો\nસારાંશ"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_gujarati_markdown_prefix(self):
+        text = "## પ્રકરણ ૧ પહેલું\nસારાંશ\n## અધ્યાય ૨ બીજું\nસારાંશ"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_gujarati_prose_is_not_a_chapter_heading(self):
+        """Inflected forms (પ્રકરણમાં/અધ્યાયમાં) and bare words are not headings."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("આ પ્રકરણમાં આપણે ચર્ચા કરીશું") is None
+        assert _chapter_number("આ અધ્યાયમાં આપણે ચર્ચા કરીશું") is None
+        assert _chapter_number("પ્રકરણ") is None
+        assert _chapter_number("અધ્યાય") is None
+
+    def test_gujarati_adhyay_does_not_collide_with_hindi(self):
+        """Gujarati અધ્યાય (U+0A85…) and Devanagari अध्याय (U+0905…) are distinct."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("અધ્યાય ૫") == 5
+        assert _chapter_number("अध्याय ५") == 5
+
     def test_detects_russian_chapters(self):
         """Russian headings: `Глава N`, case-insensitive, with Arabic digits."""
         text = (
