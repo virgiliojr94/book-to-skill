@@ -73,11 +73,46 @@ _ANNOTATION_FORMAT_CODEPOINTS = frozenset({
     0xFFFB,  # INTERLINEAR ANNOTATION TERMINATOR
 })
 
+# Default_Ignorable carriers that none of the other groups here reach. Like the
+# variation selectors in _VARIATION_SELECTOR_RANGES below they are applied after
+# a base character and render as nothing, so a run of them encodes a payload the
+# reader never sees; unlike them they are spread over three blocks and two
+# categories, so neither a single range nor a Cf filter catches all of them.
+# U+180E just above is the same Mongolian block, which is what makes the free
+# variation selectors beside it an omission rather than a decision.
+#
+# These are the assigned Default_Ignorable_Code_Point entries the predicate did
+# not already cover, per DerivedCoreProperties.txt — not a set that closes the
+# property for good. U+180F only became assigned in Unicode 14.0, so a newer UCD
+# can add more; a static list is the trade-off this file already makes.
+#
+# Dropping them costs what _VARIATION_SELECTOR_RANGES already accepts: a
+# glyph-shaping hint on a character that still renders. It does mean genuine
+# Mongolian and Khmer text comes out shaped differently, which is why the visible
+# neighbours stay out of this set — U+180A MONGOLIAN NIRUGU, U+17B6 KHMER VOWEL
+# SIGN AA, U+1BC9F DUPLOYAN PUNCTUATION CHINOOK FULL STOP — along with the Cf
+# code points Unicode subtracts from Default_Ignorable for carrying meaning: the
+# Arabic and Kaithi number signs and the Egyptian hieroglyph joiners. That is the
+# same line #178 drew around U+2800.
+_DEFAULT_IGNORABLE_CARRIER_CODEPOINTS = frozenset({
+    0x180B,   # MONGOLIAN FREE VARIATION SELECTOR ONE
+    0x180C,   # MONGOLIAN FREE VARIATION SELECTOR TWO
+    0x180D,   # MONGOLIAN FREE VARIATION SELECTOR THREE
+    0x180F,   # MONGOLIAN FREE VARIATION SELECTOR FOUR (assigned in Unicode 14.0)
+    0x17B4,   # KHMER VOWEL INHERENT AQ
+    0x17B5,   # KHMER VOWEL INHERENT AA
+    0x1BCA0,  # SHORTHAND FORMAT LETTER OVERLAP
+    0x1BCA1,  # SHORTHAND FORMAT CONTINUING OVERLAP
+    0x1BCA2,  # SHORTHAND FORMAT DOWN STEP
+    0x1BCA3,  # SHORTHAND FORMAT UP STEP
+})
+
 _INVISIBLE_CODEPOINTS = (
     _ZERO_WIDTH_CODEPOINTS
     | _BIDI_CONTROL_CODEPOINTS
     | _INVISIBLE_LETTER_CODEPOINTS
     | _ANNOTATION_FORMAT_CODEPOINTS
+    | _DEFAULT_IGNORABLE_CARRIER_CODEPOINTS
 )
 
 # 4. The Unicode tag block. Originally language tags, now used to smuggle an
