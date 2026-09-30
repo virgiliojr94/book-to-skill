@@ -668,6 +668,33 @@ class TestDetectStructure:
         assert _chapter_number("এই অধ্যায়ে আমরা আলোচনা করব") is None
         assert _chapter_number("অধ্যায়") is None
 
+    def test_detects_odia_chapters(self):
+        """Odia headings: `ଅଧ୍ୟାୟ N`, Odia or Arabic digits."""
+        text = (
+            "ଅଧ୍ୟାୟ ୧ ପରିଚୟ\nସାରାଂଶ\n"
+            "ଅଧ୍ୟାୟ ୨ ପଦ୍ଧତି\nସାରାଂଶ\n"
+            "ଅଧ୍ୟାୟ 3 ଫଳାଫଳ\nସାରାଂଶ"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_odia_markdown_prefix(self):
+        text = "## ଅଧ୍ୟାୟ ୧ ପ୍ରଥମ\nସାରାଂଶ\n## ଅଧ୍ୟାୟ ୨ ଦ୍ୱିତୀୟ\nସାରାଂଶ"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_odia_prose_is_not_a_chapter_heading(self):
+        """An inflected form (ଅଧ୍ୟାୟରେ) or a bare word is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("ଏହି ଅଧ୍ୟାୟରେ ଆମେ ଆଲୋଚନା କରିବା") is None
+        assert _chapter_number("ଅଧ୍ୟାୟ") is None
+
+    def test_odia_does_not_collide_with_bengali(self):
+        """Odia ଅଧ୍ୟାୟ (U+0B05…) and Bengali অধ্যায় (U+0985…) are distinct."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("ଅଧ୍ୟାୟ ୫") == 5
+        assert _chapter_number("অধ্যায় ৫") == 5
+
     def test_detects_tamil_chapters(self):
         """Tamil headings: `அத்தியாயம் N`, with Tamil or Arabic digits."""
         text = (

@@ -217,6 +217,19 @@ _BN_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?অধ্যায়\s*([0-9{_BN_DIGITS}]+)\b"
 )
 
+# Odia chapter headings: "ଅଧ୍ୟାୟ 1", "ଅଧ୍ୟାୟ ୧", "## ଅଧ୍ୟାୟ 2".
+# ଅଧ୍ୟାୟ ("chapter") + a number. Grouped next to Bengali because both are
+# Eastern Brahmic and the words look alike, but the scripts occupy separate
+# blocks (Odia U+0B00-U+0B7F, Bengali U+0980-U+09FF), so the two patterns
+# cannot see each other's text. Odia digits (U+0B66-U+0B6F) are positional, so
+# only a digit remap is needed. Requiring a number keeps prose that merely uses
+# an inflected form ("ଅଧ୍ୟାୟରେ", a locative suffix) from matching.
+_OR_DIGITS = "୦-୯"
+_OR_DIGIT_MAP = str.maketrans("୦୧୨୩୪୫୬୭୮୯", "0123456789")
+_OR_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?ଅଧ୍ୟାୟ\s*([0-9{_OR_DIGITS}]+)\b"
+)
+
 # Tamil chapter headings: "அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2".
 # அத்தியாயம் ("chapter") + a number. Tamil digits (U+0BE6-U+0BEF) are positional
 # like the Devanagari/Bengali blocks above, so only a digit remap is needed.
@@ -681,6 +694,9 @@ def _match_chapter_number(
     bm = _BN_CHAPTER.match(s)
     if bm:
         return int(bm.group(1).translate(_BN_DIGIT_MAP))
+    orm = _OR_CHAPTER.match(s)
+    if orm:
+        return int(orm.group(1).translate(_OR_DIGIT_MAP))
     tam = _TA_CHAPTER.match(s)
     if tam:
         return int(tam.group(1).translate(_TA_DIGIT_MAP))
@@ -722,6 +738,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Chinese ("第三章 …", "## 一 · …", "## 第一讲"), Thai ("บทที่ 3",
     "## บทที่ ๑"), Hindi ("अध्याय 1", "अध्याय १", "## अध्याय 2"),
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
+    Odia ("ଅଧ୍ୟାୟ 1", "ଅଧ୍ୟାୟ ୧", "## ଅଧ୍ୟାୟ 2"),
     Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
