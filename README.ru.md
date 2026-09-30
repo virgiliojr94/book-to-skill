@@ -75,8 +75,7 @@
 
 ## 📦 Что получается
 
-`/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/`, `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent, или `${OPENCLAW_STATE_DIR:-$HOME/.openclaw}/skills/<slug>/` для OpenClaw):
-`/book-to-skill your-book.pdf` (или folder/glob) создаёт skill в директории skills агента (`~/.copilot/skills/<slug>/`, `~/.agents/skills/<slug>/`, `~/.claude/skills/<slug>/` `$HERMES_HOME/skills/<category>/<slug>/` для Hermes Agent или `~/.config/opencode/skills/<slug>/` для OpenCode):
+`/book-to-skill your-book.pdf` (или путь к папке, шаблон файлов либо их список) по умолчанию создаёт одну копию skill в общей пользовательской директории `~/.agents/skills/<slug>/`. Её напрямую находят Copilot CLI, Amp, Codex, OpenCode и OpenClaw с каталогом состояния по умолчанию. OpenCode также читает собственную директорию `~/.config/opencode/skills/<slug>/`; если задан нестандартный `OPENCLAW_STATE_DIR`, для OpenClaw следует использовать `skills/` в активном каталоге состояния. При запуске в Claude Code конвертер пытается создать символьную ссылку `~/.claude/skills/<slug>/` и проверяет её чтением: если проверка не прошла, об этом сообщается в отчёте. Hermes Agent не сканирует общую директорию; его личные skills размещаются по категориям в `${HERMES_HOME:-$HOME/.hermes}/skills/<category>/<slug>/`. Управляемые директории OpenClaw и OpenCode, а также директории проекта можно выбрать явно:
 
 | File | Purpose | Size |
 |------|---------|------|
@@ -214,5 +213,5 @@ MIT — на converter в этом репо, **не** на книги/докум
 
 ---
 
-<!-- translation-meta: source=README.md@903d102fe8f67ea0fe3db7bea85eec7d8b505967 date=2026-08-14 maintainer=@MonteNegroX -->
-<sub>Russian translation synced to English README at commit <code>903d102</code> · English remains canonical · Maintainer: <a href="https://github.com/MonteNegroX">@MonteNegroX</a></sub>
+<!-- translation-meta: source=README.md@c108d25b0cb58e1bdc361f3de02ed9f37075152f date=2026-10-01 scope=destination-policy maintainer=@MonteNegroX -->
+<sub>Destination policy synced to English README at commit <code>c108d25</code> · English remains canonical · Maintainer: <a href="https://github.com/MonteNegroX">@MonteNegroX</a></sub>
