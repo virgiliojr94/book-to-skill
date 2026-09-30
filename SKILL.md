@@ -256,6 +256,8 @@ Read that run's `metadata.json` to inspect the results.
 
 **Always confirm the extraction is the document you asked for** before generating anything: check `filename` / `source_file` in `metadata.json`, or the `SOURCE:` header on the first line of `full_text.txt`. If you are waiting on a background run, wait on *its* specific workdir — polling a shared path can surface a different run's output.
 
+If `BOOK_TYPE=technical`, check each PDF source's `fallback_reason` in `metadata.json`. When set, tell the user that Docling did not produce the technical extraction and ask whether to retry or continue with the text fallback before generating.
+
 ---
 
 ## Step 2.5 — Pre-flight cost estimate
