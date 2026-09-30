@@ -399,6 +399,47 @@ _TOC_PATTERN = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
+# Structural extraction sees every heading at the selected depth, including
+# the book's framing sections. These whole-title guards remove only conventional
+# front/back matter; instructional titles such as "Indexing Strategies" and
+# "Glossary of Terms" must remain chapters.
+_FRONT_MATTER_HEADERS = (
+    "preface",
+    "foreword",
+    "acknowledgements",
+    "acknowledgments",
+    "dedication",
+    "copyright",
+    "epigraph",
+    "prologue",
+)
+_BACK_MATTER_HEADERS = (
+    "bibliography",
+    "references",
+    "works cited",
+    "further reading",
+    "index",
+    "glossary",
+    "notes",
+    "endnotes",
+    "footnotes",
+    "colophon",
+    "about the author",
+    "about the authors",
+)
+_NON_CHAPTER_HEADERS = frozenset((*_FRONT_MATTER_HEADERS, *_BACK_MATTER_HEADERS))
+_NON_CHAPTER_PREFIX = re.compile(r"^(?:appendix|appendices|part)\b", re.IGNORECASE)
+
+
+def _is_non_chapter_section(title: str) -> bool:
+    """Return whether *title* is conventional book framing, not a chapter."""
+    normalized = title.strip()
+    return (
+        normalized.casefold() in _NON_CHAPTER_HEADERS
+        or bool(_TOC_PATTERN.fullmatch(normalized))
+        or bool(_NON_CHAPTER_PREFIX.match(normalized))
+    )
+
 # ATX-style heading: "# Title", "## Section", AsciiDoc "= Title", "== Section".
 # The required space after the marker distinguishes an AsciiDoc "== X" from a
 # reStructuredText underline "=====" (no space) — the latter is intentionally
@@ -456,7 +497,7 @@ _MIN_NUMBERED_BODY_CHARS = 200
 
 
 def _numbered_titles_are_structural(
-    entries: list[tuple[str, int]], heading_lines: list[int], lines: list[str]
+    entries: list[tuple[str, int, str]], heading_lines: list[int], lines: list[str]
 ) -> bool:
     """Decide whether digit-led titles at one depth are chapters or list items.
 
@@ -470,15 +511,15 @@ def _numbered_titles_are_structural(
         return False
     ordered = sorted(heading_lines)
     bodies = []
-    for _, index in entries:
+    for _, index, _ in entries:
         after = [ln for ln in ordered if ln > index]
         end = after[0] if after else len(lines)
         bodies.append(sum(len(ln) for ln in lines[index + 1:end]))
     return statistics.median(bodies) >= _MIN_NUMBERED_BODY_CHARS
 
 
-def _structural_chapter_count(text: str) -> int:
-    """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources.
+def _structural_chapter_headings(text: str) -> list[str]:
+    """Return chapter-like structural headings in Markdown/AsciiDoc/RST sources.
 
     Recognizes ATX headings ("# Title", "== Section") and setext/RST underline
     headings (a title line directly above a row of "=" or "-"). Groups distinct
@@ -494,11 +535,14 @@ def _structural_chapter_count(text: str) -> int:
     not match).
     """
     lines = text.splitlines()
-    levels: dict[int, set[str]] = {}
+    # Map normalized titles to their original representation. Dict insertion
+    # order makes the returned sample match the source order while preserving
+    # the previous case-insensitive de-duplication behavior.
+    levels: dict[int, dict[str, str]] = {}
     # Digit-led titles are held back and judged per depth at the end (see
     # _numbered_titles_are_structural): "## 1. Introduction" and "## 5 Setup"
     # are the same string shape, so the line alone cannot decide.
-    numbered: dict[int, list[tuple[str, int]]] = {}
+    numbered: dict[int, list[tuple[str, int, str]]] = {}
     heading_lines: list[int] = []
     fenced = _closed_fence_line_numbers(lines)
     prev = ""  # previous non-fence line (stripped); a setext title candidate
@@ -523,8 +567,9 @@ def _structural_chapter_count(text: str) -> int:
             and re.search(r"\w", prev)
         ):
             depth = 1 if s[0] == "=" else 2
-            levels.setdefault(depth, set()).add(prev.lower())
             heading_lines.append(index)
+            if not _is_non_chapter_section(prev):
+                levels.setdefault(depth, {}).setdefault(prev.casefold(), prev)
             prev = ""
             continue
         # ATX heading ("# Title", "== Section").
@@ -535,26 +580,38 @@ def _structural_chapter_count(text: str) -> int:
             # Reject empty and all-punctuation ("=====" table-border) titles.
             if title and re.search(r"\w", title):
                 heading_lines.append(index)
-                if title[0].isdigit():
-                    numbered.setdefault(depth, []).append((title, index))
-                else:
-                    levels.setdefault(depth, set()).add(title)
+                if not _is_non_chapter_section(title):
+                    if title[0].isdigit():
+                        numbered.setdefault(depth, []).append((title, index, s))
+                    else:
+                        levels.setdefault(depth, {}).setdefault(title, s)
             # An ATX heading line is not a setext title for the next line.
             prev = ""
             continue
         prev = s
     for depth, entries in numbered.items():
         if _numbered_titles_are_structural(entries, heading_lines, lines):
-            levels.setdefault(depth, set()).update(title for title, _ in entries)
+            level = levels.setdefault(depth, {})
+            for title, _, sample in entries:
+                level.setdefault(title, sample)
     if not levels:
-        return 0
+        return []
     for depth in sorted(levels):
         if len(levels[depth]) >= 2:
-            return len(levels[depth])
+            return list(levels[depth].values())
     # No level has >= 2 distinct headings: a thin doc (e.g. one heading per
     # level). Count them all — this path runs only as a fallback when numeric
     # chapter detection already found zero, so it cannot inflate real books.
-    return sum(len(titles) for titles in levels.values())
+    return [
+        title
+        for depth in sorted(levels)
+        for title in levels[depth].values()
+    ]
+
+
+def _structural_chapter_count(text: str) -> int:
+    """Count chapter-like structural headings in Markdown/AsciiDoc/RST sources."""
+    return len(_structural_chapter_headings(text))
 
 
 def _cn_numeral_to_int(s: str) -> int | None:
@@ -803,17 +860,24 @@ def detect_structure(text: str) -> dict:
     if numeric_count >= 2:
         chapters_detected = numeric_count
         chapters_method = "numeric"
+        chapter_headings_sample = headings[:10]
     else:
         # A single stray number (e.g. a Roman numeral inside an example paper
         # reproduced in the book, or a lone "Part 1") is not enough to suppress
         # the structural (Markdown/AsciiDoc) heading count, so course-style
         # books with "### Unit N" headings still get counted via max().
-        structural_count = _structural_chapter_count(text)
+        structural_headings = _structural_chapter_headings(text)
+        structural_count = len(structural_headings)
         chapters_detected = max(numeric_count, structural_count)
         chapters_method = (
             "structural" if structural_count > numeric_count
             else "numeric" if numeric_count
             else "none"
+        )
+        chapter_headings_sample = (
+            structural_headings[:10]
+            if chapters_method == "structural"
+            else headings[:10]
         )
 
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
@@ -822,7 +886,7 @@ def detect_structure(text: str) -> dict:
     return {
         "chapters_detected": chapters_detected,
         "chapters_method": chapters_method,
-        "chapter_headings_sample": headings[:10],
+        "chapter_headings_sample": chapter_headings_sample,
         "has_toc": has_toc,
     }
 

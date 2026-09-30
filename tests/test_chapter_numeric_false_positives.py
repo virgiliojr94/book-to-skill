@@ -119,7 +119,7 @@ class TestCodeLinesAreNotChapters:
 
         assert result["chapters_method"] == "structural"
         assert result["chapters_detected"] == 2
-        assert result["chapter_headings_sample"] == []
+        assert result["chapter_headings_sample"] == ["## Real One", "## Real Two"]
 
     def test_prose_and_code_do_not_steal_the_numeric_branch(self):
         text = (
@@ -134,7 +134,11 @@ class TestCodeLinesAreNotChapters:
 
         assert result["chapters_method"] == "structural"
         assert result["chapters_detected"] == 3
-        assert result["chapter_headings_sample"] == []
+        assert result["chapter_headings_sample"] == [
+            "## Real One",
+            "## Real Two",
+            "## Real Three",
+        ]
 
 
 class TestRealNumericBooksAreUnaffected:

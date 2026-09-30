@@ -42,7 +42,7 @@ UNICODE = "第一章 緒論\n\nBody one.\n\n第二章 架構\n\nBody two.\n"
             [[f"# Chapter {n}: {title} {n}" for n in range(1, 11)]
              for title in ("Beta", "Alpha")],
         ),
-        ([PLAIN, STRUCTURAL], [[], []]),
+        ([PLAIN, STRUCTURAL], [[], ["## First topic", "## Second topic"]]),
         ([UNICODE], [["第一章 緒論", "第二章 架構"]]),
     ],
     ids=["single", "multi", "reversed", "empty-samples", "unicode"],
