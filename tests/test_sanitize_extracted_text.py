@@ -84,7 +84,9 @@ def test_main_writes_only_sanitized_text_and_metrics(tmp_path, monkeypatch):
 
     main()
 
-    extracted = output_text.read_text(encoding="utf-8")
+    # Read the persisted characters without universal-newline conversion so
+    # the length matches the corpus representation counted in metadata.
+    extracted = output_text.read_bytes().decode("utf-8")
     metadata = json.loads(output_meta.read_text(encoding="utf-8"))
     expected_source, _ = sanitize_extracted_text(
         source.read_bytes().decode("utf-8")

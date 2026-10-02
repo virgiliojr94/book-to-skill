@@ -1349,8 +1349,11 @@ def main():
     # Combine texts
     consolidated_text = "".join(combined_texts).strip()
     
-    # Write combined text
-    OUTPUT_TEXT.write_text(consolidated_text, encoding="utf-8")
+    # Preserve existing source line endings. On Windows, the default newline
+    # translation turns an extracted CRLF into CRCRLF and breaks setext headings
+    # when the persisted corpus is read back.
+    with OUTPUT_TEXT.open("w", encoding="utf-8", newline="\n") as output_file:
+        output_file.write(consolidated_text)
     
     # Consolidate metadata
     total_file_size_mb = sum(src["file_size_mb"] for src in extracted_sources)
