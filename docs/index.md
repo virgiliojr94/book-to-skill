@@ -1,5 +1,5 @@
 ---
-description: "Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI, Amp, Hermes Agent and OpenCode, OpenClaw. Named frameworks and decision rules, loaded on demand."seo_title: "book-to-skill - Turn Any Book Into an AI Agent Skill"
+description: "Turn any book, PDF or EPUB into a structured agent skill for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent, OpenCode, and OpenClaw. Named frameworks and decision rules, loaded on demand."seo_title: "book-to-skill - Turn Any Book Into an AI Agent Skill"
 hide:
   - navigation
   - toc
@@ -12,7 +12,7 @@ hide:
   "name": "book-to-skill",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Linux, macOS, Windows",
-"description": "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, RTF, MOBI/AZW) into structured, on-demand agent skills for Claude Code, GitHub Copilot CLI, Amp, Hermes Agent and OpenCode, OpenClaw.",  "url": "https://booktoskill.is-a.dev/",
+"description": "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, RTF, MOBI/AZW) into structured, on-demand agent skills for Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent, OpenCode, and OpenClaw.",  "url": "https://booktoskill.is-a.dev/",
   "codeRepository": "https://github.com/virgiliojr94/book-to-skill",
   "license": "https://opensource.org/licenses/MIT",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -61,13 +61,13 @@ Turn any book or document into a structured, on-demand agent skill — named fra
 
     ---
 
-One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, Amp, Hermes Agent, and OpenCode, OpenClaw    through the open Agent Skills standard.
+One `SKILL.md` runs on Claude Code, GitHub Copilot CLI, Amp, Codex, Hermes Agent, OpenCode, and OpenClaw through the open Agent Skills standard.
 
 </div>
 
 ## Install
 
-**As an agent skill** (gives you the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Hermes Agent, OpenCode, or OpenClaw):
+**As an agent skill** (gives you the `/book-to-skill` command in Claude Code, Copilot CLI, Amp, Codex, Hermes Agent, OpenCode, or OpenClaw):
 ```bash
 npx skills add virgiliojr94/book-to-skill
 # or manually:
