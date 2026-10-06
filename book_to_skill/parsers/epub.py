@@ -7,7 +7,7 @@ import sys
 import zipfile
 from urllib.parse import unquote, urlsplit
 
-from book_to_skill.parsers.html import _HTMLTextExtractor
+from book_to_skill.parsers.html import _HTMLTextExtractor, text_from_soup
 
 
 _IMAGE_EXTENSIONS = (
@@ -47,7 +47,7 @@ def extract_with_ebooklib(epub_path: str) -> str | None:
         parts = []
         for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
             soup = BeautifulSoup(item.get_content(), "html.parser")
-            parts.append(soup.get_text(separator="\n"))
+            parts.append(text_from_soup(soup))
         return "\n\n".join(parts)
     except ImportError:
         return None
