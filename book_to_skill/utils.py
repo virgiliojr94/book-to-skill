@@ -1470,6 +1470,28 @@ def main():
     # headings and make the result depend on the source-path length.
     structure_text = "\n\n".join(src["text"] for src in extracted_sources)
     consolidated_structure = detect_structure(structure_text)
+    structural_sources = [
+        src for src in extracted_sources
+        if src["chapters_method"] == "structural" and src["chapters_detected"] >= 2
+    ]
+    if (
+        len(extracted_sources) > 1
+        and structural_sources
+        and all(src["chapters_method"] != "numeric" for src in extracted_sources)
+    ):
+        # Each source has already selected its own chapter depth. Re-scanning
+        # the joined corpus selects the H1 source titles instead when there are
+        # multiple books with H2 chapters (issue #272). A lone heading in a
+        # source may only be its title, so it is not added to the chapter count.
+        consolidated_structure["chapters_detected"] = sum(
+            src["chapters_detected"] for src in structural_sources
+        )
+        consolidated_structure["chapter_headings_sample"] = [
+            heading
+            for src in structural_sources
+            for heading in src["chapter_headings_sample"]
+        ][:10]
+        consolidated_structure["chapters_method"] = "structural"
     # has_toc is a per-source property, so it has to be combined per source
     # rather than re-derived from the corpus. detect_structure only scans the
     # first ~30k chars, because a table of contents sits in a book's front
