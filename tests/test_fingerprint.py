@@ -105,8 +105,12 @@ def _make_metadata(tmp_path, src: Path, mode="text"):
     res = extract_single_file(src, mode, "ask")
     workdir = tmp_path / "work"
     workdir.mkdir(exist_ok=True)   # the happy path needs an EXISTING workdir
+    output_text = workdir / "full_text.txt"
+    output_text.write_text(res["text"], encoding="utf-8")
     return {
         "workdir": str(workdir),
+        "output_text": str(output_text),
+        "output_text_sha256": _sha256_file(str(output_text)),
         # extract_single_file's return dict has extraction_METHOD, not
         # extraction_MODE — the mode key only exists at metadata.json top level.
         # Take it from the mode parameter.

@@ -1023,7 +1023,7 @@ def resolve_input_files(paths: list[str]) -> list[Path]:
 
 
 def _sha256_file(path: str) -> str:
-    """Streaming sha256 — constant memory for multi-GB sources."""
+    """Streaming sha256 — constant memory for multi-GB sources and corpora."""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
@@ -1050,6 +1050,8 @@ def reuse_is_safe(current_inputs, metadata, current_mode):
       - metadata["extraction_mode"] == current_mode
       - the recorded sources match the current inputs one-to-one on
         filename AND sha256 — the recomputed fingerprints vs the recorded ones
+      - output_text resolves to a nonempty regular file inside the workdir,
+        readable with the recorded output_text_sha256 fingerprint
     Anything else: (False, reason) — the caller must start a fresh
     extraction (or ask the user when unsure), never resume.
     """
@@ -1090,7 +1092,31 @@ def reuse_is_safe(current_inputs, metadata, current_mode):
         if recorded_hash != current[filename]:
             return False, f"content changed for {filename}"
 
-    return True, "workdir intact and all sources match the current inputs"
+    output_text = metadata.get("output_text")
+    if not isinstance(output_text, str) or not output_text:
+        return False, "extracted output path missing or invalid"
+    recorded_output_hash = metadata.get("output_text_sha256")
+    if not recorded_output_hash:
+        return False, "no recorded output fingerprint — legacy metadata; re-extract"
+
+    try:
+        output_path = Path(output_text).resolve()
+        # Resolve symlinks before the containment check, and never hash a path
+        # outside this run's workdir, even if metadata names an existing file.
+        try:
+            output_path.relative_to(Path(workdir).resolve())
+        except ValueError:
+            return False, "extracted output is outside the recorded workdir"
+        if not output_path.is_file():
+            return False, "extracted output missing or not a regular file"
+        if output_path.stat().st_size == 0:
+            return False, "extracted output is empty"
+        if _sha256_file(str(output_path)) != recorded_output_hash:
+            return False, "extracted output content changed"
+    except (OSError, RuntimeError, ValueError):
+        return False, "extracted output unreadable or its path cannot be resolved"
+
+    return True, "workdir intact and all sources and extracted output match"
 
 
 def extract_single_file(input_path: Path, extraction_mode: str, install_mode: str) -> dict:
@@ -1454,6 +1480,9 @@ def main():
     # when the persisted corpus is read back.
     with OUTPUT_TEXT.open("w", encoding="utf-8", newline="\n") as output_file:
         output_file.write(consolidated_text)
+    # Fingerprint the bytes actually written, after the writer is closed, so
+    # encoding/line-ending differences are covered by the recovery check too.
+    output_text_sha256 = _sha256_file(str(OUTPUT_TEXT))
     
     # Consolidate metadata
     total_file_size_mb = sum(src["file_size_mb"] for src in extracted_sources)
@@ -1498,6 +1527,7 @@ def main():
         # run created, without having to reconstruct the per-run default path.
         "workdir": str(OUTPUT_DIR),
         "output_text": str(OUTPUT_TEXT),
+        "output_text_sha256": output_text_sha256,
         "total_sources": len(extracted_sources),
         "sources": [
             {
