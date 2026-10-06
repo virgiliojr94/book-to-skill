@@ -5,6 +5,20 @@ import sys
 from book_to_skill.exceptions import ExtractionError
 
 
+def _docx_inline_text(elem) -> str:
+    """Rebuild text runs without dropping explicit DOCX separators."""
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    text_parts: list[str] = []
+    for node in elem.iter():
+        if node.tag == f"{ns}t" and node.text:
+            text_parts.append(node.text)
+        elif node.tag == f"{ns}tab":
+            text_parts.append("\t")
+        elif node.tag in {f"{ns}br", f"{ns}cr"}:
+            text_parts.append("\n")
+    return "".join(text_parts)
+
+
 def extract_docx_with_python_docx(docx_path: str) -> str | None:
     # Called unconditionally (not just via extract_docx()) so this function is
     # self-defending when invoked directly WITH python-docx installed:
@@ -63,18 +77,6 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
         ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         parts: list[str] = []
 
-        def inline_text(elem) -> str:
-            """Rebuild text runs without dropping explicit DOCX separators."""
-            text_parts: list[str] = []
-            for node in elem.iter():
-                if node.tag == f"{ns}t" and node.text:
-                    text_parts.append(node.text)
-                elif node.tag == f"{ns}tab":
-                    text_parts.append("\t")
-                elif node.tag in {f"{ns}br", f"{ns}cr"}:
-                    text_parts.append("\n")
-            return "".join(text_parts)
-
         def emit_block(elem) -> None:
             # Walk block content in document order. Paragraphs join their runs;
             # tables emit one tab-joined line per row (same row format as the
@@ -88,14 +90,14 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
             for child in elem:
                 tag = child.tag
                 if tag == f"{ns}p":
-                    paragraph = inline_text(child)
+                    paragraph = _docx_inline_text(child)
                     if paragraph:
                         parts.append(paragraph)
                 elif tag == f"{ns}tbl":
                     for row in child.iter(f"{ns}tr"):
                         cells = []
                         for cell in row.iter(f"{ns}tc"):
-                            cells.append(inline_text(cell).strip())
+                            cells.append(_docx_inline_text(cell).strip())
                         if any(cells):
                             parts.append("\t".join(cells))
                 else:
@@ -133,6 +135,42 @@ def validate_docx_xml_safety(docx_path: str) -> None:
         raise ExtractionError(f"Error during security validation of DOCX archive: {e}")
 
 
+def _docx_sdt_text_fragments(docx_path: str) -> list[str] | None:
+    """Return non-empty paragraph text inside content controls.
+
+    This is called only after the preferred parser has validated the archive.
+    If the document XML cannot be inspected, let the caller try the stdlib
+    parser as a best-effort fallback and compare output lengths.
+    """
+    import xml.etree.ElementTree as ET
+
+    try:
+        with zipfile.ZipFile(docx_path) as zf:
+            root = ET.fromstring(zf.read("word/document.xml"))
+    except (KeyError, OSError, zipfile.BadZipFile, ET.ParseError):
+        return None
+
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    fragments = {
+        text.strip()
+        for sdt in root.iter(f"{ns}sdt")
+        for content in sdt.iter(f"{ns}sdtContent")
+        for paragraph in content.iter(f"{ns}p")
+        if (text := _docx_inline_text(paragraph).strip())
+    }
+    return sorted(fragments)
+
+
+def _sdt_coverage(text: str, fragments: list[str]) -> int:
+    """Score the amount of content-control paragraph text present in output."""
+    normalized_text = " ".join(text.split())
+    return sum(
+        len(fragment)
+        for fragment in fragments
+        if " ".join(fragment.split()) in normalized_text
+    )
+
+
 def extract_docx(docx_path: str) -> tuple[str, str]:
     # Validation lives in each leaf parser (extract_docx_with_python_docx,
     # extract_docx_with_zipfile) so it runs exactly once regardless of which
@@ -141,7 +179,21 @@ def extract_docx(docx_path: str) -> tuple[str, str]:
     print("Trying python-docx...", end=" ", flush=True)
     text = extract_docx_with_python_docx(docx_path)
     if text and text.strip():
-        print("OK")
+        sdt_fragments = _docx_sdt_text_fragments(docx_path)
+        if sdt_fragments is None or sdt_fragments:
+            print("OK; SDT content control detected")
+            print("Trying stdlib DOCX parser...", end=" ", flush=True)
+            fallback_text = extract_docx_with_zipfile(docx_path)
+            if fallback_text and (
+                (_sdt_coverage(fallback_text, sdt_fragments) > _sdt_coverage(text, sdt_fragments))
+                if sdt_fragments is not None
+                else len(fallback_text.strip()) > len(text.strip())
+            ):
+                print("OK (more complete output)")
+                return fallback_text, "zipfile-docx"
+            print("keeping python-docx result")
+        else:
+            print("OK")
         return text, "python-docx"
 
     print("not available")
