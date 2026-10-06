@@ -7,6 +7,7 @@ import os
 import re
 import statistics
 import sys
+from collections import Counter
 
 import shutil
 import zipfile
@@ -1070,16 +1071,16 @@ def reuse_is_safe(current_inputs, metadata, current_mode):
     if len(recorded) != len(current_inputs):
         return False, "sources changed"
 
-    current = {}
-    for path, fingerprint in current_inputs:
-        current[Path(path).name] = fingerprint
-    if len(current) != len(recorded):
-        # Duplicate filenames cannot be matched one-to-one.
-        return False, "sources changed"
+    current_pairs = [(Path(path).name, fingerprint) for path, fingerprint in current_inputs]
+    current_by_name = {}
+    for filename, fingerprint in current_pairs:
+        current_by_name.setdefault(filename, []).append(fingerprint)
+
+    recorded_pairs = []
 
     for src in recorded:
         filename = src.get("filename")
-        if filename not in current:
+        if filename not in current_by_name:
             return False, f"sources changed (recorded {filename!r} is not in this run)"
         recorded_hash = src.get("sha256")
         if not recorded_hash:
@@ -1087,8 +1088,21 @@ def reuse_is_safe(current_inputs, metadata, current_mode):
                 f"no recorded fingerprint for {filename} — legacy metadata "
                 "(recorded before fingerprints existed)"
             )
-        if recorded_hash != current[filename]:
-            return False, f"content changed for {filename}"
+        recorded_pairs.append((filename, recorded_hash))
+
+    if recorded_pairs != current_pairs:
+        if Counter(recorded_pairs) == Counter(current_pairs):
+            return False, "sources reordered"
+
+        recorded_name_counts = Counter(filename for filename, _ in recorded_pairs)
+        current_name_counts = Counter(filename for filename, _ in current_pairs)
+        if all(count == 1 for count in recorded_name_counts.values()) and all(
+            count == 1 for count in current_name_counts.values()
+        ):
+            for filename, recorded_hash in recorded_pairs:
+                if recorded_hash != current_by_name[filename][0]:
+                    return False, f"content changed for {filename}"
+        return False, "sources changed"
 
     return True, "workdir intact and all sources match the current inputs"
 
@@ -1569,4 +1583,3 @@ def main():
             print(f"     - {path.name}: {err}")
     else:
         print_support_note()
-

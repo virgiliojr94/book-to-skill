@@ -185,6 +185,114 @@ def test_scenario_sources_changed_falls_back(tmp_path):
     assert "sources changed" in reason
 
 
+def _extract_sources_metadata(tmp_path, monkeypatch, sources):
+    from book_to_skill.utils import main
+
+    out_dir = tmp_path / "output"
+    out_meta = out_dir / "metadata.json"
+    monkeypatch.setenv("BOOK_SKILL_WORKDIR", str(out_dir))
+    monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", out_dir)
+    monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", out_dir / "full_text.txt")
+    monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", out_meta)
+    monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *a: None)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["extract.py", *map(str, sources), "--mode", "text", "--install-missing", "no"],
+    )
+
+    main()
+    return json.loads(out_meta.read_text(encoding="utf-8")), out_dir
+
+
+def test_reuse_rejects_replacement_after_duplicate_basenames(tmp_path, monkeypatch):
+    from book_to_skill.utils import _sha256_file
+
+    first_dir = tmp_path / "a"
+    second_dir = tmp_path / "b"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = _write(first_dir, "book.txt", "Chapter 1: Synthetic\nOLD_CONTENT\n")
+    second = _write(second_dir, "book.txt", "Chapter 1: Synthetic\nOLD_CONTENT\n")
+    replacement = _write(tmp_path, "replacement.txt", "Chapter 1: Synthetic\nNEW_CONTENT\n")
+    metadata, out_dir = _extract_sources_metadata(tmp_path, monkeypatch, [first, second])
+
+    changed, reason = reuse_is_safe(
+        [(first, _sha256_file(str(first))), (replacement, _sha256_file(str(replacement)))],
+        metadata,
+        current_mode="text",
+    )
+    assert not changed
+    assert "sources changed" in reason
+    assert "NEW_CONTENT" not in (out_dir / "full_text.txt").read_text(encoding="utf-8")
+
+    unchanged, reason = reuse_is_safe(
+        [(first, _sha256_file(str(first))), (second, _sha256_file(str(second)))],
+        metadata,
+        current_mode="text",
+    )
+    assert unchanged, reason
+
+
+def test_reuse_duplicate_basenames_matches_hash_pair_multiplicity(tmp_path, monkeypatch):
+    from book_to_skill.utils import _sha256_file
+
+    first_dir = tmp_path / "a"
+    second_dir = tmp_path / "b"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = _write(first_dir, "book.txt", "Chapter 1: A\nFIRST_CONTENT\n")
+    second = _write(second_dir, "book.txt", "Chapter 1: B\nSECOND_CONTENT\n")
+    replacement = _write(tmp_path, "replacement.txt", "Chapter 1: C\nNEW_CONTENT\n")
+    metadata, _ = _extract_sources_metadata(tmp_path, monkeypatch, [first, second])
+    first_hash = _sha256_file(str(first))
+    second_hash = _sha256_file(str(second))
+
+    reordered, reason = reuse_is_safe(
+        [(second, second_hash), (first, first_hash)], metadata, current_mode="text"
+    )
+    assert not reordered
+    assert reason == "sources reordered"
+
+    replaced, reason = reuse_is_safe(
+        [(first, first_hash), (replacement, _sha256_file(str(replacement)))],
+        metadata,
+        current_mode="text",
+    )
+    assert not replaced
+    assert "sources changed" in reason
+
+    duplicated, reason = reuse_is_safe(
+        [(first, first_hash), (first, first_hash)], metadata, current_mode="text"
+    )
+    assert not duplicated
+    assert "sources changed" in reason
+
+
+def test_cli_rebuilds_corpus_when_duplicate_sources_are_reordered(tmp_path, monkeypatch):
+    from book_to_skill.utils import _sha256_file
+
+    first_dir = tmp_path / "a"
+    second_dir = tmp_path / "b"
+    first_dir.mkdir()
+    second_dir.mkdir()
+    first = _write(first_dir, "book.txt", "FIRST_CONTENT\n")
+    second = _write(second_dir, "book.txt", "SECOND_CONTENT\n")
+
+    metadata, out_dir = _extract_sources_metadata(tmp_path, monkeypatch, [first, second])
+    original_text = (out_dir / "full_text.txt").read_text(encoding="utf-8")
+    assert original_text.index("FIRST_CONTENT") < original_text.index("SECOND_CONTENT")
+    original_hashes = [source["sha256"] for source in metadata["sources"]]
+    assert original_hashes == [_sha256_file(str(first)), _sha256_file(str(second))]
+
+    reordered_metadata, _ = _extract_sources_metadata(
+        tmp_path, monkeypatch, [second, first]
+    )
+    rebuilt_text = (out_dir / "full_text.txt").read_text(encoding="utf-8")
+    assert rebuilt_text.index("SECOND_CONTENT") < rebuilt_text.index("FIRST_CONTENT")
+    rebuilt_hashes = [source["sha256"] for source in reordered_metadata["sources"]]
+    assert rebuilt_hashes == [_sha256_file(str(second)), _sha256_file(str(first))]
+
+
 def test_sha256_file_streams_across_chunks(tmp_path):
     # _sha256_file reads in 1 MiB chunks; every other fixture here is ~1 KB, so a
     # truncating bug in the loop would go unnoticed. Real inputs are tens of MB,
