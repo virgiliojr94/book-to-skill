@@ -102,7 +102,7 @@
 
 ---
 
-## 🧾 The Discovery Loop Tax
+## 🧾 Цена цикла поиска
 
 PDF-агент не просто читает — *навигирует*: ToC, backtrack, re-process каждый ход. book-to-skill платит structuring cost **один раз** при конверсии — **24×–51×** меньше токенов.
 
@@ -110,7 +110,7 @@ PDF-агент не просто читает — *навигирует*: ToC, b
 
 ---
 
-## ⚙️ How it works
+## ⚙️ Как это работает
 
 Две половины: deterministic Python **extractor** и spec-driven **generator** (агент следует `SKILL.md`). On-demand chapters держат loaded skill маленьким.
 
@@ -118,7 +118,7 @@ PDF-агент не просто читает — *навигирует*: ToC, b
 
 ---
 
-## 🚀 Usage
+## 🚀 Использование
 
 `/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, and update/fold-in modes. После конверсии converter может опубликовать skill на GitHub (по умолчанию private), чтобы любой host ставил его через `npx skills add`.
 
@@ -129,7 +129,7 @@ PDF-агент не просто читает — *навигирует*: ToC, b
 
 ---
 
-## 📥 Install
+## 📥 Установка
 
 ```bash
 # One command, any host:
@@ -147,7 +147,7 @@ git clone https://github.com/virgiliojr94/book-to-skill.git ~/.claude/skills/boo
 
 ---
 
-## ❓ FAQ
+## ❓ Частые вопросы
 
 ❓ **Ответы → [docs/faq.md](docs/faq.md)**
 
@@ -182,7 +182,7 @@ Extractor пробует tools по порядку. Check: `python3 scripts/extr
 
 ---
 
-## ⚖️ Copyright & fair use
+## ⚖️ Авторское право и добросовестное использование
 
 book-to-skill **не** содержит книг. Converter для файлов, которые вы уже имеете право читать.
 
@@ -193,15 +193,15 @@ book-to-skill **не** содержит книг. Converter для файлов,
 
 ---
 
-## 💖 Sponsors
+## 💖 Спонсоры
 
 **[Become a sponsor →](https://github.com/sponsors/virgiliojr94)** · [BACKERS.md](BACKERS.md)
 
-## License
+## Лицензия
 
 MIT — на converter в этом репо, **не** на книги/документы, которые вы обрабатываете.
 
-## Star History
+## История звёзд
 
 <a href="https://www.star-history.com/?repos=virgiliojr94%2Fbook-to-skill&type=date&legend=top-left">
  <picture>
