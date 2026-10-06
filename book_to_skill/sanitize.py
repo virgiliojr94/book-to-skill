@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import unicodedata
+
 
 # Invisible code points used to hide document-borne prompt injection. Grouped by
 # attack shape so the reasoning behind each entry stays reviewable.
@@ -153,6 +155,55 @@ _ANNOTATION_CODEPOINTS = frozenset({
 _MUSICAL_FORMAT_RANGE = (0x1D173, 0x1D17A)
 
 
+# 9. Kangxi radicals (U+2F00–U+2FDF). A PDF whose embedded font subset carries no
+#    correct Unicode mapping emits a radical where a character belongs, so
+#    "判断力" extracts as "判断⼒" and nothing looks wrong on the page. The run
+#    still reports success, but from here on every grep, chapter-heading match and
+#    topic index works on text that cannot be found (#274).
+#
+#    Every code point in this block carries a Unicode compatibility
+#    decomposition, so NFKC is the entire mapping — there is no table to keep in
+#    sync with Unicode, and no per-radical judgement call to defend.
+#
+#    The fold is scoped to this block deliberately. Applying NFKC to the whole
+#    text would also rewrite full-width forms, ligatures, circled digits and CJK
+#    compatibility ideographs: legitimate prose that sanitize.py must not touch
+#    (see test_normalization_is_scoped_to_kangxi_radicals).
+#
+#    CJK Radicals Supplement (U+2E80–U+2EF3) is the other half of this problem
+#    and is deliberately *not* folded here. Unicode defines no decomposition for
+#    that block, so its mapping is a curated table rather than a lookup — and
+#    some entries must not be folded at all, since U+2EEB and friends are
+#    ordinary Japanese kanji (⻫ is 匀, not a radical form of 二).
+_KANGXI_RADICAL_RANGE = (0x2F00, 0x2FDF)
+
+
+def _kangxi_radical_fold() -> dict[int, str]:
+    """Map each Kangxi radical that has a compatibility form to its ideograph."""
+    fold: dict[int, str] = {}
+    for codepoint in range(_KANGXI_RADICAL_RANGE[0], _KANGXI_RADICAL_RANGE[1] + 1):
+        radical = chr(codepoint)
+        ideograph = unicodedata.normalize("NFKC", radical)
+        if ideograph != radical:
+            fold[codepoint] = ideograph
+    return fold
+
+
+# Applied with str.translate, so it touches only the listed code points.
+_KANGXI_RADICAL_FOLD = str.maketrans(_kangxi_radical_fold())
+
+
+def fold_cjk_radicals(text: str) -> str:
+    """Replace Kangxi radicals with the ideographs they stand in for.
+
+    Exposed separately from :func:`sanitize_extracted_text` because this is a
+    legibility fix rather than a security strip: nothing is removed, so it does
+    not belong in the invisible-code-point count that
+    :func:`sanitize_extracted_text` reports.
+    """
+    return text.translate(_KANGXI_RADICAL_FOLD)
+
+
 def is_invisible_codepoint(codepoint: int) -> bool:
     """Return True if the code point renders as nothing and should be stripped.
 
@@ -172,11 +223,16 @@ def is_invisible_codepoint(codepoint: int) -> bool:
 
 
 def sanitize_extracted_text(text: str) -> tuple[str, int]:
-    """Remove invisible code points used for document-borne prompt injection."""
+    """Remove invisible code points used for document-borne prompt injection.
+
+    Kangxi radicals are folded to their ideographs on the way through (see
+    :func:`fold_cjk_radicals`) because they are corrupted characters rather than
+    an attack, so they do not count toward the returned removal total.
+    """
     kept: list[str] = []
     removed = 0
 
-    for character in text:
+    for character in fold_cjk_radicals(text):
         if is_invisible_codepoint(ord(character)):
             removed += 1
             continue

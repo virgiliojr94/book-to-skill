@@ -83,7 +83,7 @@ converter does not infer arbitrary `skills.load.extraDirs`.
 | `book_to_skill/parsers/` | one module per format (`pdf`, `epub`, `docx`, `html`, `rtf`, `calibre`, `text`) |
 | `book_to_skill/config.py` | supported extensions, output paths, dependency map |
 | `book_to_skill/dependencies.py` | optional-dependency probing + `--check` |
-| `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text (see Security) |
+| `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text, and folds Kangxi radicals to their ideographs (see Security) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
 | `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw`) |
 | `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|opencode`) |
@@ -101,6 +101,15 @@ is layered:
   every parser's output before metrics or `full_text.txt`, so invisible
   document-borne instructions never reach the agent. Reports the removal count;
   rejects a source with no visible content left.
+- **CJK radical folding** (`book_to_skill/sanitize.py`) — PDFs whose embedded
+  font subset carries no correct Unicode mapping emit a Kangxi radical
+  (`U+2F00–U+2FDF`) where a character belongs, so a Chinese book extracts
+  "判断⼒" for "判断力". Each radical in that block has a Unicode compatibility
+  decomposition, so the fold is NFKC applied to those code points only: the rest
+  of the text is passed through byte for byte. Nothing is removed, so it does
+  not count toward the security removal total. CJK Radicals Supplement
+  (`U+2E80–U+2EF3`) is deliberately not folded — Unicode defines no
+  decomposition for it, and some entries are ordinary kanji.
 - **DOCX XXE / Billion-Laughs guard** (`parsers/docx.py`) — rejects any XML part
   declaring a DTD or entities before parsing.
 - **Subprocess argument-injection** — file paths are absolutised before reaching
