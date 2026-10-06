@@ -456,7 +456,8 @@ _BACK_MATTER_HEADERS = (
     "about the authors",
 )
 _NON_CHAPTER_HEADERS = frozenset((*_FRONT_MATTER_HEADERS, *_BACK_MATTER_HEADERS))
-_NON_CHAPTER_PREFIX = re.compile(r"^(?:appendix|appendices|part)\b", re.IGNORECASE)
+_NON_CHAPTER_PREFIX = re.compile(r"^(?:appendix|appendices)\b", re.IGNORECASE)
+_PART_HEADER = re.compile(r"^part\s+(?:\d+|[ivxlcdm]+)\b", re.IGNORECASE)
 
 
 def _is_non_chapter_section(title: str) -> bool:
@@ -466,6 +467,7 @@ def _is_non_chapter_section(title: str) -> bool:
         normalized.casefold() in _NON_CHAPTER_HEADERS
         or bool(_TOC_PATTERN.fullmatch(normalized))
         or bool(_NON_CHAPTER_PREFIX.match(normalized))
+        or bool(_PART_HEADER.match(normalized))
     )
 
 # ATX-style heading: "# Title", "## Section", AsciiDoc "= Title", "== Section".
@@ -869,6 +871,8 @@ def detect_structure(text: str) -> dict:
 
     headings = []
     numbers = set()
+    part_headings = []
+    part_numbers = set()
     prev = ""  # previous non-blank line; cleared by blanks and fences
     for index, line in enumerate(lines):
         if index in fenced:
@@ -880,8 +884,13 @@ def detect_structure(text: str) -> dict:
             continue
         num = _chapter_number(line, prev)
         if num is not None:
-            numbers.add(num)
-            headings.append(s)
+            title = _MD_HEADING_PREFIX.sub("", s)
+            if _PART_HEADER.match(title):
+                part_numbers.add(num)
+                part_headings.append(s)
+            else:
+                numbers.add(num)
+                headings.append(s)
         prev = s
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
@@ -904,6 +913,12 @@ def detect_structure(text: str) -> dict:
         # books with "### Unit N" headings still get counted via max().
         structural_headings = _structural_chapter_headings(text)
         structural_count = len(structural_headings)
+        # Parts group chapters and must not win the numeric branch ahead of
+        # the structural chapters inside them. Retain the old Part-only
+        # fallback when the extraction contains no other chapter evidence.
+        if not numeric_count and not structural_count:
+            numeric_count = len(part_numbers)
+            headings = part_headings
         chapters_detected = max(numeric_count, structural_count)
         chapters_method = (
             "structural" if structural_count > numeric_count
@@ -1569,4 +1584,3 @@ def main():
             print(f"     - {path.name}: {err}")
     else:
         print_support_note()
-
