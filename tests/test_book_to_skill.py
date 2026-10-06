@@ -797,6 +797,37 @@ class TestDetectStructure:
         assert _chapter_number("પ્રકરણ") is None
         assert _chapter_number("અધ્યાય") is None
 
+    def test_detects_punjabi_chapters(self):
+        """Punjabi headings: both words (ਕਾਂਡ/ਅਧਿਆਇ), Gurmukhi or Arabic digits."""
+        text = (
+            "ਕਾਂਡ ੧ ਜਾਣ-ਪਛਾਣ\nਸਾਰ\n"
+            "ਅਧਿਆਇ ੨ ਢੰਗ\nਸਾਰ\n"
+            "ਕਾਂਡ 3 ਨਤੀਜੇ\nਸਾਰ"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_punjabi_markdown_prefix(self):
+        text = "## ਕਾਂਡ ੧ ਪਹਿਲਾ\nਸਾਰ\n## ਅਧਿਆਇ ੨ ਦੂਜਾ\nਸਾਰ"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_punjabi_prose_is_not_a_chapter_heading(self):
+        """A postposition phrase, an oblique form, or a bare word is not a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("ਇਸ ਕਾਂਡ ਵਿੱਚ ਅਸੀਂ ਚਰਚਾ ਕਰਾਂਗੇ") is None
+        assert _chapter_number("ਇਸ ਅਧਿਆਇ ਵਿੱਚ ਅਸੀਂ ਚਰਚਾ ਕਰਾਂਗੇ") is None
+        assert _chapter_number("ਸਾਰੇ ਕਾਂਡਾਂ ਦੀ ਸੂਚੀ") is None
+        assert _chapter_number("ਕਾਂਡ") is None
+        assert _chapter_number("ਅਧਿਆਇ") is None
+
+    def test_punjabi_does_not_collide_with_neighbouring_scripts(self):
+        """Gurmukhi (U+0A00–0A7F), Gujarati (U+0A80–0AFF) and Devanagari stay separate."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("ਅਧਿਆਇ ੫") == 5
+        assert _chapter_number("અધ્યાય ૫") == 5
+        assert _chapter_number("अध्याय ५") == 5
+
     def test_gujarati_adhyay_does_not_collide_with_hindi(self):
         """Gujarati અધ્યાય (U+0A85…) and Devanagari अध्याय (U+0905…) are distinct."""
         from book_to_skill.utils import _chapter_number

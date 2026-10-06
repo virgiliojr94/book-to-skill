@@ -293,6 +293,21 @@ _GU_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?(?:પ્રકરણ|અધ્યાય)\s*([0-9{_GU_DIGITS}]+)\b"
 )
 
+# Punjabi (Gurmukhi) chapter headings: "ਕਾਂਡ 1", "ਅਧਿਆਇ ੧", "## ਕਾਂਡ 2".
+# Like Gujarati above, Punjabi uses two distinct words for "chapter" — ਕਾਂਡ
+# (usual in books) and ਅਧਿਆਇ — so both are matched. ਅਧਿਆਇ resembles Gujarati
+# અધ્યાય and Devanagari अध्याय but the scripts are disjoint (Gurmukhi
+# U+0A00-U+0A7F, Gujarati U+0A80-U+0AFF, Devanagari U+0900-U+097F), so none of
+# the three patterns can see another's text. Gurmukhi digits (U+0A66-U+0A6F) are
+# positional, so only a digit remap is needed. Requiring a number right after
+# the word keeps prose from matching, whether it follows the word with a
+# postposition ("ਕਾਂਡ ਵਿੱਚ") or inflects it ("ਕਾਂਡਾਂ").
+_PA_DIGITS = "੦-੯"
+_PA_DIGIT_MAP = str.maketrans("੦੧੨੩੪੫੬੭੮੯", "0123456789")
+_PA_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?(?:ਕਾਂਡ|ਅਧਿਆਇ)\s*([0-9{_PA_DIGITS}]+)\b"
+)
+
 # Russian (Cyrillic) chapter headings: "Глава 1", "ГЛАВА 12", "## Глава 2".
 # "Глава" ("chapter") + a number. Cyrillic uses ordinary Arabic digits, so —
 # unlike the Devanagari/Bengali blocks above — no digit remap is needed. A
@@ -784,6 +799,9 @@ def _match_chapter_number(
     gum = _GU_CHAPTER.match(s)
     if gum:
         return int(gum.group(1).translate(_GU_DIGIT_MAP))
+    pam = _PA_CHAPTER.match(s)
+    if pam:
+        return int(pam.group(1).translate(_PA_DIGIT_MAP))
     rum = _RU_CHAPTER.match(s)
     if rum:
         return int(rum.group(1))
@@ -819,6 +837,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
     Malayalam ("അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2"),
     Gujarati ("પ્રકરણ 1", "અધ્યાય ૧", "## પ્રકરણ 2"),
+    Punjabi ("ਕਾਂਡ 1", "ਅਧਿਆਇ ੧", "## ਕਾਂਡ 2"),
     Russian ("Глава 1", "ГЛАВА 12", "## Глава 2"),
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
