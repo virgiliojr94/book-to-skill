@@ -1154,6 +1154,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         
     text = ""
     method = ""
+    fallback_reason = None
     pages = 0
     pages_label = "sections"
     images_dropped = None
@@ -1196,13 +1197,32 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                 "  ocrmypdf input.pdf output.pdf"
             )
         if extraction_mode == "technical":
-            print("Mode: technical — using Docling (layout-aware)...", end=" ", flush=True)
-            text = extract_with_docling(input_str)
+            print("Mode: technical — using Docling (layout-aware)...")
+            try:
+                text = extract_with_docling(input_str)
+            except Exception as exc:
+                fallback_reason = "docling_failed"
+                print(
+                    f"WARNING: Docling failed ({type(exc).__name__}: {exc}); "
+                    "using the PDF text fallback chain.",
+                    file=sys.stderr,
+                )
+                text = None
             if text and text.strip():
                 method = "docling"
                 print("OK")
             else:
-                print("not available, falling back to pdftotext")
+                if fallback_reason is None:
+                    if text is None:
+                        fallback_reason = "docling_unavailable"
+                        detail = "Docling is unavailable"
+                    else:
+                        fallback_reason = "docling_empty"
+                        detail = "Docling produced no text"
+                    print(
+                        f"WARNING: {detail}; using the PDF text fallback chain.",
+                        file=sys.stderr,
+                    )
                 extraction_mode = "text"
                 
         if extraction_mode == "text" or not text:
@@ -1308,6 +1328,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
         "filename": input_path.name,
         "format": document_format,
         "extraction_method": method,
+        "fallback_reason": fallback_reason,
         "file_size_mb": round(file_size_mb, 2),
         "sha256": file_sha256,
         pages_label: pages,
@@ -1505,6 +1526,7 @@ def main():
                 "filename": src["filename"],
                 "format": src["format"],
                 "extraction_method": src["extraction_method"],
+                "fallback_reason": src["fallback_reason"],
                 "file_size_mb": src["file_size_mb"],
                 "sha256": src["sha256"],
                 "pages": src["pages"],

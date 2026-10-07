@@ -149,23 +149,20 @@ def extract_with_docling(pdf_path: str) -> str | None:
         from docling.datamodel.pipeline_options import PdfPipelineOptions
         from docling.datamodel.base_models import InputFormat
         from docling.document_converter import PdfFormatOption
-
-        pipeline_options = PdfPipelineOptions()
-        pipeline_options.do_ocr = False
-        pipeline_options.do_table_structure = True
-
-        converter = DocumentConverter(
-            format_options={
-                InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
-            }
-        )
-        result = converter.convert(pdf_path)
-        return result.document.export_to_markdown()
     except ImportError:
         return None
-    except Exception as e:
-        print(f"  [warn] extract_with_docling failed: {type(e).__name__}: {e}", file=sys.stderr)
-        return None
+
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.do_ocr = False
+    pipeline_options.do_table_structure = True
+
+    converter = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+        }
+    )
+    result = converter.convert(pdf_path)
+    return result.document.export_to_markdown()
 
 
 def count_pages(pdf_path: str) -> int:
