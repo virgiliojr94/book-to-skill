@@ -242,6 +242,21 @@ _TA_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?அத்தியாயம்\s*([0-9{_TA_DIGITS}]+)\b"
 )
 
+# Sinhala chapter headings: "පරිච්ඡේදය 1", "පරිච්ඡේදය ෨", "## පරිච්ඡේදය 2".
+# පරිච්ඡේදය ("chapter") + a number. Grouped next to Tamil as the other Sri
+# Lankan script. Modern Sinhala prints numbers with ASCII digits; the Lith
+# digits (U+0DE6-U+0DEF) are included for historical texts, remapped like the
+# other Indic blocks. Only පරිච්ඡේදය is matched, not the Sanskrit loan අධ්‍යාය:
+# that word carries a ZERO WIDTH JOINER inside its conjunct, and
+# sanitize_extracted_text() strips U+200D before detect_structure() ever sees
+# the text, so a pattern containing one could never match. Requiring a number
+# keeps prose that merely inflects the word ("පරිච්ඡේදයේ") from matching.
+_SI_DIGITS = "෦-෯"
+_SI_DIGIT_MAP = str.maketrans("෦෧෨෩෪෫෬෭෮෯", "0123456789")
+_SI_CHAPTER = re.compile(
+    rf"^\s*(?:#{{1,6}}\s+)?පරිච්ඡේදය\s*([0-9{_SI_DIGITS}]+)\b"
+)
+
 # Telugu chapter headings: "అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2".
 # The chapter word has two common spellings — అధ్యాయము (formal) and అధ్యాయం
 # (modern), sharing the stem అధ్యాయ — so both endings are matched. Telugu digits
@@ -772,6 +787,9 @@ def _match_chapter_number(
     tam = _TA_CHAPTER.match(s)
     if tam:
         return int(tam.group(1).translate(_TA_DIGIT_MAP))
+    sim = _SI_CHAPTER.match(s)
+    if sim:
+        return int(sim.group(1).translate(_SI_DIGIT_MAP))
     tem = _TE_CHAPTER.match(s)
     if tem:
         return int(tem.group(1).translate(_TE_DIGIT_MAP))
@@ -815,6 +833,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
     Odia ("ଅଧ୍ୟାୟ 1", "ଅଧ୍ୟାୟ ୧", "## ଅଧ୍ୟାୟ 2"),
     Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
+    Sinhala ("පරිච්ඡේදය 1", "පරිච්ඡේදය ෨", "## පරිච්ඡේදය 2"),
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
     Malayalam ("അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2"),

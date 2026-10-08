@@ -715,6 +715,27 @@ class TestDetectStructure:
         assert _chapter_number("இந்த அத்தியாயத்தில் நாம் பார்ப்போம்") is None
         assert _chapter_number("அத்தியாயம்") is None
 
+    def test_detects_sinhala_chapters(self):
+        """Sinhala headings: `පරිච්ඡේදය N`, Arabic or Sinhala Lith digits."""
+        text = (
+            "පරිච්ඡේදය 1 හැඳින්වීම\nසාරාංශය\n"
+            "පරිච්ඡේදය ෨ ක්‍රම\nසාරාංශය\n"
+            "පරිච්ඡේදය 3 ප්‍රතිඵල\nසාරාංශය"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_sinhala_markdown_prefix(self):
+        text = "## පරිච්ඡේදය 1 පළමු\nසාරාංශය\n## පරිච්ඡේදය 2 දෙවන\nසාරාංශය"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_sinhala_prose_is_not_a_chapter_heading(self):
+        """Inflected forms (පරිච්ඡේදයේ / පරිච්ඡේදයක්) and the bare word are not headings."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("මෙම පරිච්ඡේදයේ අපි සාකච්ඡා කරමු") is None
+        assert _chapter_number("තවත් පරිච්ඡේදයක් ඇත") is None
+        assert _chapter_number("පරිච්ඡේදය") is None
+
     def test_detects_telugu_chapters(self):
         """Telugu headings: both spellings (అధ్యాయము/అధ్యాయం), Telugu or Arabic digits."""
         text = (
