@@ -550,7 +550,7 @@ Agents update this table when a task changes status. Keep entries short; link to
 |---|---|---|---|---|
 | PD-00 | DONE | — | — | Baseline documented |
 | PD-01 | DONE | — | `tests/evals/test_manifest.py` | Deterministic manifest, source SHA-256, budget/secret validation |
-| PD-02 | DONE | — | `tests/evals/test_score.py`, `test_replay.py` | Offline trajectory scorer and replay runner |
+| PD-02 | DONE | — | `tests/evals/test_score.py`, `test_replay.py`, `test_score_robustness.py` | Offline trajectory scorer and replay runner; negative usage accounting regression (#283) |
 | PD-03 | DONE | — | `tests/evals/test_paper_flat.py` | Synthetic paper-flat baseline builder |
 | PD-04 | BLOCKED | — | — | waits for PD-02/03 |
 | PD-05 | BLOCKED | — | — | primary representation experiment |

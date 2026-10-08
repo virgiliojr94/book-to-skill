@@ -13,13 +13,14 @@ def _state(value: Any) -> Any:
 
 
 def _count(value: Any) -> Any:
-    """Keep only explicit integer counts; absence remains unknown.
+    """Keep only explicit non-negative integer counts; absence remains unknown.
 
     ``bool`` is a subclass of ``int``, so a JSON ``true`` would otherwise pass an
     ``isinstance(value, int)`` test and then be summed as 1 -- inventing a usage
-    number this module promises never to estimate.
+    number this module promises never to estimate. Negative sentinels likewise
+    cannot represent recorded token or call counts.
     """
-    return value if isinstance(value, int) and not isinstance(value, bool) else UNKNOWN
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else UNKNOWN
 
 
 def score_trajectory(trajectory: Dict[str, Any]) -> Dict[str, Any]:

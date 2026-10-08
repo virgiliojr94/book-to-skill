@@ -183,3 +183,62 @@ class TestUsageCountsRejectBooleans:
 
         assert result["usage"]["calls"] == UNKNOWN
         assert result["usage"]["input_tokens"] == UNKNOWN
+
+
+class TestUsageCountsRejectNegatives:
+    @pytest.mark.parametrize("field", ["input_tokens", "output_tokens", "calls"])
+    def test_negative_field_is_unknown_independently(self, field):
+        usage = {"input_tokens": 100, "output_tokens": 20, "calls": 2}
+        usage[field] = -1
+
+        result = score_trajectory(
+            _trajectory("q", "a", ["a"], answer_correct=True, usage=usage)
+        )
+
+        assert result["usage"][field] == UNKNOWN
+        assert all(result["usage"][key] == value for key, value in usage.items()
+                   if key != field)
+        assert result["classification"] == "correct"
+
+    def test_negative_only_has_no_usage_observations(self):
+        report = score([
+            _trajectory("q", "a", ["a"], answer_correct=True,
+                        usage={"input_tokens": -100, "output_tokens": -20, "calls": -2})
+        ])
+
+        assert report["questions"][0]["usage"] == {
+            "input_tokens": UNKNOWN, "output_tokens": UNKNOWN, "calls": UNKNOWN,
+        }
+        assert report["aggregate"]["recorded_usage"] == {
+            "input_tokens": 0, "output_tokens": 0, "calls": 0,
+        }
+        assert report["aggregate"]["usage_observations"] == {
+            "input_tokens": 0, "output_tokens": 0, "calls": 0,
+        }
+
+    def test_negative_does_not_cancel_positive_and_zero_is_observed(self):
+        report = score([
+            _trajectory("positive", "a", ["a"], answer_correct=True,
+                        usage={"input_tokens": 100, "output_tokens": 20, "calls": 2}),
+            _trajectory("negative", "a", ["a"], answer_correct=True,
+                        usage={"input_tokens": -100, "output_tokens": -20, "calls": -2}),
+            _trajectory("zero", "a", ["a"], answer_correct=True,
+                        usage={"input_tokens": 0, "output_tokens": 0, "calls": 0}),
+        ])
+
+        assert report["aggregate"]["recorded_usage"] == {
+            "input_tokens": 100, "output_tokens": 20, "calls": 2,
+        }
+        assert report["aggregate"]["usage_observations"] == {
+            "input_tokens": 2, "output_tokens": 2, "calls": 2,
+        }
+        assert report["aggregate"]["classifications"] == {"correct": 3}
+
+    @pytest.mark.parametrize("value", [None, True, False, "3", 1.5])
+    def test_other_invalid_values_remain_unknown(self, value):
+        result = score_trajectory(
+            _trajectory("q", "a", ["a"], answer_correct=True,
+                        usage={"calls": value})
+        )
+
+        assert result["usage"]["calls"] == UNKNOWN
