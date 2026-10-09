@@ -374,6 +374,13 @@ def _fa_ordinal_map() -> dict[str, int]:
     for i, w in enumerate(_FA_COMPOUND_ONES, 1):
         m[f"بیست و {w}"] = 20 + i
         m[f"سی و {w}"] = 30 + i
+    # sanitize_extracted_text() strips U+200C (it is a prompt-injection spacer)
+    # before detect_structure() runs, so a key spelled with a ZWNJ can never be
+    # reached through the pipeline. Register the stripped spelling of every such
+    # key as well, so both the typographic form and what detection actually
+    # receives resolve to the same chapter number.
+    for key, value in list(m.items()):
+        m.setdefault(key.replace("\u200c", ""), value)
     return m
 
 
