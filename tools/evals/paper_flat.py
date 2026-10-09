@@ -22,7 +22,15 @@ def _chunks(source: str) -> List[str]:
     starts = [index for index, line in enumerate(lines) if _CHAPTER.match(line.rstrip())]
     if not starts:
         return [source]
-    return ["".join(lines[start:end]) for start, end in zip(starts, starts[1:] + [len(lines)])]
+    chunks = ["".join(lines[start:end]) for start, end in zip(starts, starts[1:] + [len(lines)])]
+    prefix = "".join(lines[: starts[0]])
+    if prefix:
+        # Fold any text before the first heading (preface, abstract, held-out
+        # constraints) into the first chunk instead of dropping it, so reading
+        # every chunk still reaches the whole source and the chunk count keeps
+        # matching the supplied metadata.
+        chunks[0] = prefix + chunks[0]
+    return chunks
 
 
 def _metadata(path: Path, chunk_count: int) -> Dict[str, Any]:

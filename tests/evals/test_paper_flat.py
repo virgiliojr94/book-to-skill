@@ -70,6 +70,24 @@ def test_no_heading_uses_one_full_source_chunk(tmp_path):
     assert (tmp_path / "pack" / "chunks" / "chunk-01.md").read_text(encoding="utf-8") == "Plain synthetic source.\n"
 
 
+def test_text_before_the_first_heading_stays_reachable(tmp_path):
+    text = "Preface with a unique safety constraint of 42 degrees.\n\nChapter 1: Only\n\nBody.\n"
+    source = tmp_path / "source.txt"
+    metadata = tmp_path / "metadata.json"
+    source.write_text(text, encoding="utf-8")
+    metadata.write_text(json.dumps({"title": "Prefaced", "description": "Preface fixture.", "chunks": [{"description": "Preface and chapter.", "summary": "One chunk."}]}), encoding="utf-8")
+    build(tmp_path, source, metadata)
+    chunks = sorted((tmp_path / "pack" / "chunks").iterdir())
+    assert len(chunks) == 1
+    assert chunks[0].read_text(encoding="utf-8") == text
+    assert "42 degrees" in chunks[0].read_text(encoding="utf-8")
+
+
+def test_chunk_payloads_concatenate_back_to_the_source(tmp_path):
+    text = "Preface constraint 42 degrees.\n\nChapter 1: Observe\n\nMeasure.\n\nChapter 2: Respond\n\nApply.\n"
+    assert "".join(paper_flat._chunks(text)) == text
+
+
 def test_pack_has_no_child_skill_hierarchy(tmp_path):
     build(tmp_path)
     files = sorted(
