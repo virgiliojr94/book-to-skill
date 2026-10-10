@@ -131,6 +131,15 @@ def strip_rtf_fallback(raw: str) -> str:
     # the control-word cleanup that would otherwise strip the markup and leave
     # the names behind as if they were prose.
     raw = _strip_destination_groups(raw)
+    # Park escaped literals before ANY control processing: the second slash in
+    # "\\\\u945?" or "\\\\tab" belongs to displayed text, not an active control.
+    # Do this after destination scanning, which needs the original braces and
+    # escapes to identify whole non-content groups. Longest escape first.
+    raw = (
+        raw.replace("\\\\", "\x01")
+        .replace("\\{", "\x02")
+        .replace("\\}", "\x03")
+    )
     ansi_encoding = _rtf_ansi_encoding(raw)
     raw = _RTF_UNICODE.sub(_rtf_unicode_repl, raw)   # decode \uN escapes first
     # A hex byte immediately following \uN is its compatibility fallback and
@@ -141,15 +150,6 @@ def strip_rtf_fallback(raw: str) -> str:
     )
     raw = re.sub(r"\\par[d]?", "\n", raw)
     raw = re.sub(r"\\tab", "\t", raw)
-    # Park the three escaped literals ("\\", "\{", "\}") on placeholders before
-    # the sweeps below, which would otherwise strip the backslash as a control
-    # symbol and then delete the brace along with the real group delimiters —
-    # leaving a stray "\" where the book said "{a, b}". Longest escape first.
-    raw = (
-        raw.replace("\\\\", "\x01")
-        .replace("\\{", "\x02")
-        .replace("\\}", "\x03")
-    )
     raw = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", raw)
     raw = raw.replace("{", "").replace("}", "")
     raw = raw.replace("\x01", "\\").replace("\x02", "{").replace("\x03", "}")
