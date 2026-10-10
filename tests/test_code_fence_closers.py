@@ -2,8 +2,12 @@
 
 import json
 import sys
+from pathlib import Path
 
 import pytest
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from book_to_skill.utils import _closed_fence_line_numbers, detect_structure, main
 
