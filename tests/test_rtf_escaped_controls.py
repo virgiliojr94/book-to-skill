@@ -2,8 +2,12 @@
 
 import json
 import sys
+from pathlib import Path
 
 import pytest
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from book_to_skill.parsers.rtf import strip_rtf_fallback
 from book_to_skill.utils import estimate_tokens, main
