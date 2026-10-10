@@ -57,3 +57,18 @@ def test_aggregate_sums_only_recorded_tokens_and_calls():
     assert [item["question_id"] for item in result["questions"]] == ["a", "b"]
     assert result["aggregate"]["recorded_usage"] == {"input_tokens": 4, "output_tokens": 3, "calls": 2}
     assert result["aggregate"]["usage_observations"] == {"input_tokens": 1, "output_tokens": 1, "calls": 1}
+
+
+def test_negative_usage_stays_unknown_and_cannot_cancel_valid_totals():
+    result = score.score([trajectory("invalid", ["book/chapter"],
+                                     usage={"input_tokens": -100, "output_tokens": -20, "calls": -2}),
+                          trajectory("positive", ["book/chapter"],
+                                     usage={"input_tokens": 100, "output_tokens": 20, "calls": 2}),
+                          trajectory("zero", ["book/chapter"],
+                                     usage={"input_tokens": 0, "output_tokens": 0, "calls": 0})])
+    invalid = next(item for item in result["questions"] if item["question_id"] == "invalid")
+    assert invalid["usage"] == {"input_tokens": score.UNKNOWN,
+                                "output_tokens": score.UNKNOWN,
+                                "calls": score.UNKNOWN}
+    assert result["aggregate"]["recorded_usage"] == {"input_tokens": 100, "output_tokens": 20, "calls": 2}
+    assert result["aggregate"]["usage_observations"] == {"input_tokens": 2, "output_tokens": 2, "calls": 2}
