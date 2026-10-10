@@ -4,6 +4,32 @@ import zipfile
 import sys
 from book_to_skill.exceptions import ExtractionError
 
+# WordprocessingML namespace, used to recognize <w:sdt> content controls.
+_W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def _body_skips_sdt_text(document) -> bool:
+    """True when a top-level `<w:sdt>` holds text the block iterator drops.
+
+    `Document.iter_inner_content()` yields only the body's direct `<w:p>` and
+    `<w:tbl>` children. A content control (`<w:sdt>`) is neither, so its
+    paragraphs never reach the caller -- which matters most for a Word TOC,
+    often the document's only unit structure as text. An empty control costs
+    nothing, so only a control with non-whitespace text counts as a loss.
+    """
+    body = getattr(getattr(document, "element", None), "body", None)
+    if body is None or not hasattr(body, "iterchildren"):
+        # No enumerable body (a stub document, say): nothing observed was lost.
+        return False
+    try:
+        children = list(body.iterchildren())
+    except TypeError:
+        return False
+    for child in children:
+        if child.tag == _W_NS + "sdt" and "".join(child.itertext()).strip():
+            return True
+    return False
+
 
 def extract_docx_with_python_docx(docx_path: str) -> str | None:
     # Called unconditionally (not just via extract_docx()) so this function is
@@ -26,6 +52,15 @@ def extract_docx_with_python_docx(docx_path: str) -> str | None:
         if not callable(iter_inner_content):
             # Older python-docx releases lack the ordered block iterator. Let
             # extract_docx() use its order-preserving stdlib fallback instead.
+            return None
+        if _body_skips_sdt_text(document):
+            # iter_inner_content() walks the body's direct <w:p>/<w:tbl>
+            # children, so a top-level <w:sdt> content control -- how Word
+            # stores a generated TOC -- is silently skipped even when it
+            # holds the document's only chapter structure. Returning None
+            # hands the file to the order-preserving stdlib fallback, which
+            # reads the raw XML and keeps that text, rather than reporting a
+            # clean run that quietly dropped it.
             return None
         parts = []
         for block in iter_inner_content():
