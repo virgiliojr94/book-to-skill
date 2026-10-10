@@ -493,19 +493,25 @@ def _closed_fence_line_numbers(lines: list[str]) -> set[int]:
     Counting a handful of code lines as prose is a far cheaper mistake than
     losing most of a book's structure.
 
-    The closing fence must use the SAME character as its opener, per CommonMark,
-    so a "```" block is no longer terminated by an unrelated "~~~" line.
+    Per CommonMark, a closer must use the same character, be at least as long
+    as its opener, and have no trailing info string. A longer fence can then
+    safely contain examples of shorter fences without exposing sample headings.
     """
     inside: set[int] = set()
     opener: tuple[str, int] | None = None
     for index, line in enumerate(lines):
-        match = _CODE_FENCE.match(line.strip())
+        stripped = line.strip()
+        match = _CODE_FENCE.match(stripped)
         if not match:
             continue
         marker = match.group(1)
         if opener is None:
-            opener = (marker[0], index)
-        elif marker[0] == opener[0]:
+            opener = (marker, index)
+        elif (
+            marker[0] == opener[0][0]
+            and len(marker) >= len(opener[0])
+            and not stripped[match.end():]
+        ):
             # Include both fence marker lines themselves.
             inside.update(range(opener[1], index + 1))
             opener = None
