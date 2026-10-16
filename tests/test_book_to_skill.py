@@ -1918,6 +1918,19 @@ class TestRtfUnicodeFallback:
         # RTF encodes code points > 32767 as negative 16-bit; -3 -> U+FFFD.
         assert strip_rtf_fallback(self._esc(-3)) == "�"
 
+    def test_rtf_unicode_surrogate_pair_decodes(self):
+        # Adjacent high/low escapes (-10179, -8704) encode U+1F600 (#295).
+        text = "A " + self._esc(-10179) + self._esc(-8704) + " B"
+        assert strip_rtf_fallback(text) == "A 😀 B"
+
+    def test_rtf_unicode_lone_surrogate_dropped(self):
+        assert strip_rtf_fallback("A " + self._esc(-10179) + " B") == "A  B"
+
+    def test_rtf_unicode_reversed_pair_dropped(self):
+        # Out-of-order halves are not a character (#295).
+        text = "A " + self._esc(-8704) + self._esc(-10179) + " B"
+        assert strip_rtf_fallback(text) == "A  B"
+
     def test_rtf_fallback_without_unicode_unchanged(self):
         # Regression: control-word-only input is unaffected by the new step.
         assert strip_rtf_fallback(self._BS + "b0 Bold" + self._BS + "b0 off") == "Boldoff"

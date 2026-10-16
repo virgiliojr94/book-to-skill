@@ -15,11 +15,31 @@ _RTF_HEX_RUN = re.compile(r"(?:\\'[0-9a-fA-F]{2})+")
 _RTF_ANSI_CODEPAGE = re.compile(r"\\ansicpg(\d+)")
 
 
-def _rtf_unicode_repl(match: re.Match) -> str:
-    cp = int(match.group(1)) % 0x10000      # RTF uses signed 16-bit; wrap negatives
+def _decode_single_codepoint(cp: int) -> str:
     if cp == 0 or 0xD800 <= cp <= 0xDFFF:   # NUL and lone surrogates: unwanted in text
         return ""
     return chr(cp)
+
+
+def _rtf_unicode_repl(match: re.Match) -> str:
+    cp = int(match.group(1)) % 0x10000      # RTF uses signed 16-bit; wrap negatives
+    return _decode_single_codepoint(cp)
+
+
+# Adjacent high/low escapes encode one supplementary character (#295).
+_RTF_UNICODE_PAIR = re.compile(
+    r"\\u(-?\d+)[ ]?(?:\\'[0-9a-fA-F]{2}|\?)?"
+    r"\\u(-?\d+)[ ]?(?:\\'[0-9a-fA-F]{2}|\?)?"
+)
+
+
+def _rtf_unicode_pair_repl(match: re.Match) -> str:
+    hi = int(match.group(1)) % 0x10000
+    lo = int(match.group(2)) % 0x10000
+    if 0xD800 <= hi <= 0xDBFF and 0xDC00 <= lo <= 0xDFFF:
+        return chr(0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00))
+    # Not a valid pair (lone or out-of-order halves stay excluded).
+    return _decode_single_codepoint(hi) + _decode_single_codepoint(lo)
 
 
 def _rtf_ansi_encoding(raw: str) -> str:
@@ -141,6 +161,7 @@ def strip_rtf_fallback(raw: str) -> str:
         .replace("\\}", "\x03")
     )
     ansi_encoding = _rtf_ansi_encoding(raw)
+    raw = _RTF_UNICODE_PAIR.sub(_rtf_unicode_pair_repl, raw)  # surrogate pairs first
     raw = _RTF_UNICODE.sub(_rtf_unicode_repl, raw)   # decode \uN escapes first
     # A hex byte immediately following \uN is its compatibility fallback and
     # was consumed by _RTF_UNICODE above. Any remaining \'hh escapes are actual
