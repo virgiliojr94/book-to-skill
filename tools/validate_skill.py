@@ -24,16 +24,12 @@ Refs:
              https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
   Copilot    https://docs.github.com/en/copilot/concepts/agents/about-agent-skills
              https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills
-   Amp        https://ampcode.com/manual#skills
-   Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
-   OpenClaw   https://docs.openclaw.ai/tools/skills
-
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|openclaw] [path/to/SKILL.md]
   Amp        https://ampcode.com/manual#skills
-   Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
-   OpenCode   https://opencode.ai/docs/skills
+  Hermes     https://hermes-agent.nousresearch.com/docs/user-guide/features/skills
+  OpenClaw   https://docs.openclaw.ai/tools/skills
+  OpenCode   https://opencode.ai/docs/skills
 
-Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|opencode] [path/to/SKILL.md]
+Usage: python3 tools/validate_skill.py [--lens claude|copilot|amp|hermes|openclaw|opencode] [path/to/SKILL.md]
 """
 import argparse
 import re

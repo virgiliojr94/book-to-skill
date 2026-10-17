@@ -218,7 +218,7 @@ book-to-skill/
 │       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
 ├── tools/
 │   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
-│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp|hermes|opencode)
+│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp|hermes|openclaw|opencode)
 ├── tests/                # pytest suite (extraction, detection, discovery tax)
 ├── docs/
 │   ├── performance.md    # measured benchmarks, discovery tax, cost
