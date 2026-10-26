@@ -169,6 +169,23 @@ def _package_import_index(lines: list[str]) -> int:
     raise ValueError("entry point does not import book_to_skill")
 
 
+def _entry_point_policy_error(entry: str):
+    lines = (REPO_ROOT / entry).read_text(encoding="utf-8").splitlines()
+    if not any(line.strip() == MAIN_GUARD for line in lines):
+        return (
+            f"{entry} has no `{MAIN_GUARD}` guard, so its `dont_write_bytecode` "
+            "policy would also fire for an embedding import"
+        )
+    guard_at = next(i for i, line in enumerate(lines) if line.strip() == MAIN_GUARD)
+    import_at = _package_import_index(lines)
+    if "sys.dont_write_bytecode = True" not in "\n".join(lines[guard_at:import_at]):
+        return (
+            f"{entry} must set sys.dont_write_bytecode inside its `__main__` "
+            "guard and before importing book_to_skill"
+        )
+    return None
+
+
 @pytest.mark.parametrize("entry", list(ENTRY_POINTS))
 def test_entry_point_writes_no_bytecode(deployed, entry):
     script = deployed / entry
@@ -183,18 +200,8 @@ def test_entry_point_writes_no_bytecode(deployed, entry):
 
 def test_entry_points_set_the_policy_before_importing_the_package():
     """The guard must live in each entry point, ahead of the package import."""
-    for entry in ENTRY_POINTS:
-        lines = (REPO_ROOT / entry).read_text(encoding="utf-8").splitlines()
-        assert any(line.strip() == MAIN_GUARD for line in lines), (
-            f"{entry} has no `{MAIN_GUARD}` guard, so its `dont_write_bytecode` "
-            "policy would also fire for an embedding import"
-        )
-        guard_at = next(i for i, line in enumerate(lines) if line.strip() == MAIN_GUARD)
-        import_at = _package_import_index(lines)
-        assert "sys.dont_write_bytecode = True" in "\n".join(lines[guard_at:import_at]), (
-            f"{entry} must set sys.dont_write_bytecode inside its `__main__` "
-            "guard and before importing book_to_skill"
-        )
+    errors = list(filter(None, map(_entry_point_policy_error, ENTRY_POINTS)))
+    assert errors == []
 
 
 def test_entry_point_list_still_matches_the_source_tree():
