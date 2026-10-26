@@ -198,8 +198,9 @@ class TestScannerAndExtractorAgree:
             assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
 
     def test_visible_characters_are_not_flagged(self):
-        for char in "aZ0 \n\t第한กی":
-            assert not is_invisible_codepoint(ord(char)), repr(char)
+        visible = "aZ0 \n\t第한กی"
+        flagged = list(filter(lambda char: is_invisible_codepoint(ord(char)), visible))
+        assert flagged == []
 
 
 class TestSmugglingChannelsBeyondTheTagBlock:
