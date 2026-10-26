@@ -1784,14 +1784,10 @@ class TestParserExceptionLogging:
         broken = tmp_path / "broken.pdf"
         broken.write_bytes(b"%PDF-1.4 fake")
 
-        real_import = __import__
+        fake_pypdf = mock.MagicMock()
+        fake_pypdf.PdfReader.side_effect = RuntimeError("simulated failure")
 
-        def fake_import(name, *args, **kwargs):
-            if name == "pypdf":
-                raise RuntimeError("simulated failure")
-            return real_import(name, *args, **kwargs)
-
-        with mock.patch("builtins.__import__", side_effect=fake_import):
+        with mock.patch.dict(sys.modules, {"pypdf": fake_pypdf}):
             result = extract_with_pypdf(str(broken))
 
         assert result is None
