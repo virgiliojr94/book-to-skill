@@ -921,8 +921,8 @@ class TestDetectStructure:
         """Word ordinals `اول` … `سی و چهارم` map to integers 1–34."""
         from book_to_skill.utils import _chapter_number
 
-        for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1):
-            assert _chapter_number(f"فصل {word}") == n, word
+        detected = list(map(lambda word: _chapter_number(f"فصل {word}"), self._FA_ORDINAL_1_TO_34))
+        assert detected == list(range(1, 35))
         # Common ZWNJ spelling of 30.
         assert _chapter_number("فصل سی‌ام") == 30
 
