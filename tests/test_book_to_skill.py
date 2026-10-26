@@ -1672,19 +1672,12 @@ class TestDocxExtraction:
 
         docx_path = _make_minimal_docx(tmp_path / "test.docx")
 
-        real_import = __import__
-
-        def fake_import(name, *args, **kwargs):
-            if name == "docx":
-                raise ImportError("simulated: python-docx not installed")
-            return real_import(name, *args, **kwargs)
-
         with mock.patch.object(
             docx_module,
             "validate_docx_xml_safety",
             wraps=docx_module.validate_docx_xml_safety,
         ) as spy:
-            with mock.patch("builtins.__import__", side_effect=fake_import):
+            with mock.patch.dict(sys.modules, {"docx": None}):
                 text, method = docx_module.extract_docx(str(docx_path))
 
         assert method == "zipfile-docx"
