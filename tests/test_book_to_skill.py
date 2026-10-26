@@ -12,6 +12,7 @@ import json
 import sys
 import textwrap
 import zipfile
+from itertools import starmap
 from pathlib import Path
 from unittest import mock
 
@@ -1024,8 +1025,10 @@ class TestDetectStructure:
     def test_detects_persian_word_chapters_1_to_34(self):
         """All 34 word-numeral headings count as distinct numeric chapters."""
         text = "\n".join(
-            f"فصل {word}\nمحتوا فصل {n}."
-            for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1)
+            starmap(
+                "فصل {}\nمحتوا فصل {}.".format,
+                zip(self._FA_ORDINAL_1_TO_34, range(1, 35)),
+            )
         )
         result = detect_structure(text)
         assert result["chapters_detected"] == 34
