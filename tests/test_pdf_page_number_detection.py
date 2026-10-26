@@ -60,8 +60,9 @@ def test_every_canonical_numeral_1_to_99_matches():
 
 def test_letters_outside_the_1_to_99_range_are_kept():
     """"C"/"D"/"M" alone are not page numbers in the supported range."""
-    for letter in ("c", "d", "m", "C", "D", "M"):
-        assert _PDF_PAGE_NUM.match(letter) is None
+    letters = ("c", "d", "m", "C", "D", "M")
+    matched = list(filter(lambda letter: _PDF_PAGE_NUM.match(letter) is not None, letters))
+    assert matched == []
 
 
 def test_blank_line_is_not_a_page_number():
