@@ -62,10 +62,12 @@ def test_batch_survives_unreadable_source(tmp_path, monkeypatch, capsys):
     # config caches OUTPUT_* at import time; point the module constants at the
     # temp workdir so the run does not touch the shared default.
     import book_to_skill.config as config
-    for module in (config, utils):
-        monkeypatch.setattr(module, "OUTPUT_DIR", workdir, raising=False)
-        monkeypatch.setattr(module, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
-        monkeypatch.setattr(module, "OUTPUT_META", workdir / "metadata.json", raising=False)
+    monkeypatch.setattr(config, "OUTPUT_DIR", workdir, raising=False)
+    monkeypatch.setattr(config, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
+    monkeypatch.setattr(config, "OUTPUT_META", workdir / "metadata.json", raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_DIR", workdir, raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_META", workdir / "metadata.json", raising=False)
 
     monkeypatch.setattr(
         sys, "argv", ["extract.py", str(bad), str(good), "--mode", "text", "--install-missing", "no"]
