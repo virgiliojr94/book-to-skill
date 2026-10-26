@@ -156,6 +156,12 @@ def _bytecode(deployed: Path) -> tuple[list[str], list[str]]:
     return pyc, caches
 
 
+def _guarded_entry_point(py: Path, lines: list[str]) -> set[str]:
+    if any(line.strip() == MAIN_GUARD for line in lines):
+        return {py.relative_to(REPO_ROOT).as_posix()}
+    return set()
+
+
 @pytest.mark.parametrize("entry", list(ENTRY_POINTS))
 def test_entry_point_writes_no_bytecode(deployed, entry):
     script = deployed / entry
@@ -207,8 +213,7 @@ def test_entry_point_list_still_matches_the_source_tree():
         # A module that imports the package *and* is designed to be run directly
         # is an entry point: it must carry the policy. `def main(` alone is not
         # enough — `utils.py` is a pure library module and must NOT be listed.
-        if any(line.strip() == MAIN_GUARD for line in lines):
-            found.add(py.relative_to(REPO_ROOT).as_posix())
+        found.update(_guarded_entry_point(py, lines))
 
     # `__main__.py`/`__init__.py` cannot be guarded from inside the package:
     # Python compiles them before any of our code runs. They are excluded here
