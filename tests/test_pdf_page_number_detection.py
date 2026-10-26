@@ -72,8 +72,9 @@ def test_blank_line_is_not_a_page_number():
 
 
 def test_non_numeral_words_still_rejected():
-    for word in ("Chapter", "Introduction", "the", "42a"):
-        assert _PDF_PAGE_NUM.match(word) is None
+    words = ("Chapter", "Introduction", "the", "42a")
+    matched = list(filter(lambda word: _PDF_PAGE_NUM.match(word) is not None, words))
+    assert matched == []
 
 
 def _pages(*pages):
