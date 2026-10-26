@@ -131,10 +131,12 @@ def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
 
     workdir = tmp_path / "work"
     import book_to_skill.config as config
-    for module in (config, utils):
-        monkeypatch.setattr(module, "OUTPUT_DIR", workdir, raising=False)
-        monkeypatch.setattr(module, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
-        monkeypatch.setattr(module, "OUTPUT_META", workdir / "metadata.json", raising=False)
+    monkeypatch.setattr(config, "OUTPUT_DIR", workdir, raising=False)
+    monkeypatch.setattr(config, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
+    monkeypatch.setattr(config, "OUTPUT_META", workdir / "metadata.json", raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_DIR", workdir, raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_TEXT", workdir / "full_text.txt", raising=False)
+    monkeypatch.setattr(utils, "OUTPUT_META", workdir / "metadata.json", raising=False)
     monkeypatch.setattr(
         sys,
         "argv",
