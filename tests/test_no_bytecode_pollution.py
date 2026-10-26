@@ -162,6 +162,13 @@ def _guarded_entry_point(py: Path, lines: list[str]) -> set[str]:
     return set()
 
 
+def _package_import_index(lines: list[str]) -> int:
+    for index, line in enumerate(lines):
+        if line.lstrip().startswith(("from book_to_skill", "import book_to_skill")):
+            return index
+    raise ValueError("entry point does not import book_to_skill")
+
+
 @pytest.mark.parametrize("entry", list(ENTRY_POINTS))
 def test_entry_point_writes_no_bytecode(deployed, entry):
     script = deployed / entry
@@ -183,11 +190,7 @@ def test_entry_points_set_the_policy_before_importing_the_package():
             "policy would also fire for an embedding import"
         )
         guard_at = next(i for i, line in enumerate(lines) if line.strip() == MAIN_GUARD)
-        import_at = next(
-            i
-            for i, line in enumerate(lines)
-            if line.lstrip().startswith(("from book_to_skill", "import book_to_skill"))
-        )
+        import_at = _package_import_index(lines)
         assert "sys.dont_write_bytecode = True" in "\n".join(lines[guard_at:import_at]), (
             f"{entry} must set sys.dont_write_bytecode inside its `__main__` "
             "guard and before importing book_to_skill"
