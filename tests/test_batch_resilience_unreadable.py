@@ -14,6 +14,7 @@ import os
 import stat
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -120,13 +121,12 @@ def test_batch_survives_post_extraction_stat_failure(tmp_path, monkeypatch):
     bad.write_text("Chapter 1\nFirst source", encoding="utf-8")
     good.write_text("Chapter 2\nSecond source", encoding="utf-8")
 
-    real_getsize = os.path.getsize
-
-    def flaky_getsize(path):
-        if Path(path) == bad:
-            raise PermissionError("file became unavailable")
-        return real_getsize(path)
-
+    flaky_getsize = Mock(
+        side_effect=[
+            PermissionError("file became unavailable"),
+            os.path.getsize(good),
+        ]
+    )
     monkeypatch.setattr(os.path, "getsize", flaky_getsize)
 
     workdir = tmp_path / "work"
