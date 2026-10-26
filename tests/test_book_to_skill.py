@@ -599,9 +599,12 @@ class TestDetectStructure:
         `The Art of War` (#132) is one: 13 such headings, 0 detected, while two
         footnote cross-references (`ch. 71.]`) were picked up instead.
         """
-        text = "\n".join(
-            "Chapter %s. Section\nBody text here." % r
-            for r in ("I", "II", "III", "IV", "V")
+        text = (
+            "Chapter I. Section\nBody text here.\n"
+            "Chapter II. Section\nBody text here.\n"
+            "Chapter III. Section\nBody text here.\n"
+            "Chapter IV. Section\nBody text here.\n"
+            "Chapter V. Section\nBody text here."
         )
         assert detect_structure(text)["chapters_detected"] == 5
 
