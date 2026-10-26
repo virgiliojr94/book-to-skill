@@ -301,18 +301,17 @@ class TestBatchResilience:
         # Create a file that will fail (unsupported extension, garbage bytes)
         bad_file = _make_unsupported_file(tmp_path / "bad.xyz")
 
-        # Simulate the batch loop from main()
-        input_files = [good_file, bad_file]
         extracted = []
         errors = []
 
-        for fp in input_files:
-            try:
-                with mock.patch("book_to_skill.utils.prepare_dependencies"):
-                    res = extract_single_file(fp, "text", "no")
-                extracted.append(res)
-            except ExtractionError as exc:
-                errors.append((fp, str(exc)))
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
+            extracted.append(extract_single_file(good_file, "text", "no"))
+
+        try:
+            with mock.patch("book_to_skill.utils.prepare_dependencies"):
+                extract_single_file(bad_file, "text", "no")
+        except ExtractionError as exc:
+            errors.append((bad_file, str(exc)))
 
         assert len(extracted) == 1, "Good file should have been extracted"
         assert len(errors) == 1, "Bad file should have been recorded as error"
