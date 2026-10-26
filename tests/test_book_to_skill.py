@@ -1626,17 +1626,11 @@ class TestDocxExtraction:
         malicious or not, so there's no protection to buy by validating."""
         from book_to_skill.parsers.docx import extract_docx_with_python_docx
 
-        real_import = __import__
-
-        def fake_import(name, *args, **kwargs):
-            if name == "docx":
-                raise ImportError("simulated: python-docx not installed")
-            return real_import(name, *args, **kwargs)
-
         docx_path = tmp_path / "whatever.docx"
         docx_path.write_bytes(b"not even a real docx")
 
-        with mock.patch("builtins.__import__", side_effect=fake_import):
+        missing_docx = ImportError("simulated: python-docx not installed")
+        with mock.patch("builtins.__import__", side_effect=missing_docx):
             result = extract_docx_with_python_docx(str(docx_path))
 
         assert result is None
