@@ -53,9 +53,9 @@ def test_every_canonical_numeral_1_to_99_matches():
     """Exhaustive: no value in the supported range regressed into a miss."""
     ones = ["", "i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix"]
     tens = ["", "x", "xx", "xxx", "xl", "l", "lx", "lxx", "lxxx", "xc"]
-    for value in range(1, 100):
-        numeral = tens[value // 10] + ones[value % 10]
-        assert _PDF_PAGE_NUM.match(numeral) is not None, f"{value} -> {numeral}"
+    numerals = map(lambda value: (value, tens[value // 10] + ones[value % 10]), range(1, 100))
+    misses = list(filter(lambda item: _PDF_PAGE_NUM.match(item[1]) is None, numerals))
+    assert misses == []
 
 
 def test_letters_outside_the_1_to_99_range_are_kept():
