@@ -208,10 +208,7 @@ class TestEpubExtractionFix:
 
         # Even if ebooklib is absent, this should NOT raise TypeError/ValueError
         with mock.patch("book_to_skill.utils.prepare_dependencies"):
-            try:
-                result = extract_single_file(epub_path, "text", "no")
-            except (TypeError, ValueError) as exc:
-                pytest.fail(f"Tuple-unpack regression! Got: {exc}")
+            result = extract_single_file(epub_path, "text", "no")
 
         assert result["text"]  # some text was extracted
 
