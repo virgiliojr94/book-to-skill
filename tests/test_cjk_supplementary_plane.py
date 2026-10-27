@@ -11,37 +11,33 @@ plane up. Those extensions carry classical Chinese, Cantonese, Hong Kong and
 Taiwan place and personal names, and Japanese 人名用漢字.
 """
 
-import sys
-from pathlib import Path
-
 import pytest
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT_DIR))
 
 from book_to_skill.config import CJK_CHARS_PER_TOKEN
 from book_to_skill.utils import estimate_tokens
 
-BMP = "一二三四五六七八九十"                                    # common ideographs
-SIP = "\U00020000\U00020001\U0002a700\U0002b740\U0002ceb0"   # Ext B / C / D / E
+
+class _CjkSamples:
+    BMP = "一二三四五六七八九十"  # common ideographs
+    SIP = "\U00020000\U00020001\U0002a700\U0002b740\U0002ceb0"  # Ext B / C / D / E
 
 
-class TestSupplementaryPlaneCounted:
+class TestSupplementaryPlaneCounted(_CjkSamples):
     def test_sip_matches_bmp_for_the_same_length(self):
-        bmp_text = BMP * 200
-        sip_text = SIP * 400  # same character count
+        bmp_text = self.BMP * 200
+        sip_text = self.SIP * 400  # same character count
 
         assert len(bmp_text) == len(sip_text)
         assert estimate_tokens(sip_text) == estimate_tokens(bmp_text)
 
     def test_sip_only_text_is_not_one_token(self):
-        text = SIP * 400
+        text = self.SIP * 400
 
         # The old behaviour: a space-less run counts as a single "word".
         assert estimate_tokens(text) > 1000
 
     def test_estimate_tracks_the_configured_ratio(self):
-        text = SIP * 400
+        text = self.SIP * 400
 
         assert estimate_tokens(text) == pytest.approx(
             len(text) / CJK_CHARS_PER_TOKEN, rel=0.01
@@ -49,8 +45,8 @@ class TestSupplementaryPlaneCounted:
 
     def test_mixed_plane_text_is_consistent(self):
         """A book mixing common and rare ideographs estimates evenly."""
-        mixed = (BMP * 180) + (SIP * 40)
-        all_bmp = BMP * 200
+        mixed = (self.BMP * 180) + (self.SIP * 40)
+        all_bmp = self.BMP * 200
 
         assert len(mixed) == len(all_bmp)
         assert estimate_tokens(mixed) == estimate_tokens(all_bmp)
@@ -79,11 +75,11 @@ class TestSupplementaryPlaneCounted:
         assert estimate_tokens(text) > 100, name
 
 
-class TestExistingBehaviourPreserved:
+class TestExistingBehaviourPreserved(_CjkSamples):
     """The #103 behaviour for the BMP and for Latin must not change."""
 
     def test_bmp_cjk_unchanged(self):
-        text = BMP * 200
+        text = self.BMP * 200
 
         assert estimate_tokens(text) == pytest.approx(
             len(text) / CJK_CHARS_PER_TOKEN, rel=0.01
