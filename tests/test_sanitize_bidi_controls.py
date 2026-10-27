@@ -222,12 +222,13 @@ class TestSmugglingChannelsBeyondTheTagBlock:
             assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
 
     def test_annotation_and_format_controls_are_stripped(self):
-        for codepoint in (
+        codepoints = (
             0xFFF9, 0xFFFA, 0xFFFB,  # interlinear annotation
             0x1D173, 0x1D17A,  # musical beaming controls
             0x206A, 0x206C, 0x206F,  # deprecated format controls
-        ):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        )
+        visible = list(filter(lambda codepoint: not is_invisible_codepoint(codepoint), codepoints))
+        assert visible == []
 
     def test_the_upper_neighbour_of_the_deprecated_range_is_kept(self):
         # Only the upper edge is meaningful: U+2069 below the range is POP
