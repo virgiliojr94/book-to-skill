@@ -279,10 +279,14 @@ class TestDefaultIgnorableCarriers:
     """
 
     def test_carriers_are_stripped(self):
-        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
-            carrier = chr(codepoint)
-            assert sanitize_extracted_text(f"a{carrier}b") == ("ab", 1)
+        failures = list(
+            filter(
+                lambda codepoint: not is_invisible_codepoint(codepoint)
+                or sanitize_extracted_text(f"a{chr(codepoint)}b") != ("ab", 1),
+                DEFAULT_IGNORABLE_CARRIERS,
+            )
+        )
+        assert failures == []
 
     def test_a_carrier_run_encodes_nothing_visible(self):
         # The variation-selector trick in the Mongolian block: a run of selector
