@@ -193,9 +193,10 @@ class TestScannerAndExtractorAgree:
 
     def test_previously_covered_codepoints_still_covered(self):
         # Regression net for the original set (#75) and the word joiner (#85).
-        for codepoint in (0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF,
-                          0xE0000, 0xE0069, 0xE007F):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        codepoints = (0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF,
+                      0xE0000, 0xE0069, 0xE007F)
+        visible = list(filter(lambda codepoint: not is_invisible_codepoint(codepoint), codepoints))
+        assert visible == []
 
     def test_visible_characters_are_not_flagged(self):
         visible = "aZ0 \n\t第한กی"
