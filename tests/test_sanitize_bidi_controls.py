@@ -302,10 +302,10 @@ class TestDefaultIgnorableCarriers:
     def test_scanner_flags_the_carriers(self):
         from scan_generated_skill import _is_invisible
 
-        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
-            )
+        unflagged = list(
+            filter(lambda codepoint: not _is_invisible(codepoint), DEFAULT_IGNORABLE_CARRIERS)
+        )
+        assert unflagged == []
 
     def test_visible_neighbours_and_semantic_controls_are_kept(self):
         # The Arabic and Kaithi number signs and the hieroglyph joiners are Cf
