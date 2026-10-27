@@ -178,12 +178,15 @@ class TestScannerAndExtractorAgree:
     def test_scanner_flags_everything_extraction_strips(self):
         from scan_generated_skill import _is_invisible
 
-        for char in BIDI_CONTROLS + OTHER_INVISIBLES:
-            codepoint = ord(char)
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
+        codepoints = map(ord, BIDI_CONTROLS + OTHER_INVISIBLES)
+        failures = list(
+            filter(
+                lambda codepoint: not is_invisible_codepoint(codepoint)
+                or not _is_invisible(codepoint),
+                codepoints,
             )
+        )
+        assert failures == []
 
     def test_scanner_shares_the_extractor_predicate(self):
         """Guards against a future copy-paste divergence like the U+2060 one."""
