@@ -218,8 +218,9 @@ class TestSmugglingChannelsBeyondTheTagBlock:
         assert (sanitized, removed) == ("a", 16)
 
     def test_neighbours_of_the_selector_ranges_are_kept(self):
-        for codepoint in (0xFDFF, 0xFE10, 0xE00FF, 0xE01F0):
-            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        codepoints = (0xFDFF, 0xFE10, 0xE00FF, 0xE01F0)
+        invisible = list(filter(is_invisible_codepoint, codepoints))
+        assert invisible == []
 
     def test_annotation_and_format_controls_are_stripped(self):
         codepoints = (
