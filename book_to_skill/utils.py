@@ -7,6 +7,7 @@ import os
 import re
 import statistics
 import sys
+import tempfile
 from collections import Counter
 
 import shutil
@@ -42,6 +43,7 @@ from book_to_skill.parsers.pdf import (
     extract_with_pdftotext,
     extract_with_pypdf,
     extract_with_pdfminer,
+    extract_pypdf_page_records,
     looks_image_only,
     count_pages,
 )
@@ -1032,6 +1034,8 @@ def parse_arguments(argv: list[str]) -> tuple[list[str], str, str]:
                 i += 1
         elif arg == "--no-install-missing":
             i += 1
+        elif arg == "--pdf-page-sidecar":
+            i += 1
         elif arg.startswith("-"):
             print(f"WARNING: Unknown flag '{arg}' — ignoring it.", file=sys.stderr)
             i += 1
@@ -1465,6 +1469,73 @@ def prepare_output_dir(path: Path) -> None:
         path.mkdir(parents=True, mode=0o700)
 
 
+def write_pdf_page_sidecar(sources: list[dict], output_dir: Path) -> Path | None:
+    """Write opt-in physical-page evidence without changing legacy outputs.
+
+    pypdf's page text is a separate text-layer view, not a character-offset map
+    into ``full_text.txt``. When the main extractor differs, mark that explicitly.
+    A source whose hash changes between extraction and this pass gets no page
+    evidence, so citations cannot silently refer to a different PDF revision.
+    """
+    entries = []
+    for source in sources:
+        if source["format"] != "pdf":
+            continue
+        entry = {
+            "source_file": source["source_file"],
+            "source_sha256": source["sha256"],
+            "full_text_extraction_method": source["extraction_method"],
+            "page_text_extraction_method": "pypdf",
+            "status": "unavailable",
+            "pages": [],
+        }
+        try:
+            if _sha256_file(source["source_file"]) != source["sha256"]:
+                entry["reason"] = "source_changed_since_extraction"
+            else:
+                records = extract_pypdf_page_records(source["source_file"])
+                if _sha256_file(source["source_file"]) != source["sha256"]:
+                    entry["reason"] = "source_changed_during_page_extraction"
+                elif records is None:
+                    entry["reason"] = "pypdf_unavailable_or_failed"
+                else:
+                    entry["status"] = "ok"
+                    if source["pages"] and len(records) != source["pages"]:
+                        entry["low_confidence_reasons"] = ["page_count_mismatch"]
+                    for record in records:
+                        record["source_sha256"] = source["sha256"]
+                        if source["extraction_method"] != "pypdf":
+                            record["low_confidence_reasons"].append(
+                                "different_extractor_from_full_text"
+                            )
+                        record["requires_manual_review"] = bool(
+                            record["low_confidence_reasons"]
+                        )
+                    entry["pages"] = records
+        except OSError as exc:
+            entry["reason"] = f"source_unreadable: {type(exc).__name__}"
+        entries.append(entry)
+
+    payload = {"schema_version": 1, "sources": entries}
+    destination = output_dir / "pdf_pages.json"
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", newline="\n", dir=output_dir,
+            prefix=".pdf_pages-", suffix=".tmp", delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            json.dump(payload, stream, indent=2, ensure_ascii=False)
+            stream.write("\n")
+        os.replace(temporary, destination)
+    except OSError as exc:
+        print(f"  [warn] could not write PDF page sidecar: {exc}", file=sys.stderr)
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+        return None
+    return destination
+
+
 def print_intro() -> None:
     """Two lines of attribution at the start of every run.
 
@@ -1502,7 +1573,8 @@ def print_usage() -> None:
     """Print standalone CLI usage."""
     print(
         "Usage: book-to-skill <path-to-document-folder-or-glob>... "
-        "[--mode technical|text] [--install-missing ask|yes|no]",
+        "[--mode technical|text] [--install-missing ask|yes|no] "
+        "[--pdf-page-sidecar]",
         file=sys.stderr,
     )
     print(
@@ -1671,6 +1743,10 @@ def main():
     OUTPUT_META.write_text(
         json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+
+    page_sidecar = None
+    if "--pdf-page-sidecar" in sys.argv[1:]:
+        page_sidecar = write_pdf_page_sidecar(extracted_sources, OUTPUT_DIR)
     
     page_line = f"   Total Pages: {total_pages}"
     print("\nExtraction complete:")
@@ -1703,6 +1779,8 @@ def main():
     print(f"\n   Workdir -> {OUTPUT_DIR}")
     print(f"   Text    -> {OUTPUT_TEXT}")
     print(f"   Meta    -> {OUTPUT_META}")
+    if page_sidecar is not None:
+        print(f"   PDF pages -> {page_sidecar}")
     if errors:
         print(f"\n   WARNING: {len(errors)} source(s) skipped due to errors:")
         for path, err in errors:
