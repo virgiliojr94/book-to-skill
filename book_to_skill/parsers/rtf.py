@@ -176,6 +176,9 @@ def strip_rtf_fallback(raw: str) -> str:
     raw = _RTF_HEX_RUN.sub(
         lambda match: _decode_hex_run(match, ansi_encoding), raw
     )
+    # \line is a required line break; do not match longer control words such
+    # as \linebetcol. A single following space is an RTF delimiter, not text.
+    raw = re.sub(r"\\line(?![a-zA-Z])(?:-?\d+)? ?", "\n", raw)
     raw = re.sub(r"\\par[d]?", "\n", raw)
     raw = re.sub(r"\\tab", "\t", raw)
     raw = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", raw)
