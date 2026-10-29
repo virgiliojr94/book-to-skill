@@ -918,6 +918,29 @@ class TestDetectStructure:
         assert _chapter_number("פרקים רבים בספר") is None
         assert _chapter_number("פרק") is None
 
+    def test_detects_armenian_chapters(self):
+        """Armenian headings: `Գլուխ N`, incl. all-caps ԳԼՈՒԽ and lowercase."""
+        text = (
+            "Գլուխ 1 Ներածություն\nամփոփում\n"
+            "ԳԼՈՒԽ 2 Մեթոդներ\nամփոփում\n"
+            "գլուխ 3 Արդյունքներ\nամփոփում"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_armenian_markdown_prefix(self):
+        text = "## Գլուխ 1 Առաջին\nամփոփում\n## Գլուխ 2 Երկրորդ\nամփոփում"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_armenian_prose_is_not_a_chapter_heading(self):
+        """The bare word, an inflected stem, and the plural+number are not headings."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("Գլուխ") is None
+        assert _chapter_number("այս գլխում we քննարկում ենք") is None
+        # Plural "Գլուխներ 5" ("chapters 5") must not read as chapter 5: the
+        # word has to be followed by whitespace, not more letters.
+        assert _chapter_number("Գլուխներ 5") is None
+
     def test_hebrew_heading_survives_bidi_controls(self):
         """Bidi wrappers are stripped before detection, so the heading still counts."""
         from book_to_skill.sanitize import sanitize_extracted_text
