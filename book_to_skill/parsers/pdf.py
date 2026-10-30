@@ -7,6 +7,8 @@ import subprocess
 import sys
 from collections import Counter
 
+_PART_HEADER = re.compile(r"^part\s+(?:\d+|[ivxlcdm]+)\b", re.IGNORECASE)
+
 # A bare page number sitting alone on a line: Arabic, or a Roman numeral of the
 # kind used to number front matter.
 #
@@ -128,6 +130,64 @@ def extract_with_pypdf(pdf_path: str) -> str | None:
     except Exception as e:
         print(f"  [warn] extract_with_pypdf failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
+
+
+def pdf_outline_titles(pdf_path: str) -> list[str]:
+    """Top-level titles from the PDF's embedded outline (bookmarks), or [] when
+    there is none or pypdf is unavailable. A top-level entry with children that
+    is a "Part" is replaced by its children, so "Part I > Chapter 1..7" yields
+    the chapters, not the parts."""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(pdf_path)
+        outline = reader.outline
+    except Exception:
+        return []
+    titles = []
+    for index, item in enumerate(outline):
+        if isinstance(item, list):
+            continue  # children of the preceding entry
+        title = (getattr(item, "title", "") or "").strip()
+        children = outline[index + 1] if index + 1 < len(outline) else None
+        if _PART_HEADER.match(title) and isinstance(children, list):
+            titles.extend(
+                (c.title or "").strip() for c in children if not isinstance(c, list)
+            )
+        elif title:
+            titles.append(title)
+    return [t for t in titles if t]
+
+
+def pdf_outline_all_titles(pdf_path: str) -> list[str]:
+    """Every bookmark title from the PDF outline, in document order."""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(pdf_path)
+        outline = reader.outline
+    except Exception:
+        return []
+    if not outline:
+        return []
+
+    def walk(items: list) -> list[str]:
+        titles: list[str] = []
+        index = 0
+        while index < len(items):
+            item = items[index]
+            if isinstance(item, list):
+                titles.extend(walk(item))
+                index += 1
+                continue
+            title = (getattr(item, "title", "") or "").strip()
+            if title:
+                titles.append(title)
+            index += 1
+            if index < len(items) and isinstance(items[index], list):
+                titles.extend(walk(items[index]))
+                index += 1
+        return titles
+
+    return walk(outline)
 
 
 def extract_with_pdfminer(pdf_path: str) -> str | None:

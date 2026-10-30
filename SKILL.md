@@ -460,7 +460,7 @@ If a chapter genuinely has no worked example and resists expansion, let it land 
 
 For EACH chapter/major section identified in Step 3:
 
-Read the corresponding section of the extracted `full_text.txt` (use character offsets or grep for chapter headings).
+Read the corresponding section of the extracted `full_text.txt` using top-level `chapter_ranges` from `metadata.json` when present (`start_line`/`end_line` are 1-based inclusive, for `sed`/`Read`); otherwise grep for chapter headings. (`sources[].chapter_ranges` use the same fields but line numbers in that source's text only, not the consolidated `full_text.txt`.)
 
 Create `$SKILLS_HOME/<skill_name>/chapters/ch<NN>-<slug>.md` using the structure below.
 
@@ -610,6 +610,7 @@ the relevant chapter file before answering.
 - [glossary.md](glossary.md) — all key terms with definitions
 - [patterns.md](patterns.md) — all techniques and design patterns
 - [cheatsheet.md](cheatsheet.md) — quick reference tables and decision guides
+- Full text: `<output_text from metadata.json>` — grep it for depth the chapter files omit (local extraction, not shipped)
 
 ---
 

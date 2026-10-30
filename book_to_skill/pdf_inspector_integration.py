@@ -138,6 +138,8 @@ def _result_from_inspector(
     )
 
     structure = utils_module.detect_structure(text)
+    if hasattr(utils_module, "apply_pdf_outline"):
+        structure = utils_module.apply_pdf_outline(structure, str(input_path))
     print(
         f"  chapters: {structure['chapters_detected']} "
         f"({structure['chapters_method']})"
