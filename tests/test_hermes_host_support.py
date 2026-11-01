@@ -244,9 +244,10 @@ def test_non_hermes_host_keeps_original_personal_precedence(tmp_path):
 
     personal = home / ".agents" / "skills" / "book-to-skill" / "scripts" / "extract.py"
     project_local = project / ".agents" / "skills" / "book-to-skill" / "scripts" / "extract.py"
-    for extractor in (personal, project_local):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    project_local.parent.mkdir(parents=True)
+    project_local.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
     env.pop("HERMES_AGENT")
