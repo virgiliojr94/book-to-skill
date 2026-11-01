@@ -155,9 +155,10 @@ def test_untrusted_hermes_project_cannot_override_personal_installation(
         / "scripts"
         / "extract.py"
     )
-    for extractor in (personal, untrusted):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    untrusted.parent.mkdir(parents=True)
+    untrusted.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [])
     result = subprocess.run(
