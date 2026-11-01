@@ -81,8 +81,7 @@ def test_hermes_extractor_probe_discovers_supported_layouts(tmp_path, layout):
         text=True,
     )
     selected = Path(result.stdout)
-    if not selected.is_absolute():
-        selected = nested / selected
+    assert selected.is_absolute()
     assert selected.resolve() == extractor.resolve()
 
 
