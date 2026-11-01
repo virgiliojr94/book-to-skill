@@ -286,8 +286,9 @@ class TestBatchResilience:
     def test_extract_single_file_raises_on_missing(self, tmp_path):
         """A missing file should raise ExtractionError, not sys.exit."""
         missing = tmp_path / "does_not_exist.txt"
-        with pytest.raises(ExtractionError, match="File not found"):
+        with pytest.raises(ExtractionError) as exc_info:
             extract_single_file(missing, "text", "no")
+        assert exc_info.match("File not found")
 
     def test_extract_single_file_raises_on_unsupported(self, tmp_path):
         """An unsupported format should raise ExtractionError, not sys.exit."""
