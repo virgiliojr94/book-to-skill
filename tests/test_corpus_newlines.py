@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -79,15 +80,7 @@ def test_corpus_writer_explicitly_disables_host_newline_translation(
     source = tmp_path / "synthetic.md"
     source.write_bytes(SOURCE.replace("\n", "\r\n").encode("utf-8"))
     output = tmp_path / "output"
-    observed = []
     real_open = Path.open
-
-    def record_open(self, mode="r", *args, **kwargs):
-        if self.name == "full_text.txt" and mode == "w":
-            observed.append(kwargs.get("newline"))
-        return real_open(self, mode, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "open", record_open)
     monkeypatch.setattr("book_to_skill.utils.OUTPUT_DIR", output)
     monkeypatch.setattr("book_to_skill.utils.OUTPUT_TEXT", output / "full_text.txt")
     monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", output / "metadata.json")
@@ -95,6 +88,11 @@ def test_corpus_writer_explicitly_disables_host_newline_translation(
 
     from book_to_skill.utils import main
 
-    main()
+    with mock.patch.object(
+        Path, "open", autospec=True, side_effect=real_open
+    ) as open_spy:
+        main()
 
-    assert observed == ["\n"]
+    assert mock.call(
+        output / "full_text.txt", "w", encoding="utf-8", newline="\n"
+    ) in open_spy.call_args_list

@@ -209,8 +209,11 @@ class TestSmugglingChannelsBeyondTheTagBlock:
         # A run of selectors after any base character encodes one byte each and
         # renders as nothing — the tag-block trick in a block that survives more
         # pipelines. They are Mn, not Cf, so a category filter misses them.
-        for codepoint in (0xFE00, 0xFE0F, 0xE0100, 0xE0150, 0xE01EF):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert is_invisible_codepoint(0xFE00), "U+FE00"
+        assert is_invisible_codepoint(0xFE0F), "U+FE0F"
+        assert is_invisible_codepoint(0xE0100), "U+E0100"
+        assert is_invisible_codepoint(0xE0150), "U+E0150"
+        assert is_invisible_codepoint(0xE01EF), "U+E01EF"
 
         payload = "a" + "".join(chr(0xE0100 + byte) for byte in range(16))
         sanitized, removed = sanitize_extracted_text(payload)
@@ -262,10 +265,21 @@ class TestSmugglingChannelsBeyondTheTagBlock:
     def test_scanner_flags_the_new_channels_too(self):
         from scan_generated_skill import _is_invisible
 
-        for codepoint in (0xFE0F, 0xE0100, 0xFFF9, 0x1D173, 0x206A):
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
-            )
+        assert _is_invisible(0xFE0F), (
+            "scanner does not flag U+FE0F but extraction strips it"
+        )
+        assert _is_invisible(0xE0100), (
+            "scanner does not flag U+E0100 but extraction strips it"
+        )
+        assert _is_invisible(0xFFF9), (
+            "scanner does not flag U+FFF9 but extraction strips it"
+        )
+        assert _is_invisible(0x1D173), (
+            "scanner does not flag U+1D173 but extraction strips it"
+        )
+        assert _is_invisible(0x206A), (
+            "scanner does not flag U+206A but extraction strips it"
+        )
 
 
 class TestDefaultIgnorableCarriers:
@@ -301,8 +315,17 @@ class TestDefaultIgnorableCarriers:
         # but not Default_Ignorable — Unicode subtracts them as "exceptional
         # format characters that should be visible", the same reason #178 kept
         # U+2800. A blanket Cf rule would take them.
-        for codepoint in CARRIER_NEIGHBOURS_KEPT:
-            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert len(CARRIER_NEIGHBOURS_KEPT) == 10
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[0]), "U+180A"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[1]), "U+17B6"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[2]), "U+1BC9F"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[3]), "U+0600"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[4]), "U+06DD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[5]), "U+08E2"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[6]), "U+110BD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[7]), "U+110CD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[8]), "U+13430"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[9]), "U+13431"
 
     def test_legitimate_mongolian_keeps_its_letters(self):
         # Stripping a free variation selector drops a glyph-shape hint, not a
