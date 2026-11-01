@@ -55,8 +55,7 @@ class TestDestinationGroupsDropped:
         assert "Real body text here." in out
 
     def test_chapter_heading_is_on_its_own_line(self):
-        lines = [ln for ln in strip_rtf_fallback(FULL_HEADER_RTF).splitlines()
-                 if ln.strip()]
+        lines = list(filter(str.strip, strip_rtf_fallback(FULL_HEADER_RTF).splitlines()))
         assert lines[0].strip() == "Chapter 1"
 
     def test_info_metadata_not_exposed(self):
