@@ -265,10 +265,21 @@ class TestSmugglingChannelsBeyondTheTagBlock:
     def test_scanner_flags_the_new_channels_too(self):
         from scan_generated_skill import _is_invisible
 
-        for codepoint in (0xFE0F, 0xE0100, 0xFFF9, 0x1D173, 0x206A):
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
-            )
+        assert _is_invisible(0xFE0F), (
+            "scanner does not flag U+FE0F but extraction strips it"
+        )
+        assert _is_invisible(0xE0100), (
+            "scanner does not flag U+E0100 but extraction strips it"
+        )
+        assert _is_invisible(0xFFF9), (
+            "scanner does not flag U+FFF9 but extraction strips it"
+        )
+        assert _is_invisible(0x1D173), (
+            "scanner does not flag U+1D173 but extraction strips it"
+        )
+        assert _is_invisible(0x206A), (
+            "scanner does not flag U+206A but extraction strips it"
+        )
 
 
 class TestDefaultIgnorableCarriers:
