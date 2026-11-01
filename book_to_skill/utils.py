@@ -1257,6 +1257,14 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
     
     if ext == ".epub":
         print(f"Extracting EPUB: {input_str}")
+        if extraction_mode == "technical":
+            fallback_reason = "format_not_supported_in_technical_mode"
+            print(
+                "WARNING: Technical mode is not supported for EPUB; "
+                "using the EPUB text extraction chain. "
+                "Layout-aware extraction was not used.",
+                file=sys.stderr,
+            )
         text = extract_with_ebooklib(input_str)
         if text and text.strip():
             method = "ebooklib"

@@ -129,7 +129,7 @@ Store the answer as `BOOK_TYPE`:
 - Option 3 → `BOOK_TYPE=text`
 
 **If `BOOK_TYPE=technical`**, inform the user before proceeding:
-> "📐 Technical mode selected — using Docling for structure-aware extraction (tables, code blocks, formulas preserved as markdown). This takes ~1.5s per page, so expect a few minutes for longer sources. Starting now…"
+> "📐 Technical mode selected — PDFs attempt Docling for layout-aware extraction. EPUBs and other formats use their existing text extractors; code, tables, and formulas may lose structure. Check each source's `extraction_method` and `fallback_reason` in metadata.json for the actual extraction path."
 
 **If `BOOK_TYPE=text`**, inform:
 > "📄 Text mode selected — using the fastest suitable extractor for each file type. Plain text/Markdown/HTML are usually ready in seconds; PDFs use pdftotext when available."
