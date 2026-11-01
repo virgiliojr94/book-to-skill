@@ -107,9 +107,10 @@ def test_hermes_project_extractor_precedes_personal_installation(
         / "scripts"
         / "extract.py"
     )
-    for extractor in (personal, project_local):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    project_local.parent.mkdir(parents=True)
+    project_local.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
     result = subprocess.run(
