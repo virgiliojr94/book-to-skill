@@ -209,8 +209,11 @@ class TestSmugglingChannelsBeyondTheTagBlock:
         # A run of selectors after any base character encodes one byte each and
         # renders as nothing — the tag-block trick in a block that survives more
         # pipelines. They are Mn, not Cf, so a category filter misses them.
-        for codepoint in (0xFE00, 0xFE0F, 0xE0100, 0xE0150, 0xE01EF):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert is_invisible_codepoint(0xFE00), "U+FE00"
+        assert is_invisible_codepoint(0xFE0F), "U+FE0F"
+        assert is_invisible_codepoint(0xE0100), "U+E0100"
+        assert is_invisible_codepoint(0xE0150), "U+E0150"
+        assert is_invisible_codepoint(0xE01EF), "U+E01EF"
 
         payload = "a" + "".join(chr(0xE0100 + byte) for byte in range(16))
         sanitized, removed = sanitize_extracted_text(payload)
