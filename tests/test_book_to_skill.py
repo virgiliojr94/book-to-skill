@@ -291,8 +291,9 @@ class TestBatchResilience:
     def test_extract_single_file_raises_on_unsupported(self, tmp_path):
         """An unsupported format should raise ExtractionError, not sys.exit."""
         unsupported = _make_unsupported_file(tmp_path / "data.xyz")
-        with pytest.raises(ExtractionError, match="Unsupported format"):
+        with pytest.raises(ExtractionError) as exc_info:
             extract_single_file(unsupported, "text", "no")
+        assert exc_info.match("Unsupported format")
 
     def test_batch_continues_past_bad_files(self, tmp_path):
         """A mix of good + bad files should produce output for the good ones."""
