@@ -315,8 +315,17 @@ class TestDefaultIgnorableCarriers:
         # but not Default_Ignorable — Unicode subtracts them as "exceptional
         # format characters that should be visible", the same reason #178 kept
         # U+2800. A blanket Cf rule would take them.
-        for codepoint in CARRIER_NEIGHBOURS_KEPT:
-            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert len(CARRIER_NEIGHBOURS_KEPT) == 10
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[0]), "U+180A"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[1]), "U+17B6"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[2]), "U+1BC9F"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[3]), "U+0600"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[4]), "U+06DD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[5]), "U+08E2"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[6]), "U+110BD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[7]), "U+110CD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[8]), "U+13430"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[9]), "U+13431"
 
     def test_legitimate_mongolian_keeps_its_letters(self):
         # Stripping a free variation selector drops a glyph-shape hint, not a
