@@ -736,6 +736,50 @@ class TestDetectStructure:
         assert _chapter_number("තවත් පරිච්ඡේදයක් ඇත") is None
         assert _chapter_number("පරිච්ඡේදය") is None
 
+    def test_detects_sinhala_adhyaya_chapters(self):
+        """The Sanskrit-loan word අධ්‍යාය is also a Sinhala chapter heading."""
+        text = (
+            "අධ්\u200dයාය 1 හැඳින්වීම\nසාරාංශය\n"
+            "අධ්\u200dයාය ෨ ක්‍රම\nසාරාංශය\n"
+            "අධ්\u200dයාය 3 ප්‍රතිඵල\nසාරාංශය"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_sinhala_adhyaya_matches_with_and_without_the_joiner(self):
+        """The ZWJ is optional: sanitization strips it before detection.
+
+        sanitize_extracted_text() removes U+200D, so the spelling that reaches
+        the matcher has no joiner even though every real source file has one.
+        Both forms must resolve.
+        """
+        from book_to_skill.sanitize import sanitize_extracted_text
+        from book_to_skill.utils import _chapter_number
+
+        with_joiner = "අධ්\u200dයාය 7"
+        sanitized, removed = sanitize_extracted_text(with_joiner)
+        assert removed == 1
+        assert sanitized == "අධ්යාය 7"
+        assert _chapter_number(with_joiner) == 7
+        assert _chapter_number(sanitized) == 7
+
+    def test_sinhala_adhyaya_prose_is_not_a_chapter_heading(self):
+        """Inflected forms and the bare word are not headings, joiner or not."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("මෙම අධ්\u200dයායේ අපි සාකච්ඡා කරමු") is None
+        assert _chapter_number("තවත් අධ්\u200dයායක් ඇත") is None
+        assert _chapter_number("අධ්\u200dයාය") is None
+        assert _chapter_number("අධ්යාය") is None
+
+    def test_sinhala_adhyaya_does_not_collide_with_other_indic_scripts(self):
+        """අධ්‍යාය shares a transliteration with four other scripts, not a block."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("අධ්\u200dයාය ෫") == 5
+        assert _chapter_number("अध्याय ५") == 5
+        assert _chapter_number("અધ્યાય ૫") == 5
+        assert _chapter_number("ਅਧਿਆਇ ੫") == 5
+
     def test_detects_telugu_chapters(self):
         """Telugu headings: both spellings (అధ్యాయము/అధ్యాయం), Telugu or Arabic digits."""
         text = (

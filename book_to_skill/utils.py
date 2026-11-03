@@ -243,19 +243,27 @@ _TA_CHAPTER = re.compile(
     rf"^\s*(?:#{{1,6}}\s+)?அத்தியாயம்\s*([0-9{_TA_DIGITS}]+)\b"
 )
 
-# Sinhala chapter headings: "පරිච්ඡේදය 1", "පරිච්ඡේදය ෨", "## පරිච්ඡේදය 2".
-# පරිච්ඡේදය ("chapter") + a number. Grouped next to Tamil as the other Sri
-# Lankan script. Modern Sinhala prints numbers with ASCII digits; the Lith
-# digits (U+0DE6-U+0DEF) are included for historical texts, remapped like the
-# other Indic blocks. Only පරිච්ඡේදය is matched, not the Sanskrit loan අධ්‍යාය:
-# that word carries a ZERO WIDTH JOINER inside its conjunct, and
-# sanitize_extracted_text() strips U+200D before detect_structure() ever sees
-# the text, so a pattern containing one could never match. Requiring a number
-# keeps prose that merely inflects the word ("පරිච්ඡේදයේ") from matching.
+# Sinhala chapter headings: "පරිච්ඡේදය 1", "අධ්‍යාය ෨", "## පරිච්ඡේදය 2".
+# Two words are used: පරිච්ඡේදය and the Sanskrit loan අධ්‍යාය. Grouped next to
+# Tamil as the other Sri Lankan script. Modern Sinhala prints numbers with ASCII
+# digits; the Lith digits (U+0DE6-U+0DEF) are included for historical texts,
+# remapped like the other Indic blocks.
+#
+# The joiner in අධ්‍යාය is matched optionally, and that is deliberate: the word
+# carries a ZERO WIDTH JOINER inside its ධ්‍ය conjunct, but
+# sanitize_extracted_text() strips U+200D before detect_structure() ever runs, so
+# the spelling that reaches this pattern has no joiner even though every real
+# source file has one. "\u200d?" matches both, which keeps the pattern working
+# for callers that reach _chapter_number() without sanitizing first.
+#
+# අධ්‍යාය shares its transliteration with Devanagari अध्याय, Gujarati અધ્યાય and
+# Gurmukhi ਅਧਿਆਇ, but Sinhala occupies U+0D80-U+0DFF and none of those blocks
+# overlap it, so the matchers cannot see each other's text. Requiring a number
+# keeps prose that merely inflects a word ("පරිච්ඡේදයේ", "අධ්‍යායේ") from matching.
 _SI_DIGITS = "෦-෯"
 _SI_DIGIT_MAP = str.maketrans("෦෧෨෩෪෫෬෭෮෯", "0123456789")
 _SI_CHAPTER = re.compile(
-    rf"^\s*(?:#{{1,6}}\s+)?පරිච්ඡේදය\s*([0-9{_SI_DIGITS}]+)\b"
+    rf"^\s*(?:#{{1,6}}\s+)?(?:පරිච්ඡේදය|අධ්\u200d?යාය)\s*([0-9{_SI_DIGITS}]+)\b"
 )
 
 # Telugu chapter headings: "అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2".
@@ -896,7 +904,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Bengali ("অধ্যায় 1", "অধ্যায় ১", "## অধ্যায় 2"),
     Odia ("ଅଧ୍ୟାୟ 1", "ଅଧ୍ୟାୟ ୧", "## ଅଧ୍ୟାୟ 2"),
     Tamil ("அத்தியாயம் 1", "அத்தியாயம் ௧", "## அத்தியாயம் 2"),
-    Sinhala ("පරිච්ඡේදය 1", "පරිච්ඡේදය ෨", "## පරිච්ඡේදය 2"),
+    Sinhala ("පරිච්ඡේදය 1", "අධ්‍යාය ෨", "## පරිච්ඡේදය 2"),
     Telugu ("అధ్యాయము 1", "అధ్యాయం ౧", "## అధ్యాయం 2"),
     Kannada ("ಅಧ್ಯಾಯ 1", "ಅಧ್ಯಾಯ ೧", "## ಅಧ್ಯಾಯ 2"),
     Malayalam ("അധ്യായം 1", "അധ്യായം ൧", "## അദ്ധ്യായം 2"),
