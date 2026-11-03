@@ -21,6 +21,7 @@ document into clean text + metadata; the agent turns that into a structured skil
             │  output → <tempdir>/book_skill_work/                            │
             │    full_text.txt   (all sources merged, source-marked)          │
             │    metadata.json   (pages, words, tokens, chapters, ToC)        │
+            │    pdf_pages.json  (optional, physical-page text evidence)       │
             └────────────────────────────────────────────────────────────────┘
                                    │
                                    ▼
@@ -90,6 +91,19 @@ converter does not infer arbitrary `skills.load.extraDirs`.
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 
 ## Security
+
+For page-level PDF evidence, run
+`python3 scripts/extract.py book.pdf --pdf-page-sidecar`. It additionally
+writes `pdf_pages.json` in the workdir.
+This opt-in sidecar uses pypdf's text layer even when the main extractor is
+different. Each record carries the source SHA-256, one-based physical page,
+sanitized text, extraction method, and low-confidence reasons. It does not
+change `full_text.txt` or `metadata.json`, and it provides no exact character
+offsets into the cleaned full text. A suspected merged decimal token (for
+example `0.2070.110`) remains untouched and is marked for manual PDF-table
+review; the code does not infer column separators. If pypdf cannot read the
+source or the source hash changes, the sidecar marks that source unavailable
+instead of inventing page evidence.
 
 Untrusted documents flow into an agent's context and then into a generated skill
 that later loads into other agents — a document→context supply chain. The hardening

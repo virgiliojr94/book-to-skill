@@ -63,8 +63,9 @@ jobs:
           python-version: "3.12"
       - name: Install pytest and the optional test deps
         # Test-time only, consistent with the cost discipline in AGENTS.md --
-        # no new runtime dependency is introduced.
-        run: pip install pytest beautifulsoup4 trafilatura
+    # no new runtime dependency is introduced. pypdf also exercises the
+    # opt-in physical-page sidecar against the checked-in synthetic PDF.
+        run: pip install pytest beautifulsoup4 trafilatura pypdf
       - name: Run test suite
         run: pytest tests/ -q
 
