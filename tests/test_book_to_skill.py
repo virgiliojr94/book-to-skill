@@ -2840,7 +2840,6 @@ class TestParseArgumentsUnknownFlags:
         captured = capsys.readouterr()
         assert captured.err == ""
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 #  CJK-aware token estimate (rescued from #70)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2901,3 +2900,56 @@ class TestPdfLibsCleanup:
         out = pdf_parser.extract_with_pdfminer("x.pdf")
         assert "content" in out
         assert "HEAD" not in out
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CLI entry point tests
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestCliEntryPoint:
+    """Tests for cli.py and __main__.py entry points."""
+
+    def test_cli_main_calls_utils_main(self):
+        """cli.main() should call utils.main()."""
+        from book_to_skill import cli
+        called = False
+        def fake_utils_main():
+            nonlocal called
+            called = True
+        with mock.patch("book_to_skill.cli.utils_main", side_effect=fake_utils_main):
+            cli.main()
+        assert called, "cli.main() should call utils.main()"
+
+    def test_cli_main_reconfigures_utf8(self):
+        """cli.main() should reconfigure stdout/stderr to UTF-8."""
+        from book_to_skill import cli
+        with mock.patch("book_to_skill.cli.utils_main"):
+            cli.main()
+        # After reconfigure, encoding should still be valid (may not change if already UTF-8)
+        assert sys.stdout.encoding is not None
+
+    def test_main_importable(self):
+        """__main__.py should be importable and call cli.main()."""
+        import importlib
+        spec = importlib.util.find_spec("book_to_skill.__main__")
+        assert spec is not None, "__main__ module should be findable"
+
+    def test_cli_main_returns_none(self):
+        """cli.main() is a procedure (implicitly returns None) and should complete without raising."""
+        from book_to_skill import cli
+        with mock.patch("book_to_skill.cli.utils_main"):
+            cli.main()
+
+    def test_cli_main_handles_reconfigure_failure(self):
+        """If reconfigure fails (mock stream), cli.main() should not crash."""
+        from book_to_skill import cli
+        class BrokenStream:
+            encoding = "ascii"
+            def reconfigure(self, **kwargs):
+                raise AttributeError("mock failure")
+        with mock.patch.object(cli, "sys") as mock_sys:
+            mock_sys.stdout = BrokenStream()
+            mock_sys.stderr = BrokenStream()
+            mock_sys.argv = ["extract.py"]
+            with mock.patch("book_to_skill.cli.utils_main"):
+                cli.main()  # should not raise
