@@ -12,6 +12,7 @@ import json
 import sys
 import textwrap
 import zipfile
+from itertools import starmap
 from pathlib import Path
 from unittest import mock
 
@@ -208,10 +209,7 @@ class TestEpubExtractionFix:
 
         # Even if ebooklib is absent, this should NOT raise TypeError/ValueError
         with mock.patch("book_to_skill.utils.prepare_dependencies"):
-            try:
-                result = extract_single_file(epub_path, "text", "no")
-            except (TypeError, ValueError) as exc:
-                pytest.fail(f"Tuple-unpack regression! Got: {exc}")
+            result = extract_single_file(epub_path, "text", "no")
 
         assert result["text"]  # some text was extracted
 
@@ -285,14 +283,16 @@ class TestBatchResilience:
     def test_extract_single_file_raises_on_missing(self, tmp_path):
         """A missing file should raise ExtractionError, not sys.exit."""
         missing = tmp_path / "does_not_exist.txt"
-        with pytest.raises(ExtractionError, match="File not found"):
+        with pytest.raises(ExtractionError) as exc_info:
             extract_single_file(missing, "text", "no")
+        assert exc_info.match("File not found")
 
     def test_extract_single_file_raises_on_unsupported(self, tmp_path):
         """An unsupported format should raise ExtractionError, not sys.exit."""
         unsupported = _make_unsupported_file(tmp_path / "data.xyz")
-        with pytest.raises(ExtractionError, match="Unsupported format"):
+        with pytest.raises(ExtractionError) as exc_info:
             extract_single_file(unsupported, "text", "no")
+        assert exc_info.match("Unsupported format")
 
     def test_batch_continues_past_bad_files(self, tmp_path):
         """A mix of good + bad files should produce output for the good ones."""
@@ -301,18 +301,17 @@ class TestBatchResilience:
         # Create a file that will fail (unsupported extension, garbage bytes)
         bad_file = _make_unsupported_file(tmp_path / "bad.xyz")
 
-        # Simulate the batch loop from main()
-        input_files = [good_file, bad_file]
         extracted = []
         errors = []
 
-        for fp in input_files:
-            try:
-                with mock.patch("book_to_skill.utils.prepare_dependencies"):
-                    res = extract_single_file(fp, "text", "no")
-                extracted.append(res)
-            except ExtractionError as exc:
-                errors.append((fp, str(exc)))
+        with mock.patch("book_to_skill.utils.prepare_dependencies"):
+            extracted.append(extract_single_file(good_file, "text", "no"))
+
+        try:
+            with mock.patch("book_to_skill.utils.prepare_dependencies"):
+                extract_single_file(bad_file, "text", "no")
+        except ExtractionError as exc:
+            errors.append((bad_file, str(exc)))
 
         assert len(extracted) == 1, "Good file should have been extracted"
         assert len(errors) == 1, "Bad file should have been recorded as error"
@@ -600,9 +599,12 @@ class TestDetectStructure:
         `The Art of War` (#132) is one: 13 such headings, 0 detected, while two
         footnote cross-references (`ch. 71.]`) were picked up instead.
         """
-        text = "\n".join(
-            "Chapter %s. Section\nBody text here." % r
-            for r in ("I", "II", "III", "IV", "V")
+        text = (
+            "Chapter I. Section\nBody text here.\n"
+            "Chapter II. Section\nBody text here.\n"
+            "Chapter III. Section\nBody text here.\n"
+            "Chapter IV. Section\nBody text here.\n"
+            "Chapter V. Section\nBody text here."
         )
         assert detect_structure(text)["chapters_detected"] == 5
 
@@ -1067,8 +1069,8 @@ class TestDetectStructure:
         """Word ordinals `اول` … `سی و چهارم` map to integers 1–34."""
         from book_to_skill.utils import _chapter_number
 
-        for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1):
-            assert _chapter_number(f"فصل {word}") == n, word
+        detected = list(map(lambda word: _chapter_number(f"فصل {word}"), self._FA_ORDINAL_1_TO_34))
+        assert detected == list(range(1, 35))
         # Common ZWNJ spelling of 30.
         assert _chapter_number("فصل سی‌ام") == 30
 
@@ -1198,8 +1200,10 @@ class TestDetectStructure:
     def test_detects_persian_word_chapters_1_to_34(self):
         """All 34 word-numeral headings count as distinct numeric chapters."""
         text = "\n".join(
-            f"فصل {word}\nمحتوا فصل {n}."
-            for n, word in enumerate(self._FA_ORDINAL_1_TO_34, 1)
+            starmap(
+                "فصل {}\nمحتوا فصل {}.".format,
+                zip(self._FA_ORDINAL_1_TO_34, range(1, 35)),
+            )
         )
         result = detect_structure(text)
         assert result["chapters_detected"] == 34
@@ -1797,17 +1801,11 @@ class TestDocxExtraction:
         malicious or not, so there's no protection to buy by validating."""
         from book_to_skill.parsers.docx import extract_docx_with_python_docx
 
-        real_import = __import__
-
-        def fake_import(name, *args, **kwargs):
-            if name == "docx":
-                raise ImportError("simulated: python-docx not installed")
-            return real_import(name, *args, **kwargs)
-
         docx_path = tmp_path / "whatever.docx"
         docx_path.write_bytes(b"not even a real docx")
 
-        with mock.patch("builtins.__import__", side_effect=fake_import):
+        missing_docx = ImportError("simulated: python-docx not installed")
+        with mock.patch("builtins.__import__", side_effect=missing_docx):
             result = extract_docx_with_python_docx(str(docx_path))
 
         assert result is None
@@ -1849,19 +1847,12 @@ class TestDocxExtraction:
 
         docx_path = _make_minimal_docx(tmp_path / "test.docx")
 
-        real_import = __import__
-
-        def fake_import(name, *args, **kwargs):
-            if name == "docx":
-                raise ImportError("simulated: python-docx not installed")
-            return real_import(name, *args, **kwargs)
-
         with mock.patch.object(
             docx_module,
             "validate_docx_xml_safety",
             wraps=docx_module.validate_docx_xml_safety,
         ) as spy:
-            with mock.patch("builtins.__import__", side_effect=fake_import):
+            with mock.patch.dict(sys.modules, {"docx": None}):
                 text, method = docx_module.extract_docx(str(docx_path))
 
         assert method == "zipfile-docx"
@@ -1968,14 +1959,10 @@ class TestParserExceptionLogging:
         broken = tmp_path / "broken.pdf"
         broken.write_bytes(b"%PDF-1.4 fake")
 
-        real_import = __import__
+        fake_pypdf = mock.MagicMock()
+        fake_pypdf.PdfReader.side_effect = RuntimeError("simulated failure")
 
-        def fake_import(name, *args, **kwargs):
-            if name == "pypdf":
-                raise RuntimeError("simulated failure")
-            return real_import(name, *args, **kwargs)
-
-        with mock.patch("builtins.__import__", side_effect=fake_import):
+        with mock.patch.dict(sys.modules, {"pypdf": fake_pypdf}):
             result = extract_with_pypdf(str(broken))
 
         assert result is None

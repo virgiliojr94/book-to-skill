@@ -178,12 +178,15 @@ class TestScannerAndExtractorAgree:
     def test_scanner_flags_everything_extraction_strips(self):
         from scan_generated_skill import _is_invisible
 
-        for char in BIDI_CONTROLS + OTHER_INVISIBLES:
-            codepoint = ord(char)
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
+        codepoints = map(ord, BIDI_CONTROLS + OTHER_INVISIBLES)
+        failures = list(
+            filter(
+                lambda codepoint: not is_invisible_codepoint(codepoint)
+                or not _is_invisible(codepoint),
+                codepoints,
             )
+        )
+        assert failures == []
 
     def test_scanner_shares_the_extractor_predicate(self):
         """Guards against a future copy-paste divergence like the U+2060 one."""
@@ -193,13 +196,15 @@ class TestScannerAndExtractorAgree:
 
     def test_previously_covered_codepoints_still_covered(self):
         # Regression net for the original set (#75) and the word joiner (#85).
-        for codepoint in (0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF,
-                          0xE0000, 0xE0069, 0xE007F):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        codepoints = (0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF,
+                      0xE0000, 0xE0069, 0xE007F)
+        visible = list(filter(lambda codepoint: not is_invisible_codepoint(codepoint), codepoints))
+        assert visible == []
 
     def test_visible_characters_are_not_flagged(self):
-        for char in "aZ0 \n\t第한กی":
-            assert not is_invisible_codepoint(ord(char)), repr(char)
+        visible = "aZ0 \n\t第한กی"
+        flagged = list(filter(lambda char: is_invisible_codepoint(ord(char)), visible))
+        assert flagged == []
 
 
 class TestSmugglingChannelsBeyondTheTagBlock:
@@ -209,24 +214,29 @@ class TestSmugglingChannelsBeyondTheTagBlock:
         # A run of selectors after any base character encodes one byte each and
         # renders as nothing — the tag-block trick in a block that survives more
         # pipelines. They are Mn, not Cf, so a category filter misses them.
-        for codepoint in (0xFE00, 0xFE0F, 0xE0100, 0xE0150, 0xE01EF):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert is_invisible_codepoint(0xFE00), "U+FE00"
+        assert is_invisible_codepoint(0xFE0F), "U+FE0F"
+        assert is_invisible_codepoint(0xE0100), "U+E0100"
+        assert is_invisible_codepoint(0xE0150), "U+E0150"
+        assert is_invisible_codepoint(0xE01EF), "U+E01EF"
 
         payload = "a" + "".join(chr(0xE0100 + byte) for byte in range(16))
         sanitized, removed = sanitize_extracted_text(payload)
         assert (sanitized, removed) == ("a", 16)
 
     def test_neighbours_of_the_selector_ranges_are_kept(self):
-        for codepoint in (0xFDFF, 0xFE10, 0xE00FF, 0xE01F0):
-            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        codepoints = (0xFDFF, 0xFE10, 0xE00FF, 0xE01F0)
+        invisible = list(filter(is_invisible_codepoint, codepoints))
+        assert invisible == []
 
     def test_annotation_and_format_controls_are_stripped(self):
-        for codepoint in (
+        codepoints = (
             0xFFF9, 0xFFFA, 0xFFFB,  # interlinear annotation
             0x1D173, 0x1D17A,  # musical beaming controls
             0x206A, 0x206C, 0x206F,  # deprecated format controls
-        ):
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        )
+        visible = list(filter(lambda codepoint: not is_invisible_codepoint(codepoint), codepoints))
+        assert visible == []
 
     def test_the_upper_neighbour_of_the_deprecated_range_is_kept(self):
         # Only the upper edge is meaningful: U+2069 below the range is POP
@@ -262,10 +272,21 @@ class TestSmugglingChannelsBeyondTheTagBlock:
     def test_scanner_flags_the_new_channels_too(self):
         from scan_generated_skill import _is_invisible
 
-        for codepoint in (0xFE0F, 0xE0100, 0xFFF9, 0x1D173, 0x206A):
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
-            )
+        assert _is_invisible(0xFE0F), (
+            "scanner does not flag U+FE0F but extraction strips it"
+        )
+        assert _is_invisible(0xE0100), (
+            "scanner does not flag U+E0100 but extraction strips it"
+        )
+        assert _is_invisible(0xFFF9), (
+            "scanner does not flag U+FFF9 but extraction strips it"
+        )
+        assert _is_invisible(0x1D173), (
+            "scanner does not flag U+1D173 but extraction strips it"
+        )
+        assert _is_invisible(0x206A), (
+            "scanner does not flag U+206A but extraction strips it"
+        )
 
 
 class TestDefaultIgnorableCarriers:
@@ -277,10 +298,14 @@ class TestDefaultIgnorableCarriers:
     """
 
     def test_carriers_are_stripped(self):
-        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
-            assert is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
-            carrier = chr(codepoint)
-            assert sanitize_extracted_text(f"a{carrier}b") == ("ab", 1)
+        failures = list(
+            filter(
+                lambda codepoint: not is_invisible_codepoint(codepoint)
+                or sanitize_extracted_text(f"a{chr(codepoint)}b") != ("ab", 1),
+                DEFAULT_IGNORABLE_CARRIERS,
+            )
+        )
+        assert failures == []
 
     def test_a_carrier_run_encodes_nothing_visible(self):
         # The variation-selector trick in the Mongolian block: a run of selector
@@ -291,18 +316,27 @@ class TestDefaultIgnorableCarriers:
     def test_scanner_flags_the_carriers(self):
         from scan_generated_skill import _is_invisible
 
-        for codepoint in DEFAULT_IGNORABLE_CARRIERS:
-            assert _is_invisible(codepoint), (
-                f"scanner does not flag U+{codepoint:04X} but extraction strips it"
-            )
+        unflagged = list(
+            filter(lambda codepoint: not _is_invisible(codepoint), DEFAULT_IGNORABLE_CARRIERS)
+        )
+        assert unflagged == []
 
     def test_visible_neighbours_and_semantic_controls_are_kept(self):
         # The Arabic and Kaithi number signs and the hieroglyph joiners are Cf
         # but not Default_Ignorable — Unicode subtracts them as "exceptional
         # format characters that should be visible", the same reason #178 kept
         # U+2800. A blanket Cf rule would take them.
-        for codepoint in CARRIER_NEIGHBOURS_KEPT:
-            assert not is_invisible_codepoint(codepoint), f"U+{codepoint:04X}"
+        assert len(CARRIER_NEIGHBOURS_KEPT) == 10
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[0]), "U+180A"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[1]), "U+17B6"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[2]), "U+1BC9F"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[3]), "U+0600"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[4]), "U+06DD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[5]), "U+08E2"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[6]), "U+110BD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[7]), "U+110CD"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[8]), "U+13430"
+        assert not is_invisible_codepoint(CARRIER_NEIGHBOURS_KEPT[9]), "U+13431"
 
     def test_legitimate_mongolian_keeps_its_letters(self):
         # Stripping a free variation selector drops a glyph-shape hint, not a

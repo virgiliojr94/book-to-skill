@@ -156,6 +156,36 @@ def _bytecode(deployed: Path) -> tuple[list[str], list[str]]:
     return pyc, caches
 
 
+def _guarded_entry_point(py: Path, lines: list[str]) -> set[str]:
+    if any(line.strip() == MAIN_GUARD for line in lines):
+        return {py.relative_to(REPO_ROOT).as_posix()}
+    return set()
+
+
+def _package_import_index(lines: list[str]) -> int:
+    for index, line in enumerate(lines):
+        if line.lstrip().startswith(("from book_to_skill", "import book_to_skill")):
+            return index
+    raise ValueError("entry point does not import book_to_skill")
+
+
+def _entry_point_policy_error(entry: str):
+    lines = (REPO_ROOT / entry).read_text(encoding="utf-8").splitlines()
+    if not any(line.strip() == MAIN_GUARD for line in lines):
+        return (
+            f"{entry} has no `{MAIN_GUARD}` guard, so its `dont_write_bytecode` "
+            "policy would also fire for an embedding import"
+        )
+    guard_at = next(i for i, line in enumerate(lines) if line.strip() == MAIN_GUARD)
+    import_at = _package_import_index(lines)
+    if "sys.dont_write_bytecode = True" not in "\n".join(lines[guard_at:import_at]):
+        return (
+            f"{entry} must set sys.dont_write_bytecode inside its `__main__` "
+            "guard and before importing book_to_skill"
+        )
+    return None
+
+
 @pytest.mark.parametrize("entry", list(ENTRY_POINTS))
 def test_entry_point_writes_no_bytecode(deployed, entry):
     script = deployed / entry
@@ -170,22 +200,8 @@ def test_entry_point_writes_no_bytecode(deployed, entry):
 
 def test_entry_points_set_the_policy_before_importing_the_package():
     """The guard must live in each entry point, ahead of the package import."""
-    for entry in ENTRY_POINTS:
-        lines = (REPO_ROOT / entry).read_text(encoding="utf-8").splitlines()
-        assert any(line.strip() == MAIN_GUARD for line in lines), (
-            f"{entry} has no `{MAIN_GUARD}` guard, so its `dont_write_bytecode` "
-            "policy would also fire for an embedding import"
-        )
-        guard_at = next(i for i, line in enumerate(lines) if line.strip() == MAIN_GUARD)
-        import_at = next(
-            i
-            for i, line in enumerate(lines)
-            if line.lstrip().startswith(("from book_to_skill", "import book_to_skill"))
-        )
-        assert "sys.dont_write_bytecode = True" in "\n".join(lines[guard_at:import_at]), (
-            f"{entry} must set sys.dont_write_bytecode inside its `__main__` "
-            "guard and before importing book_to_skill"
-        )
+    errors = list(filter(None, map(_entry_point_policy_error, ENTRY_POINTS)))
+    assert errors == []
 
 
 def test_entry_point_list_still_matches_the_source_tree():
@@ -207,8 +223,7 @@ def test_entry_point_list_still_matches_the_source_tree():
         # A module that imports the package *and* is designed to be run directly
         # is an entry point: it must carry the policy. `def main(` alone is not
         # enough — `utils.py` is a pure library module and must NOT be listed.
-        if any(line.strip() == MAIN_GUARD for line in lines):
-            found.add(py.relative_to(REPO_ROOT).as_posix())
+        found.update(_guarded_entry_point(py, lines))
 
     # `__main__.py`/`__init__.py` cannot be guarded from inside the package:
     # Python compiles them before any of our code runs. They are excluded here

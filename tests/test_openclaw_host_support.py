@@ -93,10 +93,8 @@ def test_openclaw_extractor_probe_discovers_supported_layouts(tmp_path, layout):
         capture_output=True,
         text=True,
     )
-    selected = _host_path(result.stdout)
-    if not selected.is_absolute():
-        selected = nested / selected
-    assert selected.resolve() == extractor.resolve()
+    selected = (nested / _host_path(result.stdout)).resolve()
+    assert selected == extractor.resolve()
 
 
 def test_openclaw_host_layouts_are_documented():

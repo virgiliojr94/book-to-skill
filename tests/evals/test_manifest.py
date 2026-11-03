@@ -81,8 +81,9 @@ def test_invalid_configs_fail_clearly(tmp_path, mutate, expected):
     (tmp_path / "source.txt").write_text("fixture", encoding="utf-8")
     value = config()
     mutate(value)
-    with pytest.raises(ValueError, match=expected):
+    with pytest.raises(ValueError) as exc_info:
         manifest.build_manifest(value, tmp_path)
+    assert exc_info.match(expected)
 
 
 def test_cli_is_repeatedly_stable(tmp_path):

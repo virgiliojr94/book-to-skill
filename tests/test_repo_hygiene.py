@@ -50,11 +50,12 @@ def test_no_compiled_bytecode_is_tracked():
     files already committed. A stale .pyc shipped in the repo is build noise at
     best and a supply-chain smell at worst, since bytecode is not reviewable in a
     diff."""
-    offenders = [
-        path
-        for path in _tracked_files()
-        if path.endswith(".pyc") or "__pycache__/" in path
-    ]
+    offenders = list(
+        filter(
+            lambda path: path.endswith(".pyc") or "__pycache__/" in path,
+            _tracked_files(),
+        )
+    )
     assert offenders == [], (
         "compiled bytecode is tracked in git: "
         + ", ".join(offenders)

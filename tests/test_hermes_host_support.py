@@ -81,8 +81,7 @@ def test_hermes_extractor_probe_discovers_supported_layouts(tmp_path, layout):
         text=True,
     )
     selected = Path(result.stdout)
-    if not selected.is_absolute():
-        selected = nested / selected
+    assert selected.is_absolute()
     assert selected.resolve() == extractor.resolve()
 
 
@@ -108,9 +107,10 @@ def test_hermes_project_extractor_precedes_personal_installation(
         / "scripts"
         / "extract.py"
     )
-    for extractor in (personal, project_local):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    project_local.parent.mkdir(parents=True)
+    project_local.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
     result = subprocess.run(
@@ -155,9 +155,10 @@ def test_untrusted_hermes_project_cannot_override_personal_installation(
         / "scripts"
         / "extract.py"
     )
-    for extractor in (personal, untrusted):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    untrusted.parent.mkdir(parents=True)
+    untrusted.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [])
     result = subprocess.run(
@@ -244,9 +245,10 @@ def test_non_hermes_host_keeps_original_personal_precedence(tmp_path):
 
     personal = home / ".agents" / "skills" / "book-to-skill" / "scripts" / "extract.py"
     project_local = project / ".agents" / "skills" / "book-to-skill" / "scripts" / "extract.py"
-    for extractor in (personal, project_local):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    project_local.parent.mkdir(parents=True)
+    project_local.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
     env.pop("HERMES_AGENT")
@@ -284,9 +286,10 @@ def test_hermes_project_candidates_require_enclosing_git_root(tmp_path):
         / "scripts"
         / "extract.py"
     )
-    for extractor in (personal, project_local):
-        extractor.parent.mkdir(parents=True)
-        extractor.touch()
+    personal.parent.mkdir(parents=True)
+    personal.touch()
+    project_local.parent.mkdir(parents=True)
+    project_local.touch()
 
     env = _env_with_hermes_trust(tmp_path, home, hermes_home, [project])
     result = subprocess.run(
