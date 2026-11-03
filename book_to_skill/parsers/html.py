@@ -32,6 +32,7 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
         super().__init__()
         self._parts: list[str] = []
         self._skip_depth = 0
+        self._pre_depth = 0
         # Strongest boundary awaiting the next non-blank text run. Deferring it
         # (instead of appending immediately) means nested blocks such as
         # "<div><p>x" collapse to one separator rather than a run of blank lines.
@@ -50,6 +51,8 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
             self._mark("\n")
         elif tag in self.CELL_TAGS:
             self._mark("\t")
+        if tag == "pre":
+            self._pre_depth += 1
 
     def handle_endtag(self, tag):
         if tag in self.SKIP_TAGS:
@@ -60,12 +63,14 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
             self._mark("\n")
         elif tag in self.CELL_TAGS:
             self._mark("\t")
+        if tag == "pre" and self._pre_depth:
+            self._pre_depth -= 1
 
     def handle_data(self, data):
         if self._skip_depth:
             return
         if self._pending:
-            if not data.strip():
+            if not data.strip() and not self._pre_depth:
                 # Whitespace-only text between tags is layout indentation. It
                 # cannot satisfy a pending boundary, and emitting it before the
                 # boundary would just add trailing spaces — drop it and keep
@@ -83,6 +88,17 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
         # handle_data; do NOT unescape again or double-encoded entities
         # (e.g. "&amp;amp;") collapse incorrectly.
         return "".join(self._parts)
+
+
+def text_from_soup(soup) -> str:
+    """Serialize a filtered BeautifulSoup tree and reuse the stdlib extractor.
+
+    get_text(separator=newline) splits inline nodes. The stdlib extractor keeps
+    inline text continuous and still separates blocks, lists, and table cells.
+    """
+    parser = _HTMLTextExtractor()
+    parser.feed(str(soup))
+    return parser.get_text()
 
 
 def extract_html_content(raw_html: str) -> str:
@@ -125,7 +141,7 @@ def extract_html_content(raw_html: str) -> str:
         for element in soup(["script", "style", "head"]):
             element.decompose()
         print("OK")
-        return soup.get_text(separator="\n")
+        return text_from_soup(soup)
     except ImportError:
         print("not available")
         print("Trying stdlib HTML parser...", end=" ", flush=True)
