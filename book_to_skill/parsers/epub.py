@@ -30,6 +30,22 @@ _IMAGE_EXTENSIONS = (
 _OPF_ELEMENT_PREFIX = r"(?:[A-Za-z_][\w.-]*:)?"
 
 
+def _decode_container_reference(match: re.Match) -> str:
+    """Decode one XML reference without HTML's numeric character remapping."""
+    reference = match.group()
+    if not reference.startswith("&#"):
+        return html.unescape(reference)
+    number = reference[2:-1]
+    try:
+        codepoint = int(number[1:], 16) if number.startswith("x") else int(number)
+    except ValueError:
+        return reference
+    if (codepoint in (9, 10, 13) or 0x20 <= codepoint <= 0xD7FF
+            or 0xE000 <= codepoint <= 0xFFFD or 0x10000 <= codepoint <= 0x10FFFF):
+        return chr(codepoint)
+    return reference
+
+
 def _decode_epub_xml(data: bytes) -> str:
     """Decode BOM-marked UTF-16 XML, retaining the existing UTF-8 fallback."""
     # UTF-32 LE starts with the UTF-16 LE BOM. EPUB XML requires UTF-8 or
@@ -99,7 +115,13 @@ def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
         container = _decode_epub_xml(zf.read("META-INF/container.xml"))
         match = re.search(r'full-path=["\']([^"\']+\.opf)["\']', container)
         if match:
-            return match.group(1)
+            # Decode XML's predefined and numeric references once. Restrict the
+            # match rather than decoding HTML-only or unterminated entities in
+            # tolerant legacy inputs that may have literal ampersands.
+            return re.sub(
+                r"&(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);",
+                _decode_container_reference, match.group(1),
+            )
     except (KeyError, Exception):
         pass
 
