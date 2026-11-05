@@ -1,1 +1,23 @@
 tests/fixtures/*.pdf binary
+
+# Dev-only files: excluded from `git archive`, release tarballs and zip downloads.
+# The git repo itself is unaffected (CI and contributors still see everything).
+/.github/ export-ignore
+/tests/ export-ignore
+/evals/ export-ignore
+/docs/ export-ignore
+/overrides/ export-ignore
+/mkdocs.yml export-ignore
+/cliff.toml export-ignore
+/tools/discovery_tax.py export-ignore
+/tools/validate_skill.py export-ignore
+/tools/evals/ export-ignore
+/CHANGELOG.md export-ignore
+/CONTRIBUTING.md export-ignore
+/BACKERS.md export-ignore
+/AGENTS.md export-ignore
+/CLAUDE.md export-ignore
+/README.ru.md export-ignore
+/README.zh-CN.md export-ignore
+/SECURITY.md export-ignore
+/SECURITY-NOTICE.md export-ignore
