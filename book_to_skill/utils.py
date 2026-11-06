@@ -378,6 +378,18 @@ _HE_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?פרק\s+([0-9]+)\b")
 # "Գլուխներ 5" ("chapters 5") from reading as chapter 5.
 _HY_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?գլուխ\s+([0-9]+)\b", re.IGNORECASE)
 
+# Georgian chapter headings: "თავი 1", "ᲗᲐᲕᲘ 12", "## თავი 2".
+# "თავი" ("chapter") + a number, with ordinary Arabic digits so no remap is
+# needed. Georgian reads as unicameral but has a second case: the Mtavruli
+# capitals (U+1C90-U+1CBF) used for all-caps styling, which Unicode pairs with
+# Mkhedruli, so re.IGNORECASE bridges them ("თავი".upper() == "ᲗᲐᲕᲘ") and no
+# explicit alternation is needed. Like Armenian "Գլուխ" above the word also means
+# "head", so requiring whitespace then a number does the guarding: an inflected
+# form changes the ending ("თავში", "in the chapter") and the plural keeps the
+# word intact, which is why \s+ matters — it stops "თავები 5" ("chapters 5")
+# from reading as chapter 5.
+_KA_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?თავი\s+([0-9]+)\b", re.IGNORECASE)
+
 # Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
 # 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
 # subsection), with an optional "의N" branch suffix that Korean statutes use for
@@ -885,6 +897,9 @@ def _match_chapter_number(
     hym = _HY_CHAPTER.match(s)
     if hym:
         return int(hym.group(1))
+    kam = _KA_CHAPTER.match(s)
+    if kam:
+        return int(kam.group(1))
 
     km = _KO_CHAPTER.match(s)
     if km:
@@ -920,6 +935,7 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Hebrew ("פרק 1", "פרק 12", "## פרק 2"),
     Armenian ("Գլուխ 1", "ԳԼՈՒԽ 12", "## Գլուխ 2"),
+    Georgian ("თავი 1", "ᲗᲐᲕᲘ 12", "## თავი 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
     "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each
