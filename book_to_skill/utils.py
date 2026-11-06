@@ -1851,6 +1851,15 @@ def main():
         for path, err in errors:
             print(f"  - {path.name}: {err}", file=sys.stderr)
         sys.exit(1)
+
+    # A caller can explicitly reuse a workdir. Remove old page evidence before
+    # replacing the corpus so a later run cannot expose pages from another PDF.
+    # If removal fails, leave the previous corpus and metadata untouched.
+    try:
+        (OUTPUT_DIR / "pdf_pages.json").unlink(missing_ok=True)
+    except OSError as exc:
+        print(f"ERROR: Could not remove previous PDF page sidecar: {exc}", file=sys.stderr)
+        sys.exit(1)
         
     # Combine texts
     consolidated_text = "".join(combined_texts).strip()
