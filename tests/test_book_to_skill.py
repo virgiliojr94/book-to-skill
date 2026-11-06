@@ -987,6 +987,28 @@ class TestDetectStructure:
         # word has to be followed by whitespace, not more letters.
         assert _chapter_number("Գլուխներ 5") is None
 
+    def test_detects_georgian_chapters(self):
+        """Georgian headings: `თავი N`, incl. all-caps Mtavruli ᲗᲐᲕᲘ."""
+        text = (
+            "თავი 1 შესავალი\nრეზიუმე\n"
+            "ᲗᲐᲕᲘ 2 მეთოდები\nრეზიუმე\n"
+            "თავი 3 შედეგები\nრეზიუმე"
+        )
+        assert detect_structure(text)["chapters_detected"] == 3
+
+    def test_georgian_markdown_prefix(self):
+        text = "## თავი 1 პირველი\nრეზიუმე\n## თავი 2 მეორე\nრეზიუმე"
+        assert detect_structure(text)["chapters_detected"] == 2
+
+    def test_georgian_prose_is_not_a_chapter_heading(self):
+        """The bare word, an inflected form, and the plural+number are not headings."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("თავი") is None
+        assert _chapter_number("ამ თავში განვიხილავთ") is None
+        # Plural "თავები 5" ("chapters 5") must not read as chapter 5.
+        assert _chapter_number("თავები 5") is None
+
     def test_hebrew_heading_survives_bidi_controls(self):
         """Bidi wrappers are stripped before detection, so the heading still counts."""
         from book_to_skill.sanitize import sanitize_extracted_text
