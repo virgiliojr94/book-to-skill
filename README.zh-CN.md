@@ -7,7 +7,8 @@
 <p align="center">
   <a href="README.md">English</a> ·
   <a href="README.ru.md">Русский</a> ·
-  <a href="README.zh-CN.md"><strong>简体中文</strong></a>
+  <a href="README.zh-CN.md"><strong>简体中文</strong></a> ·
+  <a href="README.ja.md">日本語</a>
 </p>
 
 > **翻译说明。** 以[英文 README](README.md) 为准。本翻译可能落后于 `master`。  
