@@ -1717,10 +1717,13 @@ def write_pdf_page_sidecar(sources: list[dict], output_dir: Path) -> Path | None
                     entry["reason"] = "pypdf_unavailable_or_failed"
                 else:
                     entry["status"] = "ok"
-                    if source["pages"] and len(records) != source["pages"]:
+                    page_count_mismatch = bool(source["pages"] and len(records) != source["pages"])
+                    if page_count_mismatch:
                         entry["low_confidence_reasons"] = ["page_count_mismatch"]
                     for record in records:
                         record["source_sha256"] = source["sha256"]
+                        if page_count_mismatch:
+                            record["low_confidence_reasons"].append("page_count_mismatch")
                         if source["extraction_method"] != "pypdf":
                             record["low_confidence_reasons"].append(
                                 "different_extractor_from_full_text"
