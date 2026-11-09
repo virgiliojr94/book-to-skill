@@ -43,16 +43,18 @@ def test_literal_and_active_controls_coexist_after_destination_stripping():
 
     assert strip_rtf_fallback(raw) == (
         "Literal {\\u945?}, active α and café.\n"
-        " Path C:\\table\\part\t end."
+        "Path C:\\table\\part\t end."
     )
 
 
 def test_cli_persists_literal_controls_and_source_metrics(tmp_path, monkeypatch):
     source = tmp_path / "literal-controls.rtf"
     source.write_text(
-        r"{\rtf1\ansi Chapter 1\par"
-        r"Show \\u945? and \\'e9 literally.\par"
-        r"Path C:\\table\\part\tab end.}",
+        # A "{" ends the control word. A letter would make \parShow one word,
+        # which is not a paragraph break.
+        r"{\rtf1\ansi Chapter 1\par{"
+        r"Show \\u945? and \\'e9 literally.\par{"
+        r"Path C:\\table\\part\tab end.}}}",
         encoding="utf-8",
     )
     expected = (
