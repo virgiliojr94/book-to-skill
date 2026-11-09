@@ -56,5 +56,5 @@ def test_cli_writes_combined_character_with_fallback(tmp_path, monkeypatch):
 
     corpus = (output_dir / "full_text.txt").read_text(encoding="utf-8")
     metadata = json.loads((output_dir / "metadata.json").read_text(encoding="utf-8"))
-    assert corpus.endswith("Chapter 1\n A 😀 B")
+    assert corpus.endswith("Chapter 1\nA 😀 B")
     assert metadata["extraction_method"] == "rtf-regex"

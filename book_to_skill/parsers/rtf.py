@@ -179,7 +179,16 @@ def strip_rtf_fallback(raw: str) -> str:
     # \line is a required line break; do not match longer control words such
     # as \linebetcol. A single following space is an RTF delimiter, not text.
     raw = re.sub(r"\\line(?![a-zA-Z])(?:-?\d+)? ?", "\n", raw)
-    raw = re.sub(r"\\par[d]?", "\n", raw)
+    # Keep \pard's existing handling separate: the \par matcher must not treat
+    # it (or longer words such as Word's \pararsidN revision id) as a break.
+    raw = re.sub(r"\\pard", "\n", raw)
+    # Like \line, \par may have a signed numeric parameter and consumes one
+    # delimiter space. Require a delimiter after that parameter as well.
+    raw = re.sub(
+        r"\\par(?![a-zA-Z])(?:-?\d+)?(?![a-zA-Z0-9]) ?",
+        "\n",
+        raw,
+    )
     raw = re.sub(r"\\tab", "\t", raw)
     raw = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", raw)
     raw = raw.replace("{", "").replace("}", "")
