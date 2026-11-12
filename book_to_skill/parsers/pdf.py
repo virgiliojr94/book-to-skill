@@ -55,6 +55,17 @@ def clean_pdftotext(text: str) -> str:
                 if len(nb) > 1:
                     edge[nb[-1]] += 1
         boiler = {ln for ln, c in edge.items() if c > len(pages) / 2}
+        # A chapter opens at the TOP of a page, which is also where the running
+        # header sits, so a long chapter whose title is the running header puts
+        # that title at the edge of more than half the pages and lands it in
+        # `boiler`. Dropping every edge occurrence then deletes the genuine
+        # opening too and the chapter vanishes from detect_structure(). Keep the
+        # first occurrence of a boilerplate line that reads as a chapter heading
+        # and drop the rest: the first is the opening, the rest are headers.
+        # Imported lazily because utils imports this module.
+        from book_to_skill.utils import _chapter_number
+        heading_boiler = {ln for ln in boiler if _chapter_number(ln) is not None}
+        seen_heading: set[str] = set()
         kept = []
         for p in pages:
             lines = p.splitlines()
@@ -70,7 +81,9 @@ def clean_pdftotext(text: str) -> str:
                 # along with the headers.
                 if i in (first, last):
                     s = ln.strip()
-                    if s in boiler or _PDF_PAGE_NUM.match(s):
+                    if s in heading_boiler and s not in seen_heading:
+                        seen_heading.add(s)
+                    elif s in boiler or _PDF_PAGE_NUM.match(s):
                         continue
                 kept.append(ln)
         text = "\n".join(kept)
