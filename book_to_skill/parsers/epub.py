@@ -142,6 +142,7 @@ def _find_opf_path(zf: BoundedZipFile) -> str | None:
     except ExtractionError:
         raise
     except Exception:
+        # Missing or unreadable container metadata falls back to OPF lookup below.
         pass
 
     # Fallback: glob for any .opf file
