@@ -15,6 +15,10 @@ from pathlib import Path
 
 import pytest
 
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from book_to_skill import archive as archive_limits
 from book_to_skill import utils
 from book_to_skill.archive import BoundedZipFile
@@ -197,11 +201,10 @@ def test_archive_rejection_preserves_other_batch_sources(tmp_path: Path) -> None
     good = tmp_path / "good.txt"
     good.write_text("Trusted batch source.", encoding="utf-8")
     output = tmp_path / "work"
-    root = Path(__file__).resolve().parent.parent
     result = subprocess.run(
-        [sys.executable, "-B", "-S", str(root / "scripts/extract.py"),
+        [sys.executable, "-B", "-S", str(ROOT / "scripts/extract.py"),
          str(source), str(good), "--install-missing", "no"],
-        cwd=root, env=dict(os.environ, BOOK_SKILL_WORKDIR=str(output)),
+        cwd=ROOT, env=dict(os.environ, BOOK_SKILL_WORKDIR=str(output)),
         capture_output=True, text=True, encoding="utf-8", timeout=30,
     )
     assert result.returncode == 0, result.stdout + result.stderr
