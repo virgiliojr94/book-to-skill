@@ -8,6 +8,8 @@ import sys
 import zipfile
 from urllib.parse import unquote, urlsplit
 
+from book_to_skill.archive import BoundedZipFile
+from book_to_skill.exceptions import ExtractionError
 from book_to_skill.parsers.html import _HTMLTextExtractor
 
 
@@ -71,7 +73,20 @@ def extract_with_ebooklib(epub_path: str) -> str | None:
         from ebooklib import epub
         from bs4 import BeautifulSoup
 
-        book = epub.read_epub(epub_path)
+        with BoundedZipFile(epub_path) as archive:
+            reader = epub.EpubReader(epub_path)
+
+            def read_file(name: str) -> bytes:
+                return archive.read(posixpath.normpath(name))
+
+            # Manifest aliases must consume the same budget on every read.
+            reader.read_file = read_file
+            try:
+                book = reader.load()
+                reader.process()
+            finally:
+                if reader.zf is not None:
+                    reader.zf.close()
         documents = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
         ordered_items = []
         seen = set()
@@ -99,12 +114,14 @@ def extract_with_ebooklib(epub_path: str) -> str | None:
         return "\n\n".join(parts)
     except ImportError:
         return None
+    except ExtractionError:
+        raise
     except Exception as e:
         print(f"  [warn] extract_with_ebooklib failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
 
 
-def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
+def _find_opf_path(zf: BoundedZipFile) -> str | None:
     """Locate the OPF package document inside an EPUB archive.
 
     First tries ``META-INF/container.xml`` (the spec-defined entry point),
@@ -122,7 +139,9 @@ def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
                 r"&(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);",
                 _decode_container_reference, match.group(1),
             )
-    except (KeyError, Exception):
+    except ExtractionError:
+        raise
+    except Exception:
         pass
 
     # Fallback: glob for any .opf file
@@ -144,7 +163,7 @@ def _resolve_manifest_href(href: str, opf_dir: str) -> str:
 def extract_with_zipfile(epub_path: str) -> str | None:
     """stdlib-only EPUB extractor: unzip → parse HTML files."""
     try:
-        with zipfile.ZipFile(epub_path) as zf:
+        with BoundedZipFile(epub_path) as zf:
             names = zf.namelist()
 
             # Locate OPF and determine its directory for resolving relative hrefs
@@ -202,9 +221,13 @@ def extract_with_zipfile(epub_path: str) -> str | None:
                     parser = _HTMLTextExtractor()
                     parser.feed(raw)
                     parts.append(parser.get_text())
+                except ExtractionError:
+                    raise
                 except Exception:
                     continue
             return "\n\n".join(parts) if parts else None
+    except ExtractionError:
+        raise
     except Exception as e:
         print(f"  [warn] extract_with_zipfile failed: {type(e).__name__}: {e}", file=sys.stderr)
         return None
@@ -213,12 +236,14 @@ def extract_with_zipfile(epub_path: str) -> str | None:
 def count_epub_chapters(epub_path: str) -> int:
     """Count spine items (approximate chapter count) without dependencies."""
     try:
-        with zipfile.ZipFile(epub_path) as zf:
+        with BoundedZipFile(epub_path) as zf:
             opf_path = _find_opf_path(zf)
             if not opf_path:
                 return 0
             opf_text = _decode_epub_xml(zf.read(opf_path))
             return len(_opf_opening_tags(opf_text, "itemref"))
+    except ExtractionError:
+        raise
     except Exception:
         return 0
 
@@ -226,7 +251,7 @@ def count_epub_chapters(epub_path: str) -> int:
 def count_epub_images(epub_path: str) -> int:
     """Count image members whose content the text-only EPUB parsers omit."""
     try:
-        with zipfile.ZipFile(epub_path) as zf:
+        with BoundedZipFile(epub_path) as zf:
             return sum(
                 not info.is_dir() and info.filename.lower().endswith(_IMAGE_EXTENSIONS)
                 for info in zf.infolist()

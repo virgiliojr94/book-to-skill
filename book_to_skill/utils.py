@@ -14,6 +14,7 @@ import shutil
 import zipfile
 from pathlib import Path
 
+from book_to_skill.archive import BoundedZipFile
 from book_to_skill.exceptions import ExtractionError
 
 from book_to_skill.config import (
@@ -1430,7 +1431,7 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
             document_format = "pdf"
         elif header[:2] == b"PK":
             try:
-                with zipfile.ZipFile(input_str) as zf:
+                with BoundedZipFile(input_str) as zf:
                     names = set(zf.namelist())
                     if "mimetype" in names and zf.read("mimetype").startswith(b"application/epub"):
                         ext = ".epub"
