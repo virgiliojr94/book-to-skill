@@ -2400,7 +2400,7 @@ class TestEpubSpineOrder:
         assert "AAA" in out and "BBB" in out
 
 
-def test_ebooklib_spine_order_without_optional_dependencies(monkeypatch):
+def test_ebooklib_spine_order_without_optional_dependencies(monkeypatch, tmp_path):
     """The preferred parser's spine logic runs in the dependency-free CI matrix."""
     import types
 
@@ -2449,7 +2449,9 @@ def test_ebooklib_spine_order_without_optional_dependencies(monkeypatch):
     ebooklib = types.ModuleType("ebooklib")
     ebooklib.ITEM_DOCUMENT = item_document
     epub = types.ModuleType("ebooklib.epub")
-    epub.read_epub = lambda _path: book
+    epub.EpubReader = lambda _path: types.SimpleNamespace(
+        load=lambda: book, process=lambda: None, zf=None
+    )
     ebooklib.epub = epub
     bs4 = types.ModuleType("bs4")
     bs4.BeautifulSoup = FakeSoup
@@ -2457,11 +2459,12 @@ def test_ebooklib_spine_order_without_optional_dependencies(monkeypatch):
     monkeypatch.setitem(sys.modules, "ebooklib.epub", epub)
     monkeypatch.setitem(sys.modules, "bs4", bs4)
 
-    text = extract_with_ebooklib("unused.epub")
+    source = _make_minimal_epub(tmp_path / "spine-order.epub")
+    text = extract_with_ebooklib(str(source))
     assert text.index("FIRST") < text.index("SECOND") < text.index("NAVIGATION")
 
     book.spine = [("c1", "yes"), ("missing", "yes"), ("c1", "yes")]
-    text_with_invalid_refs = extract_with_ebooklib("unused.epub")
+    text_with_invalid_refs = extract_with_ebooklib(str(source))
     assert text_with_invalid_refs.index("FIRST") < text_with_invalid_refs.index("SECOND")
     assert text_with_invalid_refs.index("SECOND") < text_with_invalid_refs.index("NAVIGATION")
     assert text_with_invalid_refs.count("FIRST") == 1
@@ -2507,15 +2510,20 @@ class TestEbooklibEpubSpineOrder:
         assert text is not None
         assert text.index("FIRST:") < text.index("SECOND:") < text.index("Navigation")
 
-    def test_missing_or_repeated_spine_refs_keep_documents_once(self, monkeypatch):
+    def test_missing_or_repeated_spine_refs_keep_documents_once(self, monkeypatch, tmp_path):
+        import types
+
         epub = pytest.importorskip("ebooklib.epub")
         pytest.importorskip("bs4")
         from book_to_skill.parsers.epub import extract_with_ebooklib
 
         book = self._make_book(epub, [("c1", "yes"), ("missing", "yes"), ("c1", "yes")])
-        monkeypatch.setattr(epub, "read_epub", lambda _path: book)
+        monkeypatch.setattr(epub, "EpubReader", lambda _path: types.SimpleNamespace(
+            load=lambda: book, process=lambda: None, zf=None
+        ))
 
-        text = extract_with_ebooklib("unused.epub")
+        source = _make_minimal_epub(tmp_path / "spine-refs.epub")
+        text = extract_with_ebooklib(str(source))
 
         assert text is not None
         assert text.index("FIRST:") < text.index("SECOND:") < text.index("NAVIGATION-MARKER")
@@ -2524,7 +2532,7 @@ class TestEbooklibEpubSpineOrder:
         assert text.count("NAVIGATION-MARKER") == 1
 
         book.spine = []
-        text_without_spine = extract_with_ebooklib("unused.epub")
+        text_without_spine = extract_with_ebooklib(str(source))
 
         assert text_without_spine is not None
         assert text_without_spine.index("SECOND:") < text_without_spine.index("FIRST:")

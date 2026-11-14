@@ -31,3 +31,9 @@ crafted input), and the impact you observed. We aim to acknowledge within a few 
   use; install dependencies yourself if you prefer to control what is added.
 - Only convert documents you trust and have the right to process (see the README's
   Copyright & fair-use section).
+
+EPUB and DOCX archives are limited to 10,000 members, 32 MiB per expanded member,
+and 128 MiB expanded in total. Only stored and deflated ZIP members are accepted.
+Local archive reads, including ebooklib's member reads, also enforce a cumulative
+128 MiB byte budget. An archive exceeding a limit is rejected as a failed source;
+other sources in the batch can still be processed.
