@@ -24,7 +24,17 @@ def default_output_dir() -> Path:
 # `or` rather than a get() default: BOOK_SKILL_WORKDIR set to an empty string
 # would otherwise become Path(""), i.e. the current directory — which the run
 # would then populate and chmod to 0700.
-OUTPUT_DIR = Path(os.environ.get("BOOK_SKILL_WORKDIR") or default_output_dir())
+#
+# A set value is expanded and made absolute: "~/x" arrives unexpanded when it is
+# quoted or comes from a settings file, and a relative path recorded in
+# metadata.json would mean something else from another directory. abspath, not
+# resolve(), so prepare_output_dir still sees (and refuses) a planted symlink.
+_WORKDIR_ENV = os.environ.get("BOOK_SKILL_WORKDIR")
+OUTPUT_DIR = (
+    Path(os.path.abspath(os.path.expanduser(_WORKDIR_ENV)))
+    if _WORKDIR_ENV
+    else default_output_dir()
+)
 OUTPUT_TEXT = OUTPUT_DIR / "full_text.txt"
 OUTPUT_META = OUTPUT_DIR / "metadata.json"
 
