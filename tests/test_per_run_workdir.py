@@ -97,3 +97,44 @@ def test_config_restored_for_other_tests(monkeypatch):
 
     assert config.OUTPUT_TEXT.parent == config.OUTPUT_DIR
     assert config.OUTPUT_META.parent == config.OUTPUT_DIR
+
+
+def test_env_override_expands_tilde(monkeypatch, tmp_path):
+    """BOOK_SKILL_WORKDIR="~/x" must mean $HOME/x, not a literal "./~/x".
+
+    The value often arrives unexpanded (quoted in a shell, or set from a
+    settings file where no shell runs). Writing to "<cwd>/~/x" while printing
+    "Workdir -> ~/x" sends any later `cat`/`rm` of that printed path to a
+    different directory. Input paths already get this expansion.
+    """
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # expanduser on Windows
+    config = _reimport_config(monkeypatch, "~/bts-work")
+
+    assert config.OUTPUT_DIR == tmp_path / "bts-work"
+    assert "~" not in config.OUTPUT_DIR.parts
+
+
+def test_relative_env_override_is_made_absolute(monkeypatch, tmp_path):
+    """A relative workdir is recorded in metadata.json; it must not depend on cwd."""
+    monkeypatch.chdir(tmp_path)
+    config = _reimport_config(monkeypatch, "rel-work")
+
+    assert config.OUTPUT_DIR.is_absolute()
+    assert config.OUTPUT_DIR == Path(os.getcwd()) / "rel-work"
+
+
+def test_env_override_does_not_resolve_symlinks(monkeypatch, tmp_path):
+    """prepare_output_dir refuses a symlinked workdir; resolving here would hide it."""
+    target = tmp_path / "real"
+    target.mkdir()
+    link = tmp_path / "link"
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        import pytest
+
+        pytest.skip("symlinks unavailable on this platform")
+    config = _reimport_config(monkeypatch, str(link))
+
+    assert config.OUTPUT_DIR == link
