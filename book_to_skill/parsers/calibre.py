@@ -49,6 +49,18 @@ def extract_with_ebook_convert(input_path: str) -> str | None:
                 text = output_path.read_text(encoding="utf-8", errors="replace")
                 if text.strip():
                     return text
+                print("  [warn] ebook-convert produced no text", file=sys.stderr)
+            else:
+                # The caller can only say "install Calibre"; when Calibre is
+                # installed and the conversion itself failed (DRM, a corrupt
+                # file), its own message is the only useful diagnosis.
+                stderr = result.stderr if isinstance(result.stderr, str) else ""
+                detail = stderr.strip()[-500:]
+                print(
+                    f"  [warn] ebook-convert exited with code {result.returncode}"
+                    + (f": {detail}" if detail else ""),
+                    file=sys.stderr,
+                )
         except Exception as e:
             print(f"  [warn] extract_with_ebook_convert failed: {type(e).__name__}: {e}", file=sys.stderr)
     return None
