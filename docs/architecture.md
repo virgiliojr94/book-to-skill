@@ -86,7 +86,7 @@ converter does not infer arbitrary `skills.load.extraDirs`.
 | `book_to_skill/dependencies.py` | optional-dependency probing + `--check` |
 | `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text, and folds Kangxi radicals to their ideographs (see Security) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
-| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw\|opencode`) |
+| `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw\|opencode`) — the format gate of Step 9.5, including a YAML parse of the frontmatter block |
 | `tools/scan_generated_skill.py` | advisory prompt-injection scan of a generated skill (see Security) |
 | `SKILL.md` | the generator spec (Steps 0–10 + fold-in workflow) |
 
