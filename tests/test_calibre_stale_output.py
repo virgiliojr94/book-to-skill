@@ -194,3 +194,42 @@ def test_unwritable_output_dir_raises(calibre_module):
         tmp_dir.side_effect = OSError(13, "Permission denied")
         with pytest.raises(ExtractionError, match="cannot create a conversion directory"):
             calibre.extract_with_ebook_convert("book.mobi")
+
+
+def test_nonzero_exit_reports_ebook_convert_stderr(calibre_module, capsys):
+    """A failed conversion says why, instead of being swallowed.
+
+    The caller turns None into "Install Calibre and ensure ebook-convert is on
+    PATH", which is wrong advice when Calibre is installed and the conversion
+    itself failed (DRM-protected or corrupt file). Calibre's own message has to
+    reach the user.
+    """
+    calibre, _workdir = calibre_module
+    failed = mock.Mock(
+        returncode=1,
+        stderr="Traceback (most recent call last):\n  ...\n"
+        "calibre.ebooks.DRMError: This file is locked with DRM.\n",
+    )
+
+    with mock.patch.object(calibre.shutil, "which", return_value="/usr/bin/ebook-convert"), \
+         mock.patch.object(calibre.subprocess, "run", return_value=failed):
+        assert calibre.extract_with_ebook_convert("book.mobi") is None
+
+    err = capsys.readouterr().err
+    assert "ebook-convert exited with code 1" in err
+    assert "DRMError: This file is locked with DRM." in err
+
+
+def test_success_without_text_is_reported(calibre_module, capsys):
+    """Exit 0 with an empty output file is also a failure worth naming."""
+    calibre, _workdir = calibre_module
+
+    def run_writes_empty(cmd, **_kwargs):
+        Path(cmd[2]).write_text("  \n", encoding="utf-8")
+        return mock.Mock(returncode=0, stderr="")
+
+    with mock.patch.object(calibre.shutil, "which", return_value="/usr/bin/ebook-convert"), \
+         mock.patch.object(calibre.subprocess, "run", side_effect=run_writes_empty):
+        assert calibre.extract_with_ebook_convert("book.mobi") is None
+
+    assert "ebook-convert produced no text" in capsys.readouterr().err
