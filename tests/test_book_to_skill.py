@@ -1210,6 +1210,92 @@ class TestDetectStructure:
         assert result["chapter_headings_sample"]  # numeric path, not MD fallback
         assert result["chapter_headings_sample"][0] == "فصل اول"
 
+    # ── Arabic chapter headings ───────────────────────────────────
+
+    # Ordinals 1–20 as Arabic books actually spell them — with the hamza (الأول),
+    # which only resolves because _AR_FOLD normalizes it to the table's الاول.
+    _AR_ORDINAL_1_TO_20 = (
+        "الأول", "الثاني", "الثالث", "الرابع", "الخامس",
+        "السادس", "السابع", "الثامن", "التاسع", "العاشر",
+        "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر",
+        "الخامس عشر", "السادس عشر", "السابع عشر", "الثامن عشر",
+        "التاسع عشر", "العشرون",
+    )
+
+    def test_arabic_definite_article_digits(self):
+        """`الفصل N` — the article is what the Persian label did not accept."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("الفصل 1") == 1
+        assert _chapter_number("الفصل ١") == 1
+        assert _chapter_number("الفصل ۱") == 1
+        assert _chapter_number("الفصل ١٠") == 10
+        assert _chapter_number("## الفصل ٣") == 3
+
+    def test_arabic_bab_chapter_word(self):
+        """باب / الباب (“gate”) titles chapters in classical and religious works."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("باب ٢") == 2
+        assert _chapter_number("الباب 3") == 3
+        assert _chapter_number("الباب الأول") == 1
+
+    def test_arabic_word_ordinals_1_to_20(self):
+        """Word ordinals `الأول` … `العشرون` map to integers 1–20."""
+        from book_to_skill.utils import _chapter_number
+
+        detected = [_chapter_number(f"الفصل {w}") for w in self._AR_ORDINAL_1_TO_20]
+        assert detected == list(range(1, 21))
+
+    def test_arabic_spelling_variants_fold_to_one_entry(self):
+        """Hamza (أ/إ/آ) and alef maqsura (ى) spellings resolve to the same number."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("الفصل الأول") == 1
+        assert _chapter_number("الفصل الاول") == 1
+        # العشرين is the oblique form of العشرون; both head chapter 20.
+        assert _chapter_number("الفصل العشرون") == 20
+        assert _chapter_number("الفصل العشرين") == 20
+
+    def test_arabic_titled_heading(self):
+        """A title after the ordinal or digit is still a heading."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("الفصل الثاني: المفاهيم") == 2
+        assert _chapter_number("الفصل ٤ — المقدمة") == 4
+
+    def test_arabic_prose_is_not_a_chapter_heading(self):
+        """Inline references and words that merely start with an ordinal stay rejected."""
+        from book_to_skill.utils import _chapter_number
+
+        assert _chapter_number("في الفصل الثالث ذكرنا") is None
+        # الأولى (fem.) and الأولوية (“priority”) merely start with الأول.
+        assert _chapter_number("الفصل الأولى من السنة") is None
+        assert _chapter_number("الفصل الأولوية") is None
+        # الفصلية / بابا are different words, not a label plus a number.
+        assert _chapter_number("الفصلية 3") is None
+        assert _chapter_number("بابا ذهب") is None
+        # Years are outside the 1–99 guard.
+        assert _chapter_number("الفصل 2025") is None
+
+    def test_arabic_fold_leaves_persian_ordinals_intact(self):
+        """The Arabic fold must not reach Persian: ی (U+06CC) ≠ ي (U+064A)."""
+        from book_to_skill.utils import _AR_FOLD, _FA_ONES, _FA_TEENS, _chapter_number
+
+        folded = {c for w in _FA_ONES + _FA_TEENS for c in w} & set(map(chr, _AR_FOLD))
+        assert folded == set()
+        assert _chapter_number("فصل اول") == 1
+        assert _chapter_number("فصل بیست و یکم") == 21
+        assert _chapter_number("فصل اولیه") is None
+
+    def test_detects_arabic_chapters(self):
+        """Plain-text Arabic headings are numeric chapters, not MD fallback."""
+        text = "الفصل الأول\nمحتوى\nالفصل الثاني\nمحتوى\nالفصل ٣\nمحتوى"
+        result = detect_structure(text)
+        assert result["chapters_detected"] == 3
+        # Non-empty sample proves the numeric path, not structural Markdown.
+        assert result["chapter_headings_sample"] == ["الفصل الأول", "الفصل الثاني", "الفصل ٣"]
+
     def test_roman_footnote_reference_is_not_a_chapter(self):
         """Scholarly cross-references must stay rejected after the Roman change."""
         from book_to_skill.utils import _chapter_number
