@@ -628,6 +628,8 @@ or ask the agent directly.
 <if images_dropped > 5: state that N source images were not read>
 ```
 
+*(For Mode 2 Search & Read, omit the `Full text:` line and append the provenance & coverage summary from `references/search-and-read.md` under `Scope & Limits`.)*
+
 ---
 
 ## Step 9.5 — Scan the generated skill

@@ -7,8 +7,14 @@
 Mode 2 builds the **exact same skill output** as Mode 1 (`SKILL.md`, `chapters/`, `glossary.md`, `patterns.md`, `cheatsheet.md`) without downloading or permanently storing a raw book file:
 
 - **Host-invoked MCP only:** The host coding agent calls MCP tools (`search`, `get_details`, `read`). Never call MCP `download`, never save `full_text.txt`, and never write raw book prose into `remote_session.json` or provenance metadata.
-- **Python zero-network helpers:** Deterministic offline helpers under `book_to_skill/remote/` and `book_to_skill/sanitize.py` handle normalization, policy checks, sanitization, cursor/checkpoint tracking, coverage, and provenance.
-- **Untrusted external data:** Every text chunk returned by MCP `read` MUST pass through `book_to_skill.sanitize.sanitize_extracted_text()` before synthesis or inspection.
+- **Python zero-network helpers (`book_to_skill.remote`):** Deterministic stdlib-only offline helpers implement the frozen contracts across six modules:
+  - `book_to_skill.remote.discovery` — `normalize_search_results()`, `group_duplicate_editions()`, `format_candidate_selection_table()`, `normalize_work_details()`
+  - `book_to_skill.remote.policy` — `load_policy()`, `check_provider_allowed()`, `build_access_copyright_notice()`, `verify_user_confirmation()`, `resolve_publish_visibility()`
+  - `book_to_skill.remote.reader` — `parse_outline_response()`, `sanitize_remote_chunk()`, `process_section_page()`, `read_section_from_pages()`
+  - `book_to_skill.remote.checkpoint` — `init_remote_session()`, `save_remote_session()`, `load_remote_session()`, `update_chapter_progress()`, `pending_chapters()`
+  - `book_to_skill.remote.coverage` — `build_coverage_report()`, `format_coverage_summary()`
+  - `book_to_skill.remote.provenance` — `build_remote_provenance()`, `render_provenance_markdown()`
+- **Untrusted external data:** Every text chunk returned by MCP `read` MUST pass through `book_to_skill.sanitize.sanitize_extracted_text()` (via `sanitize_remote_chunk()` / `process_section_page()`) before synthesis or inspection.
 
 ---
 
@@ -16,31 +22,32 @@ Mode 2 builds the **exact same skill output** as Mode 1 (`SKILL.md`, `chapters/`
 
 1. Confirm an MCP book provider (`libgen-mcp` or another configured provider exposing `search`, `get_details`, and `read`) is present in the host agent's active toolset.
    - If no provider is exposed, STOP, inform the user that MCP Search & Read is unavailable in this session, and offer **Mode 1 (local files)** (`book-to-skill <path-to-document-folder-or-glob>`).
-2. Enforce `RemotePolicyConfig` (`enabled_providers`, `blocked_providers`, `require_explicit_confirmation`, `default_publish_visibility="private"`, `allow_public_publish=false`, `warn_mcp_temporary_cache=true`). If the active provider is blocked or disallowed by policy, stop and explain why.
+2. Load policy via `load_policy()` (honoring `BOOK_TO_SKILL_REMOTE_POLICY` env JSON/path; defaults: `enabled_providers=["*"]`, `blocked_providers=[]`, `require_explicit_confirmation=True`, `default_publish_visibility="private"`, `allow_public_publish=False`, `warn_mcp_temporary_cache=True`).
+3. Verify the active provider with `check_provider_allowed(provider, policy)`. If disallowed, stop and report the reason.
 
 ---
 
 ## Step R1 — Discovery (`search` -> `get_details` -> Explicit Selection)
 
 1. **Search:** Invoke MCP `search` with the user's `<query>` (title, author, ISBN, or DOI).
-2. **Normalize & group duplicates:** Normalize candidate fields (`title`, `authors`, `edition`, `year`, `format`, `language`, `identifiers` (`isbn`, `doi`), `source_name`, `access_info`, `license_info`, `dedup_key`) and group duplicate editions by `dedup_key` while keeping individual selectable editions/formats explicit.
-3. **Require explicit selection:** Present a numbered candidate table (title, authors, edition, year, format, language, identifiers, source/provider). Ask the user to pick an exact candidate/edition number.
+2. **Normalize & group duplicates:** Pass raw results to `normalize_search_results(raw_results, provider=provider)`, then `group_duplicate_editions(candidates)` to group works sharing `dedup_key` while keeping individual selectable editions/formats explicit.
+3. **Require explicit selection:** Render the numbered selection summary with `format_candidate_selection_table(grouped)` and ask the user to pick an exact candidate/edition number.
    - Never silently auto-select when candidates or multiple editions exist.
    - If zero results match, offer to refine the query or switch to Mode 1 (local files).
-4. **Inspect details:** Call MCP `get_details` on the selected candidate to confirm full metadata, identifiers, `access_info`, and `license_info`.
+4. **Inspect details:** Call MCP `get_details` on the selected candidate and pass the response through `normalize_work_details(raw_details, provider=provider)` to confirm full metadata, identifiers (`isbn`, `doi`), `access_info`, and `license_info`.
 
 ---
 
 ## Step R2 — Copyright, Access & Temporary-Cache Confirmation Gate
 
-Before calling MCP `read` for the first time, display a clear confirmation prompt containing:
+Before calling MCP `read` for the first time, generate and display the mandatory confirmation notice with `build_access_copyright_notice(candidate, policy)`, which includes:
 
 1. **Work & source identity:** Provider/source name, title, authors, edition, and identifiers (ISBN/DOI).
 2. **Access & license info:** Known `access_info` and `license_info` (or `"unknown"` when the provider reports none).
 3. **Copyright notice (mandatory):** Explicitly warn the user that **user confirmation does not equal copyright-holder authorization** — confirming to proceed reflects only the user's own access/use basis and does not grant redistribution rights or copyright-holder permission.
 4. **Temporary-cache & transmission notice (mandatory):** Explicitly warn the user that invoking MCP `read` may cache book text temporarily on the MCP server and transmits read text chunks to the host model context for synthesis.
 
-**Hard gate:** Require explicit user confirmation (e.g., `"yes"` / `"confirm"` / `"proceed"`) after displaying this notice. Never infer consent from the initial `search` command. If the user declines or gives an ambiguous answer, stop without calling `read`.
+**Hard gate:** Pass the user's reply to `verify_user_confirmation(reply, candidate, policy)`. Never infer consent from the initial `search` command or an ambiguous/empty reply. If `verify_user_confirmation(...)` returns `False`, stop without calling `read`.
 
 ---
 
@@ -49,47 +56,55 @@ Before calling MCP `read` for the first time, display a clear confirmation promp
 1. Gather `BOOK_TYPE` (`technical` vs `text`, Step 1.5) and `DEPTH` (`reference` vs `study`, Step 4), unless already specified.
 2. Resolve `SKILLS_HOME` and `SKILL_NAME` per Step 5, applying the Step 0 re-run guard if `<skill_name>` already exists.
 3. Create `$SKILLS_HOME/<skill_name>/chapters/` (Step 6).
-4. Initialize a private per-run checkpoint directory (`chmod 0700`) containing `remote_session.json` to track work identity, `outline_mode`, limits (`max_cursors_per_section`, `max_total_requests`), and per-chapter progress (`status`, `next_cursor`, `chunks_read`, `sanitized_removed_count`, `truncated`, `error_reason`) — **storing zero raw book prose**.
+4. Initialize a private per-run checkpoint `workdir` (`chmod 0700`, symlink-checked) and persist `remote_session.json` using `init_remote_session(...)` and `save_remote_session(session, workdir)`.
+   - To resume an interrupted run, call `load_remote_session(workdir)` and iterate only `pending_chapters(session)` (skipping chapters already marked `"done"`).
+   - `remote_session.json` rejects symlinks and forbids prose keys (`text`, `raw_text`, `content`, `body`, `full_text`, `chunks`, `pages`, `excerpt`, etc.) — **zero raw book prose is stored**.
 
 ---
 
 ## Step R4 — Outline & Incremental Chapter Synthesis (`read(outline)` -> `read(section)` / `read(cursor)`)
 
 ### 1. Obtain Outline or Activate Sequential Fallback
-- Call MCP `read` in `"outline"` mode (`read(outline)`) to retrieve the chapter/section list (`index`, `section_id`, `title`).
-- **Sequential fallback:** If the outline is missing, empty, or unreliable (e.g., missing section IDs or flat unsegmented response), switch explicitly to `sequential_fallback` mode using sequential `read(cursor)` pagination from the beginning of the work, and inform the user that chapter boundaries are sequential/inferred rather than outline-verified.
+- Call MCP `read` in `"outline"` mode (`read(outline)`) and normalize via `parse_outline_response(raw_outline)` -> `(outline_mode, chapters)`.
+- **Sequential fallback:** When the outline is missing, empty, or unreliable, `parse_outline_response()` returns `outline_mode="sequential_fallback"`. Inform the user explicitly that chapter boundaries are sequential/inferred rather than outline-verified and paginate sequentially with `read(cursor)`.
 
 ### 2. Incremental Chapter Loop
-Process chapters one at a time (skipping chapters already marked `done` when resuming from `remote_session.json`):
+For each chapter returned by `pending_chapters(session)`:
 
-1. **Read & paginate:** Call MCP `read(section)` (or `read(cursor)` in sequential mode), following `next_cursor` until the section completes.
-   - Enforce per-section and total request limits (`max_cursors_per_section` default `100`, `max_total_requests` default `1000`).
-   - Track `seen_cursors` per section; if `next_cursor` repeats (infinite cursor loop) or a limit is reached, stop reading that section and mark it `incomplete` with an explicit `error_reason`.
-2. **Sanitize before synthesis:** Run every returned text chunk through `sanitize_extracted_text()` before passing it into synthesis prompts. Accumulate `sanitized_removed_count` in the checkpoint.
+1. **Read & paginate safely:** Call MCP `read(section)` (or `read(cursor)` in sequential mode) page by page, processing each page through `process_section_page(raw_page, seen_cursors=seen_cursors, max_cursors_per_section=...)` or reducing the chapter's pages via `read_section_from_pages(...)`.
+   - Enforces `max_cursors_per_section` (default `100`) and `max_total_requests` (default `1000`).
+   - Detects infinite cursor loops (`next_cursor in seen_cursors`) and immediately stops with `status="incomplete"` and an explicit `error_reason`.
+2. **Sanitize before synthesis:** `sanitize_remote_chunk()` / `process_section_page()` automatically runs `sanitize_extracted_text()` on every chunk before synthesis and tracks `sanitized_removed_count`.
 3. **Synthesize chapter file:** Write `$SKILLS_HOME/<skill_name>/chapters/ch<NN>-<slug>.md` using the Step 7 structure and adaptive token budget (`BOOK_TYPE` × `DEPTH`).
-4. **Discard raw fragments immediately:** Once the chapter summary file is written, drop the raw chapter text from working memory/scratch. Never save `full_text.txt`, never keep raw excerpts on disk, and never copy raw prose verbatim.
-5. **Checkpoint atomically:** Update `remote_session.json` (`status`: `done | incomplete | failed`, `next_cursor`, `chunks_read`, `truncated`, `error_reason`).
+4. **Discard raw fragments immediately:** Once the chapter summary file is written, drop the raw chapter text and `chunks` from working memory/scratch. Never save `full_text.txt`, never keep raw excerpts on disk, and never copy raw prose verbatim.
+5. **Checkpoint atomically:** Record progress via `update_chapter_progress(session, section_id, status=..., next_cursor=..., chunks_read=..., sanitized_removed_count=..., truncated=..., error_reason=...)` and persist via `save_remote_session(session, workdir)`.
 
 ### 3. Incomplete or Truncated Chapters (Explicit Warning Rule)
-- If a section returns `truncated: true`, ends early due to cursor/request caps or a cursor loop, or yields empty/unreadable content:
-  - Mark the chapter `incomplete` (or `failed`) with the exact `error_reason`.
-  - Add an **explicit incomplete/truncated warning** at the top of that chapter file (and in `Scope & Limits` / the Step 10 report) stating which section(s) were truncated or missing and why.
-  - Never present partial or truncated output as a complete synthesis.
+- If `read_section_from_pages()` / `process_section_page()` reports `truncated: True` or `status` in `("incomplete", "failed")` (cursor loop, request cap, missing/empty section):
+  - Keep the chapter marked `incomplete` or `failed` with its `error_reason` in `remote_session.json`.
+  - Add an **explicit incomplete/truncated warning** at the top of that chapter file (if partially synthesized) and in `Scope & Limits` / Step 10 report.
+  - Never present partial or truncated output as complete.
 
 ---
 
 ## Step R5 — Consolidated Supporting Files, Master `SKILL.md`, Scan, Report & Publish
 
-1. **Consolidated supporting files (Step 8):** Across the synthesized `chapters/` files (not raw text), generate:
+1. **Consolidated supporting files (Step 8):** Synthesize across the written `chapters/` files (never from stored raw prose):
    - `$SKILLS_HOME/<skill_name>/glossary.md` (alphabetized key terms, max 1,500 tokens)
    - `$SKILLS_HOME/<skill_name>/patterns.md` (techniques & design patterns, max 2,000 tokens)
    - `$SKILLS_HOME/<skill_name>/cheatsheet.md` (decision rules, trade-offs, thresholds, smells, max 1,200 tokens)
-2. **Master `SKILL.md` (Step 9):** Generate `$SKILLS_HOME/<skill_name>/SKILL.md` under the 4,000-token budget with Core Frameworks & Mental Models, Chapter Index, Topic Index, Supporting Files (do **not** add a `full_text.txt` line, since Mode 2 stores no raw book file), and Scope & Limits (recording source provider, edition/identifiers, coverage status, and any missing/truncated section warnings — zero raw book prose).
-3. **Security scan (Step 9.5):** Run `tools/scan_generated_skill.py "$SKILLS_HOME/<skill_name>"` before reporting success or publishing. If it exits non-zero, stop and ask a human to review the findings.
-4. **Cleanup & report (Step 10):**
+2. **Coverage & provenance metadata (Contract D):**
+   - Compute `coverage = build_coverage_report(session)` (yielding `chapters_total`, `chapters_done`, `chapters_incomplete`, `chapters_failed`, `missing_sections`, `truncated_sections`, `completeness_status` in `{"complete", "partial", "degraded"}`, and `warnings`).
+   - Compute `provenance = build_remote_provenance(candidate, session, policy, coverage=coverage)` (guaranteed free of raw prose; `storage_mode="incremental_ephemeral_no_full_text"`).
+   - Render Markdown with `render_provenance_markdown(provenance)` (and `format_coverage_summary(coverage)`).
+3. **Master `SKILL.md` (Step 9):** Generate `$SKILLS_HOME/<skill_name>/SKILL.md` under the 4,000-token budget with Core Frameworks & Mental Models, Chapter Index, Topic Index, Supporting Files (do **not** add a `full_text.txt` line, since Mode 2 stores no raw book file), and `## Scope & Limits` containing the rendered `render_provenance_markdown(provenance)` block.
+4. **Security & skill validation scan (Step 9.5):**
+   - Run `tools/scan_generated_skill.py "$SKILLS_HOME/<skill_name>"` before reporting success or publishing. If it exits non-zero, stop and ask a human to review findings.
+   - Optionally validate the generated `SKILL.md` with `tools/validate_skill.py "$SKILLS_HOME/<skill_name>/SKILL.md"`.
+5. **Cleanup & report (Step 10):**
    - Create and verify the Claude Code symlink when `SKILLS_HOME` is `~/.agents/skills` (per Step 10).
-   - Remove the temporary checkpoint `workdir` once all chapters succeed (if the run is `partial` or `degraded`, inform the user of the checkpoint path in case they choose to resume, or remove it if they discard).
-   - Print the Step 10 summary plus the coverage report (`complete`, `partial`, or `degraded`) and explicit warnings for any missing or truncated chapters.
-5. **Private-by-default publish gate (Step 11):**
+   - Remove the temporary checkpoint `workdir` once `completeness_status == "complete"`; if `"partial"` or `"degraded"`, retain or inform the user of the `workdir` path so they can resume or discard it.
+   - Print the Step 10 summary together with `format_coverage_summary(coverage)` and `render_provenance_markdown(provenance)`.
+6. **Private-by-default publish gate (Step 11):**
    - Offer publishing once only if the Step 9.5 scan passed.
-   - Apply the Step 11 visibility gate verbatim: `gh repo create` MUST default to `--private`, and `--public` is allowed **only** when the user replies with the bare word `public` to the separate closed visibility question **and** the copyright/policy gate permits it (`allow_public_publish` / author-owned or openly licensed/authorized material). Third-party copyrighted books retrieved via MCP **must stay private**.
+   - Enforce both the Step 11 visibility gate and `resolve_publish_visibility(requested, policy)`: `gh repo create` MUST default to `--private`, and `--public` is permitted **only** when the user answers the separate closed visibility question with the bare word `public` **and** `policy["allow_public_publish"]` is `True` and the copyright gate confirms authorization. Third-party copyrighted books retrieved via MCP **must stay private**.
