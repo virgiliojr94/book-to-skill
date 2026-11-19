@@ -6,12 +6,17 @@ import sys
 from book_to_skill.exceptions import ExtractionError
 
 
-def _docx_inline_text(elem) -> str:
+def _docx_inline_text(elem, *, paragraph_boundaries: bool = False) -> str:
     """Rebuild text runs without dropping explicit DOCX separators."""
     ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     text_parts: list[str] = []
+    seen_paragraph = False
     for node in elem.iter():
-        if node.tag == f"{ns}t" and node.text:
+        if paragraph_boundaries and node.tag == f"{ns}p":
+            if seen_paragraph:
+                text_parts.append("\n")
+            seen_paragraph = True
+        elif node.tag == f"{ns}t" and node.text:
             text_parts.append(node.text)
         elif node.tag == f"{ns}tab":
             text_parts.append("\t")
@@ -85,8 +90,8 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
             # tables last). Unknown wrappers (e.g. <w:sdt> content controls) are
             # recursed into so their paragraphs/tables are not lost; <w:p> and
             # <w:tbl> are NOT recursed into, so table-cell paragraphs are not
-            # double-counted. Cell text concatenates the cell's runs; nested
-            # tables fold into the parent cell and are also emitted standalone
+            # double-counted. Cell text joins runs and separates paragraphs;
+            # nested tables fold into the parent cell and are also emitted standalone
             # (rare; best-effort).
             for child in elem:
                 tag = child.tag
@@ -98,7 +103,7 @@ def extract_docx_with_zipfile(docx_path: str) -> str | None:
                     for row in child.iter(f"{ns}tr"):
                         cells = []
                         for cell in row.iter(f"{ns}tc"):
-                            cells.append(_docx_inline_text(cell).strip())
+                            cells.append(_docx_inline_text(cell, paragraph_boundaries=True).strip())
                         if any(cells):
                             parts.append("\t".join(cells))
                 else:
