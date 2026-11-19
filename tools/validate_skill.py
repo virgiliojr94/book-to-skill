@@ -205,6 +205,106 @@ def top_level_keys(fm):
             if (m := re.match(r"^([A-Za-z][\w-]*):", ln))]
 
 
+# Plain (unquoted) scalars may not start with these — YAML reserves them.
+_RESERVED_PLAIN_START = "@`"
+# Values that are not scalars (block scalar, anchor, alias, flow mapping/seq).
+_NON_SCALAR_START = "|>&*[{"
+
+
+def yaml_safety_findings(fm):
+    """Flag frontmatter this file's regex parser reads fine but a real YAML
+    parser rejects.
+
+    Host loaders (Claude Code, Pi, Copilot CLI) parse frontmatter with a YAML
+    parser, so an *unquoted* value containing ': ' is read as a nested mapping
+    inside a compact mapping and the whole skill fails to load with
+    "Nested mappings are not allowed in compact mappings". Book titles are
+    systematically of the form "Title: Subtitle", so a generated description
+    hits this constantly — the template quotes the description for exactly
+    this reason, and the check keeps that from being written off.
+
+    Dependency-free by design: CI runs this on machines without PyYAML.
+    """
+    errors, warns = [], []
+    for ln in fm.splitlines():
+        m = re.match(r"^([A-Za-z][\w-]*):(?:[ \t]+(.*))?$", ln)
+        if not m:
+            continue
+        key, raw = m.group(1), (m.group(2) or "").strip()
+        if not raw:
+            continue  # `key:` with a nested block / list — handled elsewhere
+        if raw[0] in _NON_SCALAR_START:
+            continue
+        if raw[0] in ("'", '"'):
+            q = raw[0]
+            closing_escaped = raw[-2:] == ("''" if q == "'" else '\\"')
+            if len(raw) < 2 or raw[-1] != q or closing_escaped:
+                errors.append(
+                    f"frontmatter '{key}': {q}-quoted value is not closed on one "
+                    f"line (a multi-line quoted scalar needs indentation on the "
+                    f"continuation lines)"
+                )
+                continue
+            inner = raw[1:-1]
+            if q == '"' and re.search(r'(?<!\\)"', inner):
+                warns.append(
+                    f"frontmatter '{key}': unescaped '\"' inside a double-quoted "
+                    f"value — escape it as \\\""
+                )
+            if q == "'" and re.search(r"(?<!')'(?!')", inner):
+                warns.append(
+                    f"frontmatter '{key}': unescaped \"'\" inside a single-quoted "
+                    f"value — escape it as ''"
+                )
+            continue
+        if ": " in raw or raw.endswith(":"):
+            errors.append(
+                f"frontmatter '{key}': unquoted value contains ': ' — YAML reads "
+                f"that as a nested mapping and strict loaders reject the file "
+                f"(host skill loading breaks entirely). Wrap the value in double "
+                f"quotes: \"{raw[:40]}…\" and escape inner quotes as \\\""
+            )
+        if raw[0] in _RESERVED_PLAIN_START:
+            errors.append(
+                f"frontmatter '{key}': plain value starts with reserved YAML "
+                f"indicator '{raw[0]}' — quote it"
+            )
+        if '"' in raw:
+            warns.append(
+                f"frontmatter '{key}': plain value embeds '\"' — legal today, but "
+                f"one edit at the start turns it into a quoted scalar and a parse "
+                f"error; quote the whole value"
+            )
+        if " #" in raw:
+            warns.append(
+                f"frontmatter '{key}': ' #' in an unquoted value starts a YAML "
+                f"comment, so the tail is silently dropped — quote it"
+            )
+    return errors, warns
+
+
+def strict_yaml_findings(fm):
+    """Parse the frontmatter with PyYAML when it is installed.
+
+    Catches syntax the heuristics above do not model. Silent when PyYAML is
+    absent, so the validator keeps its zero-dependency contract.
+    """
+    try:
+        import yaml
+    except ImportError:
+        return []
+    try:
+        data = yaml.safe_load(fm)
+    except yaml.YAMLError as exc:
+        lines = [ln.strip() for ln in str(exc).splitlines() if ln.strip()]
+        head = lines[0] if lines else "invalid YAML"
+        where = next((ln for ln in lines[1:] if ln.startswith("in ")), "")
+        return [f"frontmatter is not valid YAML: {head} {where}"[:220]]
+    if data is not None and not isinstance(data, dict):
+        return ["frontmatter does not parse to a YAML mapping"]
+    return []
+
+
 def tool_base(entry):
     """Bash(python3 *) -> Bash ; Read -> Read ; My-MCP(do_thing) -> My-MCP."""
     return entry.split("(", 1)[0].strip()
@@ -220,6 +320,14 @@ def audit(path, lens="claude"):
     errors, warns = [], []
     if fm is None:
         return ["no valid YAML frontmatter (--- block)"], []
+
+    # A frontmatter block that no YAML parser accepts makes the whole skill
+    # unloadable, so these findings lead the report.
+    y_errors, y_warns = yaml_safety_findings(fm)
+    errors.extend(y_errors)
+    warns.extend(y_warns)
+    if not y_errors:
+        errors.extend(strict_yaml_findings(fm))
 
     name = get_scalar(fm, "name")
     if not name:

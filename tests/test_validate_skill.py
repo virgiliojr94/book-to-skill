@@ -275,3 +275,102 @@ def test_empty_block_scalar_description_is_missing(tmp_path):
     p.write_text("---\nname: my-skill\ndescription: |\nlicense: MIT\n---\n\n# Body\n", encoding="utf-8")
     errors, _ = validate_skill.audit(str(p))
     assert "description: missing (required)" in errors
+
+
+# --- YAML syntax of the frontmatter block -----------------------------------
+# The regex parser in tools/validate_skill.py reads these files fine; host
+# loaders (Claude Code, Pi, Copilot CLI) parse frontmatter as YAML, and a
+# SKILL.md whose description is a *plain* scalar containing ': ' fails to load
+# at all ("Nested mappings are not allowed in compact mappings"). Book titles
+# are systematically "Title: Subtitle", so generated skills hit this often.
+
+_TITLE_SKILL = (
+    "---\n"
+    "name: swett-professional-rails-testing\n"
+    "description: Knowledge base from Professional Rails Testing: Tools and "
+    "Principles (248-page PDF).\n"
+    "---\n\n# Body\n"
+)
+
+
+def test_plain_description_containing_colon_space_is_an_error(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(_TITLE_SKILL, encoding="utf-8")
+    errors, _ = validate_skill.audit(str(p))
+    assert any("nested mapping" in e for e in errors), errors
+
+
+def test_quoted_description_containing_colon_space_is_accepted(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        _TITLE_SKILL.replace("description: Knowledge", 'description: "Knowledge')
+        .replace("(248-page PDF).", '(248-page PDF)."'),
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill.audit(str(p))
+    assert errors == [], errors
+
+
+def test_quoted_description_with_escaped_inner_quotes_is_accepted(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        "---\nname: my-skill\n"
+        'description: "Knowledge base from \\"DDIA\\" by Kleppmann."\n'
+        "---\n\n# Body\n",
+        encoding="utf-8",
+    )
+    errors, warns = validate_skill.audit(str(p))
+    assert errors == [], errors
+    assert not [w for w in warns if "frontmatter" in w], warns
+
+
+def test_unterminated_quoted_description_is_an_error(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        '---\nname: my-skill\ndescription: "A test skill.\n---\n\n# Body\n',
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill.audit(str(p))
+    assert any("not closed" in e for e in errors), errors
+
+
+def test_plain_description_embedding_a_quote_warns(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        '---\nname: my-skill\ndescription: Working skill for "A Philosophy '
+        'of Software Design".\n---\n\n# Body\n',
+        encoding="utf-8",
+    )
+    _errors, warns = validate_skill.audit(str(p))
+    assert any("embeds" in w for w in warns), warns
+
+
+def test_hash_in_plain_description_warns(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text(
+        "---\nname: my-skill\ndescription: A test skill # not a comment\n"
+        "---\n\n# Body\n",
+        encoding="utf-8",
+    )
+    _errors, warns = validate_skill.audit(str(p))
+    assert any("comment" in w for w in warns), warns
+
+
+def test_yaml_safety_findings_ignores_block_scalars_and_nested_blocks():
+    fm = (
+        "name: my-skill\n"
+        "description: >\n  Title: Subtitle, colon-safe.\n"
+        "metadata:\n  openclaw:\n    emoji: book\n"
+    )
+    errors, warns = validate_skill.yaml_safety_findings(fm)
+    assert errors == [], errors
+    assert warns == [], warns
+
+
+def test_strict_yaml_findings_reports_syntax_errors(tmp_path):
+    findings = validate_skill.strict_yaml_findings(
+        "name: my-skill\ndescription: A: B: C\n"
+    )
+    yaml = pytest.importorskip("yaml")  # PyYAML-optional path
+    assert yaml is not None
+    assert any("not valid YAML" in f for f in findings), findings

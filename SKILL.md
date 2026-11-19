@@ -622,18 +622,29 @@ or ask the agent directly.
 <if images_dropped > 5: state that N source images were not read>
 ```
 
+**The frontmatter block is parsed by a YAML parser by host loaders — write it as YAML, not as prose.** Rules that keep the skill loadable:
+
+- `description:` must be a **double-quoted YAML scalar**, every inner `"` escaped as `\"`. That is why the template above is quoted — keep it that way when you fill it in.
+- A *bare* (unquoted) value is safe only if it contains no `: `. Book titles are systematically `Title: Subtitle`, so quoting is the only habit worth having. An unquoted `: ` is read as a nested mapping inside a compact mapping, and strict loaders (Claude Code, Pi, Copilot CLI) reject the whole file: the skill silently never loads, with a `Nested mappings are not allowed in compact mappings` warning in the host's skill scan.
+- The same applies to every key you add (`license`, `metadata`, …), and to ` #`: unquoted, YAML treats it as the start of a comment and drops the tail.
+- Cap the **parsed** description at 1024 characters (the wrapping quotes do not count). A maximal "cover every keyword" description gets truncated on some hosts and routes worse than a focused one; the chapter/topic indexes are where keyword coverage belongs.
+
 ---
 
-## Step 9.5 — Scan the generated skill
+## Step 9.5 — Validate and scan the generated skill
 
-Before reporting success, loading the skill in another session, or publishing it, run the advisory security scan:
+Before reporting success, loading the skill in another session, or publishing it, run the format gate and the advisory security scan:
 
 ```bash
 SKILL_CONVERTER_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+# --lens: claude (default) | copilot | amp | hermes | openclaw | opencode
+"$PYTHON_BIN" "$SKILL_CONVERTER_ROOT/tools/validate_skill.py" --lens <lens> "$SKILLS_HOME/<skill_name>/SKILL.md"
 "$PYTHON_BIN" "$SKILL_CONVERTER_ROOT/tools/scan_generated_skill.py" "$SKILLS_HOME/<skill_name>"
 ```
 
-If the scanner exits non-zero, stop and ask a human to review its file/line findings. Do not silently rewrite the generated files, and do not load or publish the skill until the findings are resolved or explicitly accepted.
+`validate_skill.py` is the format gate: it parses the frontmatter as YAML and reports what a host loader will reject — the recurring one being an unquoted `: ` in `description:`. Its ERROR findings are mechanical: fix `SKILL.md`, re-run, and do not report success while it exits non-zero.
+
+If the **security scanner** exits non-zero, stop and ask a human to review its file/line findings. Do not silently rewrite the generated files, and do not load or publish the skill until the findings are resolved or explicitly accepted.
 
 ---
 
