@@ -108,6 +108,18 @@ def test_references_search_and_read_covers_workflow_and_warnings():
     assert "never call mcp `download`" in lowered
 
 
+def test_step0_and_frontmatter_ux_clarity():
+    """Frontmatter and Step 0 provide clear two-path onboarding and handle bare `search` cleanly."""
+    text = _skill_text()
+    frontmatter, _ = validate_skill.parse_frontmatter(text)
+    assert frontmatter is not None
+    assert "/book-to-skill search <query>" in frontmatter
+    step0 = _step0_section(text)
+    assert "avoid internal \"Mode 1/Mode 2\" labels" in step0
+    assert "MCP available, query missing" in step0
+    assert "MCP unavailable" in step0
+
+
 @pytest.mark.parametrize("lens", sorted(validate_skill.LENSES.keys()))
 def test_validate_skill_passes_all_six_lenses(lens):
     """SKILL.md must pass validate_skill.py on all 6 supported host lenses."""

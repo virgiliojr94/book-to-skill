@@ -1,6 +1,6 @@
 ---
 name: book-to-skill
-description: "Converts books and documents (PDF, EPUB, DOCX, HTML, Markdown, plain text, RTF, MOBI/AZW with Calibre) into structured agent skills, extracting frameworks, mental models, principles, techniques, and anti-patterns. Use when the user wants to study a document through GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, OpenCode, or OpenClaw, apply an author's frameworks while working, or build a reusable knowledge base from a file."
+description: "Converts books and documents into structured agent skills from local files (PDF, EPUB, DOCX, HTML, Markdown, TXT, RTF, MOBI/AZW) or remote MCP book search (`/book-to-skill search <query>`), extracting frameworks, mental models, principles, techniques, and anti-patterns. Use via GitHub Copilot CLI, Amp, Claude Code, Hermes Agent, OpenCode, or OpenClaw to study a document or apply an author's frameworks."
 ---
 
 <!--
@@ -96,11 +96,18 @@ For **generated** book skills, prefer the user-level cross-agent root `~/.agents
 
 ## Step 0 — Out-of-scope check
 
-If no arguments are provided, stop and respond:
-> "book-to-skill requires a supported document path, folder, or glob pattern (or `search <query>` for MCP Search & Read). Usage: `book-to-skill <path-to-document-folder-or-glob>... [skill-name-slug]` or `/book-to-skill search <query>`"
+If no arguments (or `help`) are provided, present both paths cleanly (avoid internal "Mode 1/Mode 2" labels in user-facing replies) and ask what to convert:
+> "Choose how to start:
+> 1. **Local book or folder** *(ready now — PDF, EPUB, DOCX, TXT, MD, HTML, RTF, MOBI/AZW)*: `/book-to-skill ~/books/accelerate.pdf`
+> 2. **Search & Read via MCP** *(title, author, ISBN, or DOI — status: `<connected: provider | not configured>`)*: `/book-to-skill search "Accelerate"`
+>
+> Reply with a file path or a search query to begin."
 
 Throughout the workflow:
-- **Mode 2 (Search & Read) routing:** If `/book-to-skill search <query>` (or remote book search with no local path) is requested, detect whether an MCP book provider (`libgen-mcp` or a configured provider exposing book search and read tools) is exposed in the host agent's toolset. If unavailable, STOP, clearly inform the user that MCP search/read is not available in this session, and offer **Mode 1 (local files)** (`book-to-skill <path-to-document-folder-or-glob>`). If available, read `references/search-and-read.md` only when Mode 2 Search & Read is triggered and follow it instead of local Steps 1–3.
+- **Mode 2 (Search & Read) routing:** If `search` (with or without `<query>`) or a remote book lookup with no local path is requested, check whether an MCP book provider (`libgen-mcp` or a configured provider exposing book search and read tools) is exposed in the host agent's toolset:
+  - **MCP unavailable:** STOP without printing a dry error; tell the user clearly: *(a)* Search & Read needs a book MCP server (none connected in this session), *(b)* how to enable it in 2 steps (configure an MCP provider such as `libgen-mcp` in the host's MCP settings, open a new session, then run `/book-to-skill search "Accelerate"`), and *(c)* offer local files (Mode 1) immediately with a concrete example (`/book-to-skill ~/path/to/book.pdf`).
+  - **MCP available, query missing:** Ask `"What book, author, ISBN, or DOI should I search for? (e.g. Accelerate or 9781942788331)"` — do not treat a bare `/book-to-skill search` as an error.
+  - **MCP available with query:** Read `references/search-and-read.md` only when Mode 2 Search & Read is triggered and follow it instead of local Steps 1–3.
 - **Resolve the destination root first.** Before any existing-skill lookup, determine where this run would write: the personal or project-local root for the user's host, per the Step 5 table and selection rules — a project-local request uses its project-local root, never the personal root. Below, "the resolved root" means that destination.
 - Identify the input paths and the optional skill slug.
 - If the last argument is not a file, folder, or glob that exists or matches any files, and it looks like a skill slug (e.g. lowercase hyphens, alphanumeric), treat it as `SKILL_NAME`.
