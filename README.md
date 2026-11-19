@@ -120,11 +120,26 @@ Two halves: a deterministic Python **extractor** (document → clean text + meta
 
 ## 🚀 Usage
 
-`/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, and update/fold-in modes. After a conversion, the converter can publish the skill to GitHub (private by default) so any host installs it with `npx skills add`.
+`/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, update/fold-in, and MCP Search & Read modes. After a conversion, the converter can publish the skill to GitHub (private by default) so any host installs it with `npx skills add`.
 
 ▶️ **All modes and examples → [docs/usage.md](docs/usage.md)**
 
 💬 **In practice → [use cases](https://github.com/virgiliojr94/book-to-skill-use-cases)** — a DevEx book became a survey of 300+ engineers; a scanned PDF that stalled became [#130](https://github.com/virgiliojr94/book-to-skill/pull/130). Add yours: the account lives in your own Gist, the index takes a one-line PR.
+
+---
+
+## 🔍 Mode 2: Search & Read (MCP)
+
+When an MCP book provider (such as `libgen-mcp`) is configured in your host agent, you can discover and convert a work incrementally without downloading a local copy first:
+
+```text
+/book-to-skill search "<title, author, ISBN, or DOI>"
+```
+
+- **Host-mediated & zero-network core:** Your host agent runs MCP `search`, `get_details`, and `read` chapter by chapter and discards raw fragments immediately after synthesis — `book_to_skill/` makes zero network calls and writes no permanent `full_text.txt` (see [docs/architecture.md](docs/architecture.md#mode-2-search--read-mcp) and [references/search-and-read.md](references/search-and-read.md)).
+- **Provider configurability (`BOOK_TO_SKILL_REMOTE_POLICY`):** Configure `enabled_providers`, `blocked_providers`, confirmation requirements, and publish defaults via the `BOOK_TO_SKILL_REMOTE_POLICY` environment variable (a JSON string or path to a JSON file). Defaults require explicit user confirmation before any `read` call and enforce `--private` GitHub publishing (`allow_public_publish: false`).
+- **Graceful fallback:** If no MCP book provider is available in the active session (or a provider is disallowed by policy), the converter stops clearly and offers **Mode 1 (local files)** (`/book-to-skill <path|folder|glob>`) instead.
+- **Copyright, access & cache rules:** Confirming before `read` does **not** grant copyright-holder authorization, and MCP `read` may temporarily cache files on the MCP server and transmit read text to your model. Review [Copyright & fair use](#-copyright--fair-use) and [SECURITY.md](SECURITY.md) before using Mode 2.
 
 ---
 
@@ -237,12 +252,12 @@ book-to-skill/
 ---
 ## ⚖️ Copyright & fair use
 
-book-to-skill ships **no book content** — not a single page. It's a converter you point at files you already own.
+book-to-skill ships **no book content** — not a single page. It's a converter you point at files you already own (or query through an MCP provider you configure).
 
-- **Processing is local.** Extraction and analysis run on your machine. Your files are never uploaded by this tool. (If your agent's model runs in the cloud, the text you feed it follows that provider's normal data terms — same as any prompt.)
-- **You use your own copy.** Bring a book you bought, docs your company owns, or papers you have the right to read.
+- **Processing is local (Mode 1) and ephemeral (Mode 2).** Local extraction and analysis run on your machine and never upload files. In Mode 2 (Search & Read), `book_to_skill/` still makes zero network calls and writes no permanent `full_text.txt`; your host agent calls your configured MCP server (`read`), which may temporarily cache full files on the server and transmit read chunks to your model under those providers' data terms.
+- **You use your own copy and remain responsible for access rights.** Bring a book you bought, docs your company owns, or papers you have the right to read. In Mode 2, explicit confirmation before reading records your consent to proceed — it does **not** equal copyright-holder authorization.
 - **The output is your notes.** A generated skill is a structured, synthesized derivative — framework names, definitions, takeaways — not a reproduction of the text. The skill explicitly never copies raw passages (see Quality Rule #7). Treat it like handwritten study notes: yours, for personal use.
-- **Don't redistribute.** Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private. Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.
+- **Don't redistribute.** Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private (Mode 2 enforces `--private` by default). Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.
 
 When in doubt, follow the license or terms of the source document. This project is a tool; how you use it is on you.
 

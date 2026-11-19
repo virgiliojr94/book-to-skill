@@ -5,9 +5,13 @@ seo_title: "Architecture - How book-to-skill Extracts and Generates"
 
 # Architecture
 
-book-to-skill has two halves: a **deterministic extractor** (Python) and a
-**spec-driven generator** (the agent following `SKILL.md`). The extractor turns any
-document into clean text + metadata; the agent turns that into a structured skill.
+book-to-skill has two halves: a **deterministic Python core** (`book_to_skill/`,
+handling local extraction in Mode 1 and offline MCP payload/session processing
+in Mode 2) and a **spec-driven generator** (the agent following `SKILL.md`, plus
+the lazy-loaded `references/search-and-read.md` in Mode 2). Both input modes
+produce the same structured skill output.
+
+## Mode 1: Local Extraction (Default)
 
 ```
             ┌─────────────────────────── EXTRACTOR (Python, deterministic) ──┐
@@ -62,6 +66,56 @@ when `OPENCLAW_STATE_DIR` is unset or uses the default `~/.openclaw`. A
 non-default state uses its active `<state-dir>/skills` root instead; the
 converter does not infer arbitrary `skills.load.extraDirs`.
 
+## Mode 2: Search & Read (MCP)
+
+When invoked with `/book-to-skill search <query>`, the agent switches to Mode 2
+without downloading or permanently saving a full raw book file. `SKILL.md`
+contains only a compact Mode 2 trigger and routes to
+[`references/search-and-read.md`](../references/search-and-read.md), which is
+loaded lazily only when Mode 2 runs and an MCP book provider is available. If
+no MCP provider is exposed, the agent stops and offers Mode 1 (local files).
+
+```
+ Query (/book-to-skill search "...")
+   │
+   ▼  host agent invokes MCP `search` & `get_details`
+ MCP Search ──▶ book_to_skill/remote/discovery.py + policy.py
+   │              (normalize candidates, group editions, check BOOK_TO_SKILL_REMOTE_POLICY)
+   ▼
+ Selection  ──▶ explicit candidate pick + mandatory copyright/cache confirmation gate
+   │
+   ▼  host agent invokes MCP `read` (outline / section / cursor; never `download`)
+ MCP Read   ──▶ book_to_skill/remote/reader.py
+   │              (parse outline or sequential_fallback, sanitize chunks via sanitize.py,
+   │               guard cursor loops & request caps)
+   ▼
+ Incremental Processing ──▶ book_to_skill/remote/checkpoint.py
+   │                          (prose-free remote_session.json in 0o700 workdir for resume)
+   ▼
+ Generator (references/search-and-read.md + SKILL.md Steps 7–11)
+   │  per-chapter synthesis → discard raw fragments immediately (no full_text.txt)
+   │  coverage.py + provenance.py → Scope & Limits + scan_generated_skill.py
+   ▼
+ Skill (<SKILLS_HOME>/<slug>/: SKILL.md, chapters/*.md, glossary.md, patterns.md, cheatsheet.md)
+```
+
+### `book_to_skill/remote/` zero-network helper modules
+
+`book_to_skill/remote/` is a deterministic, stdlib-only offline package. It
+performs **no** outbound HTTP requests, opens **no** sockets, and has **no**
+runtime dependency on `libgen-mcp` or any MCP SDK. The host coding agent
+executes MCP tool calls and passes JSON/text payloads into these helpers:
+
+| Module | Responsibility |
+|--------|----------------|
+| `book_to_skill/remote/__init__.py` | Re-exports the public offline helper API and constants |
+| `book_to_skill/remote/discovery.py` | Normalizes MCP `search` / `get_details` payloads (`normalize_search_results`, `normalize_work_details`), deduplicates editions (`group_duplicate_editions`), and formats selection tables |
+| `book_to_skill/remote/policy.py` | Loads `BOOK_TO_SKILL_REMOTE_POLICY` (`load_policy`), enforces provider allow/block rules (`check_provider_allowed`), builds the copyright/cache notice (`build_access_copyright_notice`), verifies explicit consent (`verify_user_confirmation`), and enforces private-by-default publish visibility (`resolve_publish_visibility`) |
+| `book_to_skill/remote/reader.py` | Parses outlines with `sequential_fallback` (`parse_outline_response`), sanitizes every chunk (`sanitize_remote_chunk`), and paginates sections with cursor-loop and request-cap guards (`process_section_page`, `read_section_from_pages`) |
+| `book_to_skill/remote/checkpoint.py` | Initializes, atomically saves, and reloads prose-free `remote_session.json` state (`init_remote_session`, `save_remote_session`, `load_remote_session`, `update_chapter_progress`, `pending_chapters`) |
+| `book_to_skill/remote/coverage.py` | Computes chapter completion, missing/truncated sections, and `complete` / `partial` / `degraded` status (`build_coverage_report`, `format_coverage_summary`) |
+| `book_to_skill/remote/provenance.py` | Builds and renders prose-free source/edition/coverage metadata for `SKILL.md` (`build_remote_provenance`, `render_provenance_markdown`, `storage_mode="incremental_ephemeral_no_full_text"`) |
+
 ## Design principles
 
 1. **Extract structure, not summaries** — named frameworks, decision rules,
@@ -85,6 +139,8 @@ converter does not infer arbitrary `skills.load.extraDirs`.
 | `book_to_skill/config.py` | supported extensions, output paths, dependency map |
 | `book_to_skill/dependencies.py` | optional-dependency probing + `--check` |
 | `book_to_skill/sanitize.py` | strips zero-width / Unicode-tag-block characters from extracted text, and folds Kangxi radicals to their ideographs (see Security) |
+| `book_to_skill/remote/` | zero-network offline helpers for Mode 2 discovery, policy, sanitized reading, checkpoints, coverage, and provenance |
+| `references/search-and-read.md` | lazy-loaded Mode 2 Search & Read protocol spec (loaded only when MCP Search & Read is triggered) |
 | `tools/discovery_tax.py` | measures token cost vs context-dump / discovery loop |
 | `tools/validate_skill.py` | checks a generated SKILL.md against host rules (`--lens claude\|copilot\|amp\|hermes\|openclaw\|opencode`) |
 | `tools/scan_generated_skill.py` | advisory prompt-injection scan of a generated skill (see Security) |
@@ -134,6 +190,11 @@ is layered:
   exfiltration-shaped content across the generated `SKILL.md`, `chapters/*.md`,
   `glossary.md`, `patterns.md`, and `cheatsheet.md`. Findings name only the rule and
   file location — never the matched text.
+- **Mode 2 remote boundaries** —
+  - *Zero-network Python core*: `book_to_skill/` performs no network I/O; the host agent mediates MCP `search`, `get_details`, and `read` (MCP `download` is never called).
+  - *Untrusted MCP chunk sanitization*: every remote fragment passes through `sanitize.py` (`sanitize_extracted_text()`) via `sanitize_remote_chunk()` / `process_section_page()` before inspection or synthesis.
+  - *No permanent `full_text.txt` or stored raw prose*: raw fragments are discarded immediately after each `chapters/*.md` file is written; `checkpoint.py` and `provenance.py` reject prose keys (`FORBIDDEN_PROSE_KEYS`), and `remote_session.json` is written atomically (`0o600`) inside a symlink-checked `0o700` `workdir`.
+  - *Bounded pagination & explicit gates*: `reader.py` enforces `max_cursors_per_section` (default `100`), `max_total_requests` (default `1000`), and seen-cursor loop detection; `policy.py` enforces explicit user consent before `read` and private-by-default publishing (`--private`).
 - **CI** — CodeQL, Bandit (gate on HIGH), Zizmor, and dependency CVE review on PRs.
 
 ## Extending
