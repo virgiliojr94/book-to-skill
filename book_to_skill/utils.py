@@ -1078,7 +1078,32 @@ def _line_matches_outline_title(lines: list[str], index: int, outline_title: str
                     triple = f"{pair} {lines[look + 2].strip().casefold()}"
                     if triple == bare_cf:
                         return index
+
+    # Letter-spaced headings: expanded character spacing in the source document
+    # makes pdftotext emit "C h ư ơn g 2 1  T i ê u ..." with irregular gaps,
+    # often wrapped onto a second line. Compare with all whitespace removed;
+    # exact equality still rejects ToC lines (leader + page number) and a
+    # shorter chapter number ("Chương 2" vs "C h ư ơn g 2 1 ...").
+    if not _looks_letter_spaced(line):
+        return None
+    full_sq = "".join(full_cf.split())
+    line_sq = "".join(line.casefold().split())
+    if line_sq == full_sq:
+        return _chapter_start_at(lines, index)
+    if (
+        index + 1 < len(lines)
+        and not _is_disqualified_chapter_line(lines[index + 1])
+        and line_sq + "".join(lines[index + 1].casefold().split()) == full_sq
+    ):
+        return _chapter_start_at(lines, index)
     return None
+
+
+def _looks_letter_spaced(line: str) -> bool:
+    """True when many tokens are single characters ("C h ư ơn g 2 1 ...")."""
+    tokens = line.split()
+    singles = sum(1 for token in tokens if len(token) == 1)
+    return singles >= 3 and singles * 10 >= len(tokens) * 3
 
 
 def _find_outline_chapter_start(lines: list[str], title: str, start: int) -> int | None:
