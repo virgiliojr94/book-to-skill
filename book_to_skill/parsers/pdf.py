@@ -55,6 +55,28 @@ def clean_pdftotext(text: str) -> str:
                 if len(nb) > 1:
                     edge[nb[-1]] += 1
         boiler = {ln for ln, c in edge.items() if c > len(pages) / 2}
+        # #113 keeps a genuine heading identical to the running header by
+        # stripping page edges only, which works because that heading sits
+        # mid-page. A chapter opening does not: it sits at the TOP of a page,
+        # exactly where the header is. So a long chapter whose title is the
+        # running header has every copy at an edge, lands in `boiler`, and the
+        # genuine opening is deleted with the headers -- the chapter then
+        # vanishes from detect_structure() with nothing logged.
+        #
+        # Keep the first edge occurrence of a boilerplate line that carries a
+        # number and drop the rest: the first is the opening, the rest are
+        # headers. A number is the signal because an unnumbered running header
+        # ("DESIGNING SYSTEMS", "O'Reilly Media") has none, so those keep their
+        # existing full removal. str.isdigit() is used rather than ASCII-only
+        # matching so Devanagari, Bengali and the other non-ASCII chapter
+        # numerals this extractor supports count too.
+        # ponytail: a numbered running header ("Section 3.2", "Smith 2019")
+        # leaves one copy behind; reuse the extractor's own _chapter_number if
+        # that bites, once it can be imported without an import cycle.
+        numbered_boiler = {
+            ln for ln in boiler if any(ch.isdigit() for ch in ln)
+        }
+        seen_numbered: set[str] = set()
         kept = []
         for p in pages:
             lines = p.splitlines()
@@ -70,7 +92,9 @@ def clean_pdftotext(text: str) -> str:
                 # along with the headers.
                 if i in (first, last):
                     s = ln.strip()
-                    if s in boiler or _PDF_PAGE_NUM.match(s):
+                    if s in numbered_boiler and s not in seen_numbered:
+                        seen_numbered.add(s)
+                    elif s in boiler or _PDF_PAGE_NUM.match(s):
                         continue
                 kept.append(ln)
         text = "\n".join(kept)
