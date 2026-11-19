@@ -3,8 +3,8 @@
 Word documents with expanded character spacing come out of pdftotext as
 ``C h ư ơn g 2 1   T i ê u đ ề ...``: letters (even chapter digits) separated by
 spaces, irregularly, with the title wrapped onto a second line. The ToC line
-carries the same title plus a dashed leader and page number and must not be
-taken as the chapter start. Synthetic Vietnamese fixture mirroring that shape
+carries the same title plus a trailing page number and must not be taken as
+the chapter start. Synthetic Vietnamese fixture mirroring that shape
 (no source-book text).
 """
 
@@ -57,3 +57,10 @@ def test_letter_spaced_chapter_number_does_not_match_shorter_number():
     # "Chương 2 <ch21 title>" must not claim the "C h ư ơn g 2 1" heading.
     only_two = ["Chương 2 Phần mềm Lạ và các cuộc Thử nghiệm Ứng dụng"]
     assert chapter_line_ranges("\n".join(_LINES), only_two) == []
+
+
+def test_squash_fallback_only_applies_to_letter_spaced_lines():
+    # A normal line with extra internal spaces (e.g. a running header) is not
+    # letter-spaced, so the whitespace-insensitive fallback must not claim it.
+    text = "\n".join(["Chương 1    Nền  tảng   Quản trị", "", "body"])
+    assert chapter_line_ranges(text, ["Chương 1 Nền tảng Quản trị"]) == []
