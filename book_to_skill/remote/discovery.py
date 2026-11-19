@@ -23,6 +23,7 @@ _MIME_TO_FORMAT = {
     "application/xhtml+xml": "xhtml",
 }
 _WRAPPER_RESULT_LIST_KEYS = ("results", "items", "hits", "records", "books", "works")
+_WRAPPER_OPEN_ACCESS_KEY = "open_access"
 _WRAPPER_DETAIL_KEYS = ("details", "work", "book", "item", "result", "record")
 
 _YEAR_MODERN_RE = re.compile(r"(?<!\d)([12]\d{3})(?!\d)")
@@ -449,14 +450,27 @@ def normalize_search_results(
     if raw_results is None:
         return []
     if isinstance(raw_results, dict):
+        open_access_raw = raw_results.get(_WRAPPER_OPEN_ACCESS_KEY)
+        has_open_access = isinstance(open_access_raw, list)
         extracted = None
         for key in _WRAPPER_RESULT_LIST_KEYS:
             if isinstance(raw_results.get(key), list):
                 extracted = raw_results[key]
                 break
-        if extracted is None:
+        if extracted is None and not has_open_access:
             raise TypeError("raw_results dict must contain a list under results/items/hits/records")
-        items = extracted
+
+        items = []
+        if has_open_access:
+            for oa_item in open_access_raw:
+                if isinstance(oa_item, dict):
+                    annotated = dict(oa_item)
+                    annotated.setdefault("access_info", "open-access")
+                    if "source" not in annotated and "source_name" not in annotated and annotated.get("origin"):
+                        annotated["source_name"] = annotated["origin"]
+                    items.append(annotated)
+        if extracted:
+            items.extend(extracted)
     elif isinstance(raw_results, (list, tuple)):
         items = list(raw_results)
     else:
@@ -547,6 +561,13 @@ def _format_source_label(candidate: dict[str, Any]) -> str:
     return provider
 
 
+def _compact_display_id(item_id: str) -> str:
+    """Shorten long hashes (e.g. 32-char MD5s) in terminal tables without losing uniqueness."""
+    if len(item_id) > 16:
+        return f"{item_id[:8]}…"
+    return item_id
+
+
 def _format_edition_line(candidate: dict[str, Any]) -> str:
     """Format edition/year/format/source/id summary for one selectable item."""
     edition = _clean_text(candidate.get("edition")) or "-"
@@ -554,8 +575,18 @@ def _format_edition_line(candidate: dict[str, Any]) -> str:
     year = str(year_val) if year_val is not None else "-"
     fmt = _clean_text(candidate.get("format")) or "-"
     source = _format_source_label(candidate)
-    item_id = _clean_text(candidate.get("item_id")) or "-"
-    return f"Edition: {edition} | Year: {year} | Format: {fmt} | Source: {source} | ID: {item_id}"
+    raw_id = _clean_text(candidate.get("item_id")) or "-"
+    item_id = _compact_display_id(raw_id) if raw_id != "-" else "-"
+    parts = [f"Edition: {edition}", f"Year: {year}", f"Format: {fmt}", f"Source: {source}"]
+    access_info = _clean_text(candidate.get("access_info"))
+    if access_info.casefold() in {"open-access", "open_access", "public-domain", "public domain"}:
+        parts.append(f"Access: {access_info}")
+    idents = candidate.get("identifiers")
+    doi = _clean_text(idents.get("doi")) if isinstance(idents, dict) else ""
+    if doi:
+        parts.append(f"DOI: {doi}")
+    parts.append(f"ID: {item_id}")
+    return " | ".join(parts)
 
 
 def format_candidate_selection_table(candidates: list[dict[str, Any]]) -> str:

@@ -336,3 +336,46 @@ def test_format_candidate_selection_table_flat_and_grouped():
     assert "1.1 Edition: 3rd | Year: 2024 | Format: epub | Source: libgen-mcp/OpenCatalog | ID: item-1" in grouped_table
     assert "1.2 Edition: 3rd | Year: 2024 | Format: pdf | Source: libgen-mcp/MirrorTwo | ID: item-2" in grouped_table
     assert "2. Minimal Record — Unknown author" in grouped_table
+
+
+def test_normalize_search_results_includes_open_access_and_compacts_long_ids():
+    payload = {
+        "results": [
+            {
+                "md5": "caf74dbcc14e6d9eb647117af8596783",
+                "title": "Site Reliability Engineering",
+                "author": "Betsy Beyer",
+                "year": 2016,
+                "extension": "pdf",
+            }
+        ],
+        "open_access": [
+            {
+                "doi": "10.1000/sre-open-example",
+                "title": "Site Reliability Engineering Paper",
+                "authors": ["Betsy Beyer"],
+                "year": 2016,
+                "origin": "openalex",
+                "format": "pdf",
+            }
+        ],
+    }
+
+    normalized = normalize_search_results(payload)
+    assert len(normalized) == 2
+    # open_access items surface first with open-access annotation
+    assert normalized[0]["access_info"] == "open-access"
+    assert normalized[0]["source_name"] == "openalex"
+    assert normalized[0]["identifiers"]["doi"] == "10.1000/sre-open-example"
+
+    table = format_candidate_selection_table(normalized)
+    assert "Access: open-access" in table
+    assert "DOI: 10.1000/sre-open-example" in table
+    # 32-char MD5 is compacted for display while full item_id stays intact in normalized dict
+    assert "ID: caf74dbc…" in table
+    assert "caf74dbcc14e6d9eb647117af8596783" not in table
+    assert normalized[1]["item_id"] == "caf74dbcc14e6d9eb647117af8596783"
+
+    oa_only = normalize_search_results({"open_access": payload["open_access"]})
+    assert len(oa_only) == 1
+    assert oa_only[0]["source_name"] == "openalex"

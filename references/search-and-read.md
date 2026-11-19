@@ -50,12 +50,16 @@ Only enter this section when the user explicitly confirms they want help install
 
 ## Step R1 — Discovery (`search` -> `get_details` -> Explicit Selection)
 
-1. **Search:** Invoke MCP `search` with the user's `<query>` (title, author, ISBN, or DOI).
-2. **Normalize & group duplicates:** Pass raw results to `normalize_search_results(raw_results, provider=provider)`, then `group_duplicate_editions(candidates)` to group works sharing `dedup_key` while keeping individual selectable editions/formats explicit.
+When calling Python helpers (`book_to_skill.remote.*`), run via `PYTHONPATH=<skill-root>` (for example `~/.agents/skills/book-to-skill`) rather than guessing package paths.
+
+1. **Search:** Invoke MCP `search` with `<query>` (title, author, ISBN, or DOI). When the provider is `libgen-mcp`:
+   - Pass `"extra_sources": "always"` so keyless `open_access` results (OAPEN, arXiv, OpenAlex, Europe PMC, Crossref, Gutenberg, RFC, NIST) are returned alongside catalog results.
+   - Pass `"topics": ["nonfiction"]` for general technical/non-fiction books (omit or adjust if the user explicitly asks for papers, standards, or fiction) to avoid noisy comics/magazine hits.
+2. **Normalize & group duplicates:** Pass raw results (the full dict including `open_access`, or list) to `normalize_search_results(raw_results, provider=provider)`, then `group_duplicate_editions(candidates)` to surface `open_access` copies clearly and group works sharing `dedup_key`.
 3. **Require explicit selection:** Render the numbered selection summary with `format_candidate_selection_table(grouped)` and ask the user to pick an exact candidate/edition number.
    - Never silently auto-select when candidates or multiple editions exist.
-   - If zero results match, offer to refine the query or switch to Mode 1 (local files).
-4. **Inspect details:** Call MCP `get_details` on the selected candidate and pass the response through `normalize_work_details(raw_details, provider=provider)` to confirm full metadata, identifiers (`isbn`, `doi`), `access_info`, and `license_info`.
+   - If zero results match, offer to refine the query or switch to a local file.
+4. **Inspect details:** Call MCP `get_details` on the selected candidate and pass the response through `normalize_work_details(raw_details, provider=provider)` to confirm full metadata, identifiers (`isbn`, `doi`), `access_info`, and `license_info`. If the selected candidate has a verified `doi` from an open-access provider, prefer `read(doi=...)` over `read(md5=...)` so retrieval avoids unstable `md5` mirrors.
 
 ---
 
@@ -100,7 +104,8 @@ For each chapter returned by `pending_chapters(session)`:
 4. **Discard raw fragments immediately:** Once the chapter summary file is written, drop the raw chapter text and `chunks` from working memory/scratch. Never save `full_text.txt`, never keep raw excerpts on disk, and never copy raw prose verbatim.
 5. **Checkpoint atomically:** Record progress via `update_chapter_progress(session, section_id, status=..., next_cursor=..., chunks_read=..., sanitized_removed_count=..., truncated=..., error_reason=...)` and persist via `save_remote_session(session, workdir)`.
 
-### 3. Incomplete or Truncated Chapters (Explicit Warning Rule)
+### 3. Incomplete, Truncated, or Unreachable Remote Sources (Explicit Warning Rule)
+- **Upstream mirror failures / anti-bot challenges:** If MCP `read(md5=...)` fails across upstream mirrors (e.g., `HTTP 500`, expired mirror HTML, or a browser challenge/CAPTCHA), **never attempt to bypass anti-bot challenges**. Clearly explain that the external mirror servers failed outside `book-to-skill`, and offer actionable next steps: *(1)* try an `open_access` / `doi` edition if available (`read(doi=...)`), *(2)* try another edition, *(3)* configure an alternate mirror via `libgen-mcp -mirror <url>` if applicable, or *(4)* convert a local file directly.
 - If `read_section_from_pages()` / `process_section_page()` reports `truncated: True` or `status` in `("incomplete", "failed")` (cursor loop, request cap, missing/empty section):
   - Keep the chapter marked `incomplete` or `failed` with its `error_reason` in `remote_session.json`.
   - Add an **explicit incomplete/truncated warning** at the top of that chapter file (if partially synthesized) and in `Scope & Limits` / Step 10 report.
