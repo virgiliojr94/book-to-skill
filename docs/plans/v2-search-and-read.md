@@ -143,7 +143,7 @@ Status values:
 | **SR-10** | PR 4 | DONE | `gen-dev` + `verifier` | SR-05 + Contract C | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py`, `tests/remote/test_provenance_coverage.py` | #3, #4, #5, #6 |
 | **SR-11** | PR 4 | DONE | `spec-dev` + `verifier` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook), `book_to_skill/remote/__init__.py` | #3, #4, #8 |
 | **SR-12** | PR 4 | DONE | `spec-dev` + `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
-| **TR-LEG** | Track | READY | `User / Legal` | — | Legal review & `RemotePolicyConfig` defaults | #8 |
+| **TR-LEG** | Track | DONE | `User / Legal` | — | Interim Profile A confirmed: `enabled_providers=["*"]` with mandatory explicit confirmation, MCP cache notice, and `--private` lock (`BOOK_TO_SKILL_REMOTE_POLICY` overridable) | #8 |
 | **SR-13** | PR 5 | DONE | `qa-sec` + `verifier` | SR-06, SR-09, SR-10 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
 | **SR-14** | PR 5 | DONE | `qa-sec` + `verifier` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
 | **SR-15** | Rel 2.0 | READY | `docs-dev` + `coordinator` | SR-14, TR-LEG | Docs (`README.md`, `docs/architecture.md`, `SECURITY.md`) DONE; version bump (`pyproject.toml` → `2.0.0`) + `git-cliff` `CHANGELOG.md` + tag pending user/legal release cut | #1–#8 |
