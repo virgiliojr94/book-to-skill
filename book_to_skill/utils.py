@@ -1041,7 +1041,9 @@ def _is_chapter_content_boundary(
     if not stripped or _PAGE_CHAPTER_HEADER.match(stripped):
         return False
     heading_cf = _normalized_heading(lines[index])
-    if heading_cf in range_end_titles:
+    # A line starting lowercase is a wrapped prose continuation ("contents."),
+    # not a front/end-matter heading such as "Contents" or "Index".
+    if heading_cf in range_end_titles and not stripped[0].islower():
         return True
     title = _line_title_text(lines[index])
     if _PART_HEADER.match(title) or _NON_CHAPTER_PREFIX.match(title):
