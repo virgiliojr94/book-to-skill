@@ -131,17 +131,17 @@ Status values:
 | ID | PR | Status | Owner | Depends on | Scope / Owned Files | Links to Success Criteria |
 |---|---|---|---|---|---|---|
 | **SR-00** | PR 0 | DONE | `coordinator` | — | `docs/plans/v2-search-and-read.md`, `AGENTS.md` | Shared state foundation |
-| **SR-01** | PR 1 | READY | `spec-dev` | SR-00 | `SKILL.md` | #1 |
-| **SR-02** | PR 1 | READY | `spec-dev` | SR-00 | `references/search-and-read.md` | #1, #2 |
-| **SR-03** | PR 1 | BLOCKED | `verifier` | SR-01, SR-02 | `tests/test_search_and_read_spec.py` | #1 |
-| **SR-04** | PR 2 | READY | `discovery-dev` | SR-00 | `book_to_skill/remote/__init__.py`, `book_to_skill/remote/discovery.py` | #2, #6 |
-| **SR-05** | PR 2 | READY | `policy-dev` | SR-00 | `book_to_skill/remote/policy.py` | #6, #8 |
-| **SR-06** | PR 2 | BLOCKED | `verifier` | SR-04, SR-05 | `tests/remote/test_discovery.py`, `tests/remote/test_policy.py` | #2, #7, #8 |
-| **SR-07** | PR 3 | BLOCKED | `reader-dev` | SR-00, SR-04 | `book_to_skill/remote/reader.py` | #2, #4, #5 |
-| **SR-08** | PR 3 | BLOCKED | `reader-dev` | SR-07 | `book_to_skill/remote/checkpoint.py` | #4, #5, #6 |
-| **SR-09** | PR 3 | BLOCKED | `verifier` | SR-07, SR-08 | `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py` | #5, #7 |
-| **SR-10** | PR 4 | BLOCKED | `gen-dev` | SR-05, SR-08 | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py` | #3, #4, #5, #6 |
-| **SR-11** | PR 4 | BLOCKED | `spec-dev` | SR-02, SR-10 | `references/search-and-read.md`, `SKILL.md` (minimal hook) | #3, #4, #8 |
+| **SR-01** | PR 1 | DONE | `spec-dev` | SR-00 | `SKILL.md` | #1 |
+| **SR-02** | PR 1 | DONE | `spec-dev` | SR-00 | `references/search-and-read.md` | #1, #2 |
+| **SR-03** | PR 1 | DONE | `spec-dev` + `verifier` | SR-01, SR-02 | `tests/test_search_and_read_spec.py` | #1 |
+| **SR-04** | PR 2 | DONE | `discovery-dev` + `verifier` | SR-00 | `book_to_skill/remote/__init__.py`, `book_to_skill/remote/discovery.py` | #2, #6 |
+| **SR-05** | PR 2 | DONE | `policy-dev` + `verifier` | SR-00 | `book_to_skill/remote/policy.py` | #6, #8 |
+| **SR-06** | PR 2 | DONE | `discovery-dev`/`policy-dev` + `verifier` | SR-04, SR-05 | `tests/remote/test_discovery.py`, `tests/remote/test_policy.py` | #2, #7, #8 |
+| **SR-07** | PR 3 | IN_PROGRESS | `reader-dev` | SR-00, SR-04 | `book_to_skill/remote/reader.py` | #2, #4, #5 |
+| **SR-08** | PR 3 | IN_PROGRESS | `reader-dev` | SR-07 | `book_to_skill/remote/checkpoint.py` | #4, #5, #6 |
+| **SR-09** | PR 3 | IN_PROGRESS | `reader-dev` + `verifier` | SR-07, SR-08 | `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py` | #5, #7 |
+| **SR-10** | PR 4 | IN_PROGRESS | `gen-dev` | SR-05 + Contract C | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py`, `tests/remote/test_provenance_coverage.py` | #3, #4, #5, #6 |
+| **SR-11** | PR 4 | BLOCKED | `spec-dev` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook) | #3, #4, #8 |
 | **SR-12** | PR 4 | BLOCKED | `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
 | **TR-LEG** | Track | READY | `User / Legal` | — | Legal review & `RemotePolicyConfig` defaults | #8 |
 | **SR-13** | PR 5 | BLOCKED | `qa-sec` | SR-06, SR-09, SR-12 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
@@ -171,3 +171,15 @@ Additional checks for remote/security PRs:
 - **Owner:** `coordinator`
 - **Artifacts:** `docs/plans/v2-search-and-read.md`, `AGENTS.md`
 - **Notes:** Baseline `master` at `e7bb659` (`968 passed, 12 skipped, 12 subtests passed`, `ruff check .` clean). Contracts A–D frozen for parallel agents.
+
+### PR 1 (SR-01, SR-02, SR-03) — Input Modes & Lazy Search & Read Spec
+- **Status:** `DONE` (integrated at `7582b5c` on `feat/v2-search-and-read`)
+- **Owner:** `spec-dev`, verified by `verifier`
+- **Artifacts:** `SKILL.md` (+9/-3, net +6 lines), `references/search-and-read.md` (+95), `tests/test_search_and_read_spec.py` (+115)
+- **Gates:** All 6 `validate_skill.py` lenses exited 0; `pytest -q` & `ruff check .` green.
+
+### PR 2 (SR-04, SR-05, SR-06) — Discovery Normalization & Policy/Copyright Gate
+- **Status:** `DONE` (integrated at `ff12af7` and `98d1ff7` on `feat/v2-search-and-read`)
+- **Owner:** `discovery-dev` + `policy-dev`, verified by `verifier`
+- **Artifacts:** `book_to_skill/remote/__init__.py`, `book_to_skill/remote/discovery.py`, `book_to_skill/remote/policy.py`, `tests/remote/test_discovery.py`, `tests/remote/test_policy.py`
+- **Integrated Gates:** `pytest -q` -> `1051 passed, 12 skipped, 12 subtests passed in 5.38s`; `ruff check .` -> `All checks passed!`; `bandit` HIGH gate -> 0 issues; `validate_skill.py` -> passed.
