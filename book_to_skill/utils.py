@@ -1013,6 +1013,11 @@ def _line_matches_outline_title(lines: list[str], index: int, outline_title: str
                 pair = f"{lines[look].strip()} {lines[look + 1].strip()}".casefold()
                 if pair == bare_cf:
                     return index
+                # Long display titles can wrap onto a third line.
+                if look + 2 < len(lines) and not _is_disqualified_chapter_line(lines[look + 2]):
+                    triple = f"{pair} {lines[look + 2].strip().casefold()}"
+                    if triple == bare_cf:
+                        return index
     return None
 
 
