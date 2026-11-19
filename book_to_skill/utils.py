@@ -123,6 +123,10 @@ _EXPLICIT_CHAPTER = re.compile(
 # “Chapter 8 are relevant...”) is prose / a cross-reference, not a heading.
 # The uppercase class is À-Þ so titles starting with Ü/Û (common in German, e.g. “Überblick”) are recognized.
 _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+(?![a-z])")
+# Same tail once a Markdown/AsciiDoc marker has been stripped. A lowercase word
+# there is the title ("## Chapter 1 title"), not the bare-line cross-reference
+# the guard above exists to reject ("Chapter 6 explores...").
+_MARKED_LOWER_TITLE = re.compile(r"^\s+\S")
 # A tail that opens with a sentence period — "Chapter 4. References are
 # indicated by the `&` symbol…", "Chapter 17.) We have seen…" — is prose wrapped
 # at the column limit, unless it reads like a title. Two shapes, measured on the
@@ -798,7 +802,9 @@ def _match_chapter_number(
     fenced block); it is consulted only for a bare period tail. `heading_marked`
     says the line carried an explicit "#"/"==" prefix before it was stripped —
     an explicit heading is trusted as it stands, so "## Chapter 4. References
-    are indicated by the `&` symbol…" keeps counting. (Issue #237)
+    are indicated by the `&` symbol…" keeps counting, including a sentence-case
+    title such as "## Chapter 1 title". The same lowercase tail on a bare line
+    stays prose. (Issue #237)
     """
     # Normalize Kangxi-radical numerals (⼀⼆⼋⼗) to ideographs so Chinese
     # ebooks that encode chapter numbers in the U+2F00 block are detected.
@@ -823,7 +829,10 @@ def _match_chapter_number(
         return int(plain.group(1))
 
     m = _EXPLICIT_CHAPTER.match(s)
-    if m and _HEADING_TAIL.match(m.group("rest")):
+    if m and (
+        _HEADING_TAIL.match(m.group("rest"))
+        or (heading_marked and _MARKED_LOWER_TITLE.match(m.group("rest")))
+    ):
         if not heading_marked and _is_prose_period_tail(m.group("rest"), prev_line):
             return None
         if m.group(1):
