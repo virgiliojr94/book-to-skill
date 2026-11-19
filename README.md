@@ -50,7 +50,7 @@
 
 **How it works, in 3 steps:**
 
-1. **Point or Search** — give it a local file/folder (`/book-to-skill ./my-book.pdf`) **or** search remotely via MCP (`/book-to-skill search "Accelerate"`).
+1. **Point or Search** — give it a local file/folder (`/book-to-skill ./my-book.pdf`) **or** search remotely via MCP (`/book-to-skill search "Pro Git"`).
 2. **It distills** the book into a skill — frameworks, decision rules, anti-patterns, and per-chapter files. Structure, not a summary.
 3. **Your agent loads it on demand** — ask `/my-book replication` and it reads the right chapter and answers from the real content, no hallucination.
 
@@ -142,7 +142,7 @@ Plus analyze-only, generate-from-analysis, and update/fold-in workflows. After a
 Don't have the book file handy? When an MCP book provider (such as `libgen-mcp`) is configured in your host agent, **Search & Read** lets you search by title, author, ISBN, or DOI, pick the exact edition, and convert it chapter by chapter into the same structured skill layout — **without downloading a permanent copy to your disk**:
 
 ```text
-/book-to-skill search "Accelerate"
+/book-to-skill search "Pro Git"
 ```
 
 - **Guided setup if needed:** Run `/book-to-skill` or `/book-to-skill search` without an active MCP provider and the skill walks you through installing and configuring `libgen-mcp` for your host (or converting a local file right away).

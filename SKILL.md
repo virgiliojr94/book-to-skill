@@ -98,15 +98,15 @@ For **generated** book skills, prefer the user-level cross-agent root `~/.agents
 
 If no arguments (or `help`) are provided, present both paths cleanly (avoid internal "Mode 1/Mode 2" labels in user-facing replies) and ask what to convert:
 > "Choose how to start:
-> 1. **Local book or folder** *(ready now — PDF, EPUB, DOCX, TXT, MD, HTML, RTF, MOBI/AZW)*: `/book-to-skill ~/books/accelerate.pdf`
-> 2. **Search & Read via MCP** *(status: `<connected: provider | not configured — run search to set up or query>`)*: `/book-to-skill search "Accelerate"`
+> 1. **Local book or folder** *(ready now — PDF, EPUB, DOCX, TXT, MD, HTML, RTF, MOBI/AZW)*: `/book-to-skill ~/books/pro-git.pdf`
+> 2. **Search & Read via MCP** *(status: `<connected: provider | not configured — run search to set up or query>`)*: `/book-to-skill search "Pro Git"`
 >
 > Reply with a file path, a search query, or `install mcp` to configure Search & Read."
 
 Throughout the workflow:
 - **Mode 2 (Search & Read) routing:** If `search` (with or without `<query>`), `install mcp`, or a remote book lookup with no local path is requested, check whether an MCP book provider (`libgen-mcp` or a configured provider exposing book search and read tools) is exposed in the host agent's toolset:
-  - **MCP unavailable (or `install mcp` requested):** STOP without printing a dry error; explain that Search & Read needs a book MCP server (`libgen-mcp` or similar), and offer two clear options: *(1)* **Set up `libgen-mcp` now** — ask for explicit confirmation, and once confirmed, read the `## Setup` section of `references/search-and-read.md` to install/register it safely for the active host (without overwriting existing MCP servers or proceeding without consent), OR *(2)* **Convert a local file right now** (Mode 1: `/book-to-skill ~/books/accelerate.pdf`).
-  - **MCP available, query missing:** Ask `"What book, author, ISBN, or DOI should I search for? (e.g. Accelerate or 9781942788331)"` — do not treat a bare `/book-to-skill search` as an error.
+  - **MCP unavailable (or `install mcp` requested):** STOP without printing a dry error; explain that Search & Read needs a book MCP server (`libgen-mcp` or similar), and offer two clear options: *(1)* **Set up `libgen-mcp` now** — ask for explicit confirmation, and once confirmed, read the `## Setup` section of `references/search-and-read.md` to install/register it safely for the active host (without overwriting existing MCP servers or proceeding without consent), OR *(2)* **Convert a local file right now** (Mode 1: `/book-to-skill ~/books/pro-git.pdf`).
+  - **MCP available, query missing:** Ask `"What book, author, ISBN, or DOI should I search for? (e.g. Pro Git or Think Python)"` — do not treat a bare `/book-to-skill search` as an error.
   - **MCP available with query:** Read `references/search-and-read.md` only when Mode 2 Search & Read is triggered and follow it instead of local Steps 1–3.
 - **Resolve the destination root first.** Before any existing-skill lookup, determine where this run would write: the personal or project-local root for the user's host, per the Step 5 table and selection rules — a project-local request uses its project-local root, never the personal root. Below, "the resolved root" means that destination.
 - Identify the input paths and the optional skill slug.

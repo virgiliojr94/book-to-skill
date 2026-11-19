@@ -21,10 +21,10 @@ Mode 2 builds the **exact same skill output** as Mode 1 (`SKILL.md`, `chapters/`
 ## Pre-Flight — Provider & Policy Check
 
 1. Confirm an MCP book provider (`libgen-mcp` or another configured provider exposing `search`, `get_details`, and `read`) is present in the host agent's active toolset.
-   - If no provider is exposed, STOP without exposing internal "Mode 1/Mode 2" labels: explain that Search & Read needs a book MCP server, offer to run the **Guided Setup** below (with explicit user confirmation), and offer converting a local file immediately (`/book-to-skill ~/books/accelerate.pdf`).
+   - If no provider is exposed, STOP without exposing internal "Mode 1/Mode 2" labels: explain that Search & Read needs a book MCP server, offer to run the **Guided Setup** below (with explicit user confirmation), and offer converting a local file immediately (`/book-to-skill ~/books/pro-git.pdf`).
 2. Load policy via `load_policy()` (honoring `BOOK_TO_SKILL_REMOTE_POLICY` env JSON/path; defaults: `enabled_providers=["*"]`, `blocked_providers=[]`, `require_explicit_confirmation=True`, `default_publish_visibility="private"`, `allow_public_publish=False`, `warn_mcp_temporary_cache=True`).
 3. Verify the active provider with `check_provider_allowed(provider, policy)`. If disallowed, stop and report the reason.
-4. If the user ran bare `/book-to-skill search` without a `<query>`, ask what book, author, ISBN, or DOI they want to search for (with an example such as `Accelerate` or `9781942788331`) instead of throwing a syntax error.
+4. If the user ran bare `/book-to-skill search` without a `<query>`, ask what book, author, ISBN, or DOI they want to search for (with an example such as `Pro Git` or `Think Python`) instead of throwing a syntax error.
 
 ---
 
@@ -44,7 +44,7 @@ Only enter this section when the user explicitly confirms they want help install
    - **GitHub Copilot CLI:** `~/.copilot/mcp-config.json` (`mcpServers.libgen-mcp`)
    - **OpenAI Codex:** `~/.codex/config.toml` (`[mcp_servers.libgen-mcp]`)
    - **OpenCode:** `~/.config/opencode/opencode.json` (`mcp.libgen-mcp`)
-3. **Reload & verify:** Report the exact config path updated, note that other configured servers were preserved, and ask the user to start a **new session** so the host loads the MCP tools, then run `/book-to-skill search "Accelerate"`.
+3. **Reload & verify:** Report the exact config path updated, note that other configured servers were preserved, and ask the user to start a **new session** so the host loads the MCP tools, then run `/book-to-skill search "Pro Git"`.
 
 ---
 
