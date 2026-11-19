@@ -372,6 +372,8 @@ def test_normalize_search_results_includes_open_access_and_compacts_long_ids():
     table = format_candidate_selection_table(normalized)
     assert "Access: open-access" in table
     assert "DOI: 10.1000/sre-open-example" in table
+    # When item_id equals DOI, don't repeat a redundant truncated ID column
+    assert "ID: 10.1000/" not in table
     # 32-char MD5 is compacted for display while full item_id stays intact in normalized dict
     assert "ID: caf74dbc…" in table
     assert "caf74dbcc14e6d9eb647117af8596783" not in table
@@ -411,3 +413,57 @@ def test_unverified_crossref_in_open_access_bucket_is_not_flagged_open_access():
     assert normalized[0]["access_info"] == "open-access"
     assert "metadata-only" in normalized[2]["access_info"]
     assert "open-access" not in normalized[2]["access_info"]
+
+
+def test_normalize_work_details_unwraps_libgen_mcp_edition_and_file_envelopes():
+    edition_payload = {
+        "citations": {"doi_status": "confirmed"},
+        "edition": {
+            "edition_id": "135423110",
+            "title": "Zero Trust Architecture",
+            "author": "Rose, Scott ;Borchert, Oliver ;Mitchell, Stu ;Connelly, Sean ",
+            "doi": "10.6028/nist.sp.800-207",
+            "year": "2020",
+        },
+        "next_steps": ["..."],
+    }
+    norm_ed = normalize_work_details(edition_payload)
+    assert norm_ed["item_id"] == "135423110"
+    assert norm_ed["title"] == "Zero Trust Architecture"
+    assert norm_ed["authors"] == ["Rose, Scott", "Borchert, Oliver", "Mitchell, Stu", "Connelly, Sean"]
+    assert norm_ed["identifiers"]["doi"] == "10.6028/nist.sp.800-207"
+    assert norm_ed["year"] == 2020
+
+    file_payload = {
+        "citations": {"doi_status": "confirmed"},
+        "file": {
+            "author": "Balaram Puli",
+            "doi": "10.48550/ARXIV.2505.01926",
+            "origin": "doi.org",
+            "title": "SRE Observations",
+            "year": "2025",
+        },
+    }
+    norm_file = normalize_work_details(file_payload)
+    assert norm_file["item_id"] == "10.48550/ARXIV.2505.01926"
+    assert norm_file["title"] == "SRE Observations"
+    assert norm_file["source_name"] == "doi.org"
+
+
+def test_normalize_search_results_extracts_arxiv_item_id_from_pdf_url():
+    payload = {
+        "results": [
+            {
+                "title": "Agentic Testing Systems",
+                "origin": "arxiv",
+                "is_oa": True,
+                "pdf_url": "https://arxiv.org/pdf/2410.18291v1",
+            }
+        ]
+    }
+    normalized = normalize_search_results(payload)
+    assert len(normalized) == 1
+    assert normalized[0]["item_id"] == "arXiv:2410.18291v1"
+    table = format_candidate_selection_table(group_duplicate_editions(normalized))
+    assert "ID: arXiv:24…" in table
+

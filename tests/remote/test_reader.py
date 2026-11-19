@@ -280,3 +280,46 @@ def test_read_section_from_pages_truncated_missing_and_empty():
     assert empty["status"] == "incomplete"
     assert empty["chunks_read"] == 0
     assert empty["sanitized_removed_count"] == 1
+
+
+def test_libgen_mcp_real_outline_cursor_and_unextractable_shapes():
+    raw_outline = {
+        "extractable": True,
+        "format": "pdf",
+        "has_more": False,
+        "outline": [
+            {"index": 1, "level": 0, "page": 1, "title": "NIST SP 800-207"},
+            {"index": 2, "level": 0, "page": 10, "title": "1 Introduction"},
+        ],
+    }
+    mode, chapters = parse_outline_response(raw_outline)
+    assert mode == "outline"
+    assert chapters == [
+        {"index": 1, "section_id": "1", "title": "NIST SP 800-207"},
+        {"index": 2, "section_id": "2", "title": "1 Introduction"},
+    ]
+
+    # libgen-mcp returns {"has_more": true, "cursor": "<token>"} with no next_cursor key
+    seen: set[str] = set()
+    p1 = process_section_page(
+        {"extractable": True, "has_more": True, "cursor": "tok-page-2", "text": "Intro part 1"},
+        seen_cursors=seen,
+    )
+    assert p1["status"] == "in_progress"
+    assert p1["has_more"] is True
+    assert p1["next_cursor"] == "tok-page-2"
+
+    p2 = process_section_page(
+        {"extractable": True, "has_more": False, "text": "Intro part 2"},
+        seen_cursors=seen,
+    )
+    assert p2["status"] == "done"
+    assert p2["has_more"] is False
+    assert p2["next_cursor"] is None
+
+    unextractable = process_section_page(
+        {"extractable": False, "reason": "scanned image PDF", "text": ""},
+        seen_cursors=set(),
+    )
+    assert unextractable["status"] == "failed"
+    assert "scanned image PDF" in (unextractable["error_reason"] or "")

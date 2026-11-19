@@ -132,17 +132,19 @@ def parse_outline_response(raw_outline: dict[str, Any]) -> tuple[str, list[dict[
         if not isinstance(entry, dict):
             return "sequential_fallback", []
 
+        raw_index = _pick_first_non_empty(entry, _INDEX_KEYS)
+        index = _parse_positive_index(raw_index, pos)
+
         raw_section_id = _pick_first_non_empty(entry, _SECTION_ID_KEYS)
         section_id = _sanitize_text_field(raw_section_id)
+        if not section_id and raw_index is not None and not isinstance(raw_index, bool):
+            section_id = str(index)
         if not section_id or section_id in seen_ids:
             return "sequential_fallback", []
         seen_ids.add(section_id)
 
         raw_title = _pick_first_non_empty(entry, _TITLE_KEYS)
         title = _sanitize_text_field(raw_title) or f"Section {pos}"
-
-        raw_index = _pick_first_non_empty(entry, _INDEX_KEYS)
-        index = _parse_positive_index(raw_index, pos)
 
         chapters.append(
             {
@@ -196,6 +198,8 @@ def process_section_page(
 
     raw_status = _sanitize_text_field(raw_page.get("status")).lower()
     raw_error = _sanitize_text_field(raw_page.get("error") or raw_page.get("error_reason"))
+    raw_reason = _sanitize_text_field(raw_page.get("reason"))
+    unextractable = raw_page.get("extractable") is False
     missing_flag = (
         raw_page.get("missing") is True
         or raw_page.get("found") is False
@@ -210,12 +214,19 @@ def process_section_page(
         raw_text = raw_page.get("chunk")
     sanitized = sanitize_remote_chunk("" if raw_text is None else str(raw_text))
 
-    current_cursor = _normalize_cursor(
-        raw_page.get("cursor") or raw_page.get("current_cursor") or raw_page.get("page_cursor")
-    )
-    raw_next_cursor = _normalize_cursor(
+    explicit_next_cursor = _normalize_cursor(
         raw_page.get("next_cursor") or raw_page.get("nextCursor") or raw_page.get("cursor_next")
     )
+    cursor_field = _normalize_cursor(raw_page.get("cursor"))
+    # libgen-mcp returns {"has_more": true, "cursor": "<next-cursor>"} with no `next_cursor` key.
+    if explicit_next_cursor is None and raw_page.get("has_more") is True and cursor_field is not None:
+        current_cursor = _normalize_cursor(raw_page.get("current_cursor") or raw_page.get("page_cursor"))
+        raw_next_cursor = cursor_field
+    else:
+        current_cursor = _normalize_cursor(
+            raw_page.get("cursor") or raw_page.get("current_cursor") or raw_page.get("page_cursor")
+        )
+        raw_next_cursor = explicit_next_cursor
 
     if missing_flag:
         return {
@@ -229,10 +240,10 @@ def process_section_page(
             "loop_detected": False,
             "cursor_limit_reached": False,
             "status": "failed",
-            "error_reason": raw_error or "Section is missing or not found.",
+            "error_reason": raw_error or raw_reason or "Section is missing or not found.",
         }
 
-    if raw_error or raw_status in {"error", "failed"}:
+    if unextractable or raw_error or raw_status in {"error", "failed"}:
         return {
             "text": sanitized["text"],
             "removed_invisible_count": sanitized["removed_invisible_count"],
@@ -244,7 +255,7 @@ def process_section_page(
             "loop_detected": False,
             "cursor_limit_reached": False,
             "status": "failed",
-            "error_reason": raw_error or "Provider returned an error for this section.",
+            "error_reason": raw_error or raw_reason or "Provider reported unextractable or failed content.",
         }
 
     if current_cursor is not None:

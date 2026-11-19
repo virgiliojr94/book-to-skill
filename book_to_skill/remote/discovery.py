@@ -24,7 +24,7 @@ _MIME_TO_FORMAT = {
 }
 _WRAPPER_RESULT_LIST_KEYS = ("results", "items", "hits", "records", "books", "works")
 _WRAPPER_OPEN_ACCESS_KEY = "open_access"
-_WRAPPER_DETAIL_KEYS = ("details", "work", "book", "item", "result", "record")
+_WRAPPER_DETAIL_KEYS = ("details", "work", "book", "item", "result", "record", "edition", "file")
 _OPEN_TEXT_ORIGINS = frozenset(
     {
         "arxiv",
@@ -49,6 +49,7 @@ _YEAR_ANY_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
 _DOI_PREFIX_RE = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|urn:doi:|doi:)\s*", re.IGNORECASE)
 _ISBN_PREFIX_RE = re.compile(r"^(?:urn:isbn:|isbn(?:-?(?:10|13))?[:\s]*)", re.IGNORECASE)
 _ISBN_VALID_RE = re.compile(r"^(?:\d{9}[\dX]|\d{13})$")
+_ARXIV_URL_RE = re.compile(r"arxiv\.org/(?:pdf|abs)/([a-z0-9._-]+)", re.IGNORECASE)
 
 
 def _clean_text(value: Any) -> str:
@@ -400,11 +401,20 @@ def normalize_work_details(raw_details: dict[str, Any], provider: str = "libgen-
     raw = _unwrap_details_dict(raw_details)
     resolved_provider = _resolve_provider(raw, provider)
 
+    identifiers = _normalize_identifiers(raw)
+
     item_id_val = _pick_first(
         raw,
-        ("item_id", "id", "md5", "book_id", "work_id", "doc_id", "olid", "key", "sha256", "sha1"),
+        ("item_id", "id", "md5", "edition_id", "file_id", "book_id", "work_id", "doc_id", "olid", "key", "sha256", "sha1"),
     )
-    item_id = _clean_text(item_id_val)
+    item_id = _clean_text(item_id_val) or (identifiers.get("doi") or "")
+    if not item_id:
+        for url_key in ("pdf_url", "oa_url", "url", "access_url"):
+            url_val = _clean_text(raw.get(url_key))
+            arxiv_match = _ARXIV_URL_RE.search(url_val) if url_val else None
+            if arxiv_match:
+                item_id = f"arXiv:{arxiv_match.group(1)}"
+                break
 
     title_val = _pick_first(raw, ("title", "book_title", "work_title", "name"))
     title = _clean_text(title_val)
@@ -421,10 +431,8 @@ def normalize_work_details(raw_details: dict[str, Any], provider: str = "libgen-
         language_raw = next((item for item in language_raw if _clean_text(item)), None)
     language = _clean_optional_text(language_raw, treat_unknown_as_none=True)
 
-    identifiers = _normalize_identifiers(raw)
-
     source_name = (
-        _clean_text(_pick_first(raw, ("source_name", "source", "repository", "mirror", "catalog", "collection")))
+        _clean_text(_pick_first(raw, ("source_name", "source", "origin", "repository", "mirror", "catalog", "collection")))
         or resolved_provider
     )
 
@@ -641,7 +649,8 @@ def _format_edition_line(candidate: dict[str, Any]) -> str:
     doi = _clean_text(idents.get("doi")) if isinstance(idents, dict) else ""
     if doi:
         parts.append(f"DOI: {doi}")
-    parts.append(f"ID: {item_id}")
+    if raw_id != doi:
+        parts.append(f"ID: {item_id}")
     return " | ".join(parts)
 
 
