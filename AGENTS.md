@@ -27,6 +27,12 @@ For the progressive-disclosure research/evaluation initiative, also read:
 
 That document is the execution ledger and defines task order, evidence gates, and which paper-derived ideas are hypotheses rather than product requirements.
 
+For the v2.0 Search & Read initiative, also read:
+
+- `docs/plans/v2-search-and-read.md`
+
+That document is the shared execution state, interface contracts (A–D), file ownership, and acceptance ledger across agents.
+
 ## Non-negotiable rules
 
 - **Measure, do not assert.** No claimed quality, token, routing, accuracy, or cost improvement without reproducible evidence.
