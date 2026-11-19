@@ -58,6 +58,7 @@ When calling Python helpers (`book_to_skill.remote.*`), run via `PYTHONPATH=<ski
 2. **Normalize & group duplicates:** Pass raw results (the full dict including `open_access`, or list) to `normalize_search_results(raw_results, provider=provider)`, then `group_duplicate_editions(candidates)` to surface `open_access` copies clearly and group works sharing `dedup_key`.
 3. **Require explicit selection:** Render the numbered selection summary with `format_candidate_selection_table(grouped)` and ask the user to pick an exact candidate/edition number.
    - Never silently auto-select when candidates or multiple editions exist.
+   - Prefer `epub` or `pdf` editions over `.mobi`/`.azw3` when multiple formats exist, and avoid unverified/closed `metadata-only` DOI entries when verified `open-access` records (e.g., `arxiv`, `oapen`, `europepmc`, `rfc`, `nist`, `acl`) are available.
    - If zero results match, offer to refine the query or switch to a local file.
 4. **Inspect details:** Call MCP `get_details` on the selected candidate and pass the response through `normalize_work_details(raw_details, provider=provider)` to confirm full metadata, identifiers (`isbn`, `doi`), `access_info`, and `license_info`. If the selected candidate has a verified `doi` from an open-access provider, prefer `read(doi=...)` over `read(md5=...)` so retrieval avoids unstable `md5` mirrors.
 
@@ -79,9 +80,8 @@ Before calling MCP `read` for the first time, generate and display the mandatory
 ## Step R3 — Purpose, Destination & Checkpoint Setup
 
 1. Gather `BOOK_TYPE` (`technical` vs `text`, Step 1.5) and `DEPTH` (`reference` vs `study`, Step 4), unless already specified.
-2. Resolve `SKILLS_HOME` and `SKILL_NAME` per Step 5, applying the Step 0 re-run guard if `<skill_name>` already exists.
-3. Create `$SKILLS_HOME/<skill_name>/chapters/` (Step 6).
-4. Initialize a private per-run checkpoint `workdir` (`chmod 0700`, symlink-checked) and persist `remote_session.json` using `init_remote_session(...)` and `save_remote_session(session, workdir)`.
+2. Resolve `SKILLS_HOME` and `SKILL_NAME` per Step 5, applying the Step 0 re-run guard if `<skill_name>` already exists. **Do not create `$SKILLS_HOME/<skill_name>/chapters/` yet** — wait until the first MCP `read` succeeds so failed remote reads never leave behind empty skill folders.
+3. Initialize a private per-run checkpoint `workdir` (`chmod 0700`, symlink-checked) and persist `remote_session.json` using `init_remote_session(...)` and `save_remote_session(session, workdir)` once chapter list/fallback mode is known.
    - To resume an interrupted run, call `load_remote_session(workdir)` and iterate only `pending_chapters(session)` (skipping chapters already marked `"done"`).
    - `remote_session.json` rejects symlinks and forbids prose keys (`text`, `raw_text`, `content`, `body`, `full_text`, `chunks`, `pages`, `excerpt`, etc.) — **zero raw book prose is stored**.
 
@@ -92,6 +92,7 @@ Before calling MCP `read` for the first time, generate and display the mandatory
 ### 1. Obtain Outline or Activate Sequential Fallback
 - Call MCP `read` in `"outline"` mode (`read(outline)`) and normalize via `parse_outline_response(raw_outline)` -> `(outline_mode, chapters)`.
 - **Sequential fallback:** When the outline is missing, empty, or unreliable, `parse_outline_response()` returns `outline_mode="sequential_fallback"`. Inform the user explicitly that chapter boundaries are sequential/inferred rather than outline-verified and paginate sequentially with `read(cursor)`.
+- **Create `$SKILLS_HOME/<skill_name>/chapters/` (Step 6) only after** the first remote `read` succeeds and yields extractable text/outline. Never leave an empty placeholder directory if `read` fails.
 
 ### 2. Incremental Chapter Loop
 For each chapter returned by `pending_chapters(session)`:

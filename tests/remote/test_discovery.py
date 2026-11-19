@@ -356,6 +356,7 @@ def test_normalize_search_results_includes_open_access_and_compacts_long_ids():
                 "authors": ["Betsy Beyer"],
                 "year": 2016,
                 "origin": "openalex",
+                "is_oa": True,
                 "format": "pdf",
             }
         ],
@@ -379,3 +380,34 @@ def test_normalize_search_results_includes_open_access_and_compacts_long_ids():
     oa_only = normalize_search_results({"open_access": payload["open_access"]})
     assert len(oa_only) == 1
     assert oa_only[0]["source_name"] == "openalex"
+
+
+def test_unverified_crossref_in_open_access_bucket_is_not_flagged_open_access():
+    payload = {
+        "results": [
+            {"md5": "caf74dbcc14e6d9eb647117af8596783", "title": "SRE Book", "author": "Betsy Beyer"},
+        ],
+        "open_access": [
+            {
+                "doi": "10.1007/979-8-8688-1448-8_1",
+                "title": "Introduction to SRE (Paywalled Chapter)",
+                "origin": "crossref",
+            },
+            {
+                "doi": "10.48550/ARXIV.2505.01926",
+                "title": "SRE Open arXiv Paper",
+                "origin": "arxiv",
+                "is_oa": True,
+            },
+        ],
+    }
+
+    normalized = normalize_search_results(payload)
+    assert [item["title"] for item in normalized] == [
+        "SRE Open arXiv Paper",
+        "SRE Book",
+        "Introduction to SRE (Paywalled Chapter)",
+    ]
+    assert normalized[0]["access_info"] == "open-access"
+    assert "metadata-only" in normalized[2]["access_info"]
+    assert "open-access" not in normalized[2]["access_info"]

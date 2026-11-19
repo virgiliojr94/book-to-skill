@@ -25,6 +25,24 @@ _MIME_TO_FORMAT = {
 _WRAPPER_RESULT_LIST_KEYS = ("results", "items", "hits", "records", "books", "works")
 _WRAPPER_OPEN_ACCESS_KEY = "open_access"
 _WRAPPER_DETAIL_KEYS = ("details", "work", "book", "item", "result", "record")
+_OPEN_TEXT_ORIGINS = frozenset(
+    {
+        "arxiv",
+        "europepmc",
+        "biorxiv",
+        "medrxiv",
+        "rfc",
+        "nist",
+        "acl",
+        "oapen",
+        "gutenberg",
+        "zenodo",
+        "scielo",
+        "pmc",
+        "doaj",
+    }
+)
+_OPEN_OA_STATUSES = frozenset({"gold", "green", "hybrid", "bronze", "open", "oa"})
 
 _YEAR_MODERN_RE = re.compile(r"(?<!\d)([12]\d{3})(?!\d)")
 _YEAR_ANY_RE = re.compile(r"(?<!\d)(\d{4})(?!\d)")
@@ -414,10 +432,31 @@ def normalize_work_details(raw_details: dict[str, Any], provider: str = "libgen-
         raw,
         ("access_info", "access", "availability", "access_status", "access_url"),
     )
+    is_oa_flag = raw.get("is_oa")
+    oa_flag = raw.get("open_access") if isinstance(raw.get("open_access"), bool) else None
+    oa_status = _clean_text(raw.get("oa_status")).lower()
+    has_oa_url = bool(_clean_text(_pick_first(raw, ("oa_url", "pdf_url", "fulltext_url"))))
+    origin_key = source_name.casefold()
+
     if isinstance(access_val, bool):
         access_info = "open_access" if access_val else "restricted_access"
+    elif _clean_text(access_val):
+        access_info = _clean_text(access_val)
+    elif is_oa_flag is False or oa_flag is False or oa_status == "closed":
+        access_info = f"metadata-only / closed ({source_name})"
+    elif (
+        is_oa_flag is True
+        or oa_flag is True
+        or oa_status in _OPEN_OA_STATUSES
+        or origin_key in _OPEN_TEXT_ORIGINS
+        or has_oa_url
+    ):
+        access_info = "open-access"
+    elif raw.get("_from_open_access_bucket"):
+        # Unflagged entries from an open_access array (e.g. closed Crossref DOIs) should not pose as verified OA.
+        access_info = f"metadata-only / unverified-oa ({source_name})"
     else:
-        access_info = _clean_text(access_val) or f"MCP remote read via {resolved_provider}"
+        access_info = f"MCP remote read via {resolved_provider}"
 
     license_info = _clean_optional_text(
         _pick_first(raw, ("license_info", "license", "rights", "copyright", "license_url")),
@@ -461,16 +500,33 @@ def normalize_search_results(
             raise TypeError("raw_results dict must contain a list under results/items/hits/records")
 
         items = []
+        verified_oa: list[dict[str, Any]] = []
+        unverified_oa: list[dict[str, Any]] = []
         if has_open_access:
             for oa_item in open_access_raw:
-                if isinstance(oa_item, dict):
-                    annotated = dict(oa_item)
-                    annotated.setdefault("access_info", "open-access")
-                    if "source" not in annotated and "source_name" not in annotated and annotated.get("origin"):
-                        annotated["source_name"] = annotated["origin"]
-                    items.append(annotated)
+                if not isinstance(oa_item, dict):
+                    continue
+                annotated = dict(oa_item)
+                annotated["_from_open_access_bucket"] = True
+                if "source" not in annotated and "source_name" not in annotated and annotated.get("origin"):
+                    annotated["source_name"] = annotated["origin"]
+                origin_val = _clean_text(annotated.get("origin") or annotated.get("source_name")).casefold()
+                oa_status_val = _clean_text(annotated.get("oa_status")).lower()
+                is_verified = (
+                    annotated.get("is_oa") is True
+                    or annotated.get("open_access") is True
+                    or oa_status_val in _OPEN_OA_STATUSES
+                    or origin_val in _OPEN_TEXT_ORIGINS
+                    or bool(_clean_text(_pick_first(annotated, ("oa_url", "pdf_url", "fulltext_url"))))
+                ) and annotated.get("is_oa") is not False and oa_status_val != "closed"
+                if is_verified:
+                    verified_oa.append(annotated)
+                else:
+                    unverified_oa.append(annotated)
+        items.extend(verified_oa)
         if extracted:
             items.extend(extracted)
+        items.extend(unverified_oa)
     elif isinstance(raw_results, (list, tuple)):
         items = list(raw_results)
     else:
