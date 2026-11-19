@@ -113,7 +113,7 @@ def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
     # Spec-defined: read container.xml for the rootfile path
     try:
         container = _decode_epub_xml(zf.read("META-INF/container.xml"))
-        match = re.search(r'full-path=["\']([^"\']+\.opf)["\']', container)
+        match = re.search(r'full-path[ \t\r\n]*=[ \t\r\n]*["\']([^"\']+\.opf)["\']', container)
         if match:
             # Decode XML's predefined and numeric references once. Restrict the
             # match rather than decoding HTML-only or unterminated entities in
@@ -164,8 +164,8 @@ def extract_with_zipfile(epub_path: str) -> str | None:
                 # because all attributes live in the opening tag.
                 manifest: dict[str, str] = {}
                 for item_tag in _opf_opening_tags(opf_text, "item"):
-                    id_m = re.search(r'\bid=["\']([^"\']+)["\']', item_tag)
-                    href_m = re.search(r'\bhref=["\']([^"\']+)["\']', item_tag)
+                    id_m = re.search(r'\bid[ \t\r\n]*=[ \t\r\n]*["\']([^"\']+)["\']', item_tag)
+                    href_m = re.search(r'\bhref[ \t\r\n]*=[ \t\r\n]*["\']([^"\']+)["\']', item_tag)
                     if id_m and href_m:
                         resolved = _resolve_manifest_href(href_m.group(1), opf_dir)
                         manifest[id_m.group(1)] = resolved
@@ -173,7 +173,7 @@ def extract_with_zipfile(epub_path: str) -> str | None:
                 # Spine: ordered idrefs -> hrefs (true reading order).
                 for itemref_tag in _opf_opening_tags(opf_text, "itemref"):
                     idref_m = re.search(
-                        r'\bidref=["\']([^"\']+)["\']', itemref_tag
+                        r'\bidref[ \t\r\n]*=[ \t\r\n]*["\']([^"\']+)["\']', itemref_tag
                     )
                     if not idref_m:
                         continue
