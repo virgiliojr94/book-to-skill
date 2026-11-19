@@ -22,6 +22,7 @@ for _stream in (sys.stdout, sys.stderr):
     try:
         _stream.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
+        # Non-standard or closed stdio stream (e.g. captured test streams) cannot reconfigure.
         pass
 
 # Ensure the project root directory (where the 'book_to_skill' package lives) is in sys.path

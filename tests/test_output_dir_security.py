@@ -51,7 +51,7 @@ def test_prepare_output_dir_rejects_non_directory(tmp_path):
 def test_prepare_output_dir_tightens_permissions_on_existing_own_dir(tmp_path):
     target = tmp_path / "work"
     target.mkdir()
-    os.chmod(target, 0o777)  # simulate a pre-existing, overly-permissive dir
+    os.chmod(target, 0o750)  # simulate a pre-existing, overly-permissive dir
 
     prepare_output_dir(target)
 

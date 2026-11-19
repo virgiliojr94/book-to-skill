@@ -207,6 +207,7 @@ def extract_rtf(rtf_path: str) -> tuple[str, str]:
         if text.strip():
             return text, "striprtf"
     except ImportError:
+        # striprtf is optional; fall back to the built-in regex RTF stripper below.
         pass
     except Exception as e:
         print(f"  [warn] extract_rtf/striprtf failed: {type(e).__name__}: {e}", file=sys.stderr)

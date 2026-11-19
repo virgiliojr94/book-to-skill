@@ -21,7 +21,7 @@ _TITLES = [
 _LINES = [
     # line 1: ToC entry (letter-spaced, leader + page number) — not a start
     "Chương 1              N ề n t ả n g Q u ả n t r ị H ệ t h ố n g v à "
-    "c á c N g u y ê n l ý ---------- 99",
+    + "c á c N g u y ê n l ý ---------- 99",
     "",
     "98 | P a g e",
     "        Tên Sách Mẫu – Running Header",

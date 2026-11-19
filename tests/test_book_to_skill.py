@@ -2034,7 +2034,7 @@ class TestDependencyCheck:
         # MOBI has no fallback → flagged as required
         assert "MISSING — required, no fallback" in out
         # Calibre hint is surfaced as a system dependency
-        assert "calibre-ebook.com" in out
+        assert "install Calibre: https://calibre-ebook.com/download" in out
 
     def test_pdftotext_alone_satisfies_pdf_text(self, capsys):
         """pdftotext present (system) should mark PDF text-heavy ready even with no python PDF libs."""

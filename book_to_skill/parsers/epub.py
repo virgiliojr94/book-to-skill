@@ -122,7 +122,8 @@ def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
                 r"&(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);",
                 _decode_container_reference, match.group(1),
             )
-    except (KeyError, Exception):
+    except Exception:
+        # Missing or unreadable container.xml; fall back to scanning for any *.opf archive entry.
         pass
 
     # Fallback: glob for any .opf file

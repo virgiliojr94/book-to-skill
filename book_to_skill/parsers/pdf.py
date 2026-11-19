@@ -317,6 +317,7 @@ def count_pages(pdf_path: str) -> int:
                 if line.startswith("Pages:"):
                     return int(line.split(":")[1].strip())
         except Exception:
+            # Optional pdfinfo lookup failed or returned non-numeric output; fall through to Python fallbacks.
             pass
 
     # Fallback: count pages with pypdf.
