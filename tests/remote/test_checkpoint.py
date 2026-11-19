@@ -158,7 +158,7 @@ def test_save_and_load_remote_session_enforces_0700_and_atomic_write(tmp_path):
 def test_save_remote_session_tightens_existing_dir_permissions(tmp_path):
     workdir = tmp_path / "loose-dir"
     workdir.mkdir()
-    os.chmod(workdir, 0o777)
+    os.chmod(workdir, 0o755)
 
     session = init_remote_session(
         _sample_work(),

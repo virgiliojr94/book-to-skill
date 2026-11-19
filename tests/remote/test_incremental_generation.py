@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
-import book_to_skill.remote as remote
 from book_to_skill.remote import (
     build_access_copyright_notice,
     build_coverage_report,
@@ -232,6 +232,7 @@ def _run_synthetic_incremental_generation(
 
 def test_remote_package_exports_all_public_apis():
     """book_to_skill.remote.__init__ cleanly exports all public symbols across PR 2-4."""
+    remote = importlib.import_module("book_to_skill.remote")
     expected = {
         "normalize_search_results",
         "normalize_work_details",

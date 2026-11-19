@@ -35,7 +35,6 @@ FORBIDDEN_PROSE_KEYS = frozenset(
     }
 )
 
-_WORK_REQUIRED_KEYS = ("item_id", "title", "authors", "edition", "identifiers")
 _WORK_OPTIONAL_METADATA_KEYS = (
     "provider",
     "year",

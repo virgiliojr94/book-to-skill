@@ -19,5 +19,7 @@ tests/fixtures/*.pdf binary
 /CLAUDE.md export-ignore
 /README.ru.md export-ignore
 /README.zh-CN.md export-ignore
+/README.ja.md export-ignore
 /SECURITY.md export-ignore
 /SECURITY-NOTICE.md export-ignore
+/uv.lock export-ignore
