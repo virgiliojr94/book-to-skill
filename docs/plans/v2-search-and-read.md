@@ -137,15 +137,15 @@ Status values:
 | **SR-04** | PR 2 | DONE | `discovery-dev` + `verifier` | SR-00 | `book_to_skill/remote/__init__.py`, `book_to_skill/remote/discovery.py` | #2, #6 |
 | **SR-05** | PR 2 | DONE | `policy-dev` + `verifier` | SR-00 | `book_to_skill/remote/policy.py` | #6, #8 |
 | **SR-06** | PR 2 | DONE | `discovery-dev`/`policy-dev` + `verifier` | SR-04, SR-05 | `tests/remote/test_discovery.py`, `tests/remote/test_policy.py` | #2, #7, #8 |
-| **SR-07** | PR 3 | IN_PROGRESS | `reader-dev` | SR-00, SR-04 | `book_to_skill/remote/reader.py` | #2, #4, #5 |
-| **SR-08** | PR 3 | IN_PROGRESS | `reader-dev` | SR-07 | `book_to_skill/remote/checkpoint.py` | #4, #5, #6 |
-| **SR-09** | PR 3 | IN_PROGRESS | `reader-dev` + `verifier` | SR-07, SR-08 | `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py` | #5, #7 |
-| **SR-10** | PR 4 | IN_PROGRESS | `gen-dev` | SR-05 + Contract C | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py`, `tests/remote/test_provenance_coverage.py` | #3, #4, #5, #6 |
-| **SR-11** | PR 4 | BLOCKED | `spec-dev` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook) | #3, #4, #8 |
-| **SR-12** | PR 4 | BLOCKED | `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
+| **SR-07** | PR 3 | DONE | `reader-dev` + `verifier` | SR-00, SR-04 | `book_to_skill/remote/reader.py` | #2, #4, #5 |
+| **SR-08** | PR 3 | DONE | `reader-dev` + `verifier` | SR-07 | `book_to_skill/remote/checkpoint.py` | #4, #5, #6 |
+| **SR-09** | PR 3 | DONE | `reader-dev` + `verifier` | SR-07, SR-08 | `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py` | #5, #7 |
+| **SR-10** | PR 4 | DONE | `gen-dev` + `verifier` | SR-05 + Contract C | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py`, `tests/remote/test_provenance_coverage.py` | #3, #4, #5, #6 |
+| **SR-11** | PR 4 | IN_PROGRESS | `spec-dev` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook) | #3, #4, #8 |
+| **SR-12** | PR 4 | IN_PROGRESS | `spec-dev` + `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
 | **TR-LEG** | Track | READY | `User / Legal` | — | Legal review & `RemotePolicyConfig` defaults | #8 |
-| **SR-13** | PR 5 | BLOCKED | `qa-sec` | SR-06, SR-09, SR-12 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
-| **SR-14** | PR 5 | BLOCKED | `qa-sec` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
+| **SR-13** | PR 5 | IN_PROGRESS | `qa-sec` | SR-06, SR-09, SR-10 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
+| **SR-14** | PR 5 | IN_PROGRESS | `qa-sec` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
 | **SR-15** | Rel 2.0 | BLOCKED | `coordinator` | SR-14 | `README.md`, `docs/architecture.md`, `SECURITY.md`, `pyproject.toml`, `CHANGELOG.md` | #1–#8 |
 
 ---
@@ -183,3 +183,15 @@ Additional checks for remote/security PRs:
 - **Owner:** `discovery-dev` + `policy-dev`, verified by `verifier`
 - **Artifacts:** `book_to_skill/remote/__init__.py`, `book_to_skill/remote/discovery.py`, `book_to_skill/remote/policy.py`, `tests/remote/test_discovery.py`, `tests/remote/test_policy.py`
 - **Integrated Gates:** `pytest -q` -> `1051 passed, 12 skipped, 12 subtests passed in 5.38s`; `ruff check .` -> `All checks passed!`; `bandit` HIGH gate -> 0 issues; `validate_skill.py` -> passed.
+
+### PR 3 (SR-07, SR-08, SR-09) — Controlled Remote Reader & Resumable Checkpoints
+- **Status:** `DONE` (integrated at `1a20ef5` on `feat/v2-search-and-read`)
+- **Owner:** `reader-dev`, verified by `verifier`
+- **Artifacts:** `book_to_skill/remote/reader.py`, `book_to_skill/remote/checkpoint.py`, `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py`
+- **Gates:** 34 new unit tests passing; prompt-injection sanitization via `sanitize_extracted_text()`; cursor loop/limit guards; atomic `0o700` session writes with symlink check and zero raw prose stored.
+
+### PR 4a (SR-10) — Coverage Reporting & Prose-Free Provenance Metadata
+- **Status:** `DONE` (integrated at `a0885e6` on `feat/v2-search-and-read`)
+- **Owner:** `gen-dev`, verified by `verifier`
+- **Artifacts:** `book_to_skill/remote/coverage.py`, `book_to_skill/remote/provenance.py`, `tests/remote/test_provenance_coverage.py`
+- **Integrated Gates:** `pytest -q` -> `1095 passed, 12 skipped, 12 subtests passed in 5.92s`; `ruff check .` -> `All checks passed!`; `bandit` HIGH gate -> 0 issues.
