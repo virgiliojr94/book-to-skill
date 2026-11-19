@@ -109,15 +109,22 @@ def test_references_search_and_read_covers_workflow_and_warnings():
 
 
 def test_step0_and_frontmatter_ux_clarity():
-    """Frontmatter and Step 0 provide clear two-path onboarding and handle bare `search` cleanly."""
+    """Frontmatter and Step 0 provide clear two-path onboarding and guided MCP install."""
     text = _skill_text()
     frontmatter, _ = validate_skill.parse_frontmatter(text)
     assert frontmatter is not None
     assert "/book-to-skill search <query>" in frontmatter
     step0 = _step0_section(text)
-    assert "avoid internal \"Mode 1/Mode 2\" labels" in step0
+    assert 'avoid internal "Mode 1/Mode 2" labels' in step0
     assert "MCP available, query missing" in step0
     assert "MCP unavailable" in step0
+    assert "install mcp" in step0
+    assert "explicit confirmation" in step0
+
+    ref = SEARCH_REF_MD.read_text(encoding="utf-8")
+    assert "## Setup — Installing & Configuring an MCP Book Provider (Opt-in)" in ref
+    assert "Never install packages or modify host MCP configuration files without explicit user consent." in ref
+    assert "~/.gemini/config/mcp_config.json" in ref
 
 
 @pytest.mark.parametrize("lens", sorted(validate_skill.LENSES.keys()))

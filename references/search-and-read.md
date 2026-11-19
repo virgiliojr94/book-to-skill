@@ -21,10 +21,30 @@ Mode 2 builds the **exact same skill output** as Mode 1 (`SKILL.md`, `chapters/`
 ## Pre-Flight — Provider & Policy Check
 
 1. Confirm an MCP book provider (`libgen-mcp` or another configured provider exposing `search`, `get_details`, and `read`) is present in the host agent's active toolset.
-   - If no provider is exposed, STOP without exposing internal "Mode 1/Mode 2" labels: explain that Search & Read needs a book MCP server (e.g., `libgen-mcp` added to the host's MCP settings + new session) and offer converting a local file immediately (`/book-to-skill ~/path/to/book.pdf`).
+   - If no provider is exposed, STOP without exposing internal "Mode 1/Mode 2" labels: explain that Search & Read needs a book MCP server, offer to run the **Guided Setup** below (with explicit user confirmation), and offer converting a local file immediately (`/book-to-skill ~/books/accelerate.pdf`).
 2. Load policy via `load_policy()` (honoring `BOOK_TO_SKILL_REMOTE_POLICY` env JSON/path; defaults: `enabled_providers=["*"]`, `blocked_providers=[]`, `require_explicit_confirmation=True`, `default_publish_visibility="private"`, `allow_public_publish=False`, `warn_mcp_temporary_cache=True`).
 3. Verify the active provider with `check_provider_allowed(provider, policy)`. If disallowed, stop and report the reason.
 4. If the user ran bare `/book-to-skill search` without a `<query>`, ask what book, author, ISBN, or DOI they want to search for (with an example such as `Accelerate` or `9781942788331`) instead of throwing a syntax error.
+
+---
+
+## Setup — Installing & Configuring an MCP Book Provider (Opt-in)
+
+Only enter this section when the user explicitly confirms they want help installing or configuring `libgen-mcp` (`github.com/jmrplens/libgen-mcp`). **Never install packages or modify host MCP configuration files without explicit user consent.**
+
+1. **Probe available local runtimes** (`command -v docker npx npm brew go winget` as applicable) and recommend the cleanest option already available on the user's system:
+   - **Docker:** `{"command": "docker", "args": ["run", "-i", "--rm", "ghcr.io/jmrplens/libgen-mcp:latest"]}`
+   - **Node / NPX:** `{"command": "npx", "args": ["-y", "@jmrp.io/libgen-mcp"]}` (or install CLI with `npm install -g @jmrp.io/libgen-mcp`)
+   - **Homebrew (macOS/Linux):** `brew install jmrplens/tap/libgen-mcp` → `{"command": "libgen-mcp", "args": []}`
+   - **Go:** `go install github.com/jmrplens/libgen-mcp@latest` → `{"command": "libgen-mcp", "args": []}`
+   - **WinGet (Windows):** `winget install -e --id jmrplens.libgen-mcp` → `{"command": "libgen-mcp", "args": []}`
+2. **Confirm method and host config path with the user**, then merge the `"libgen-mcp"` entry safely into the active host's MCP configuration **without overwriting existing MCP servers**:
+   - **Antigravity (`agy`):** `~/.gemini/config/mcp_config.json` (`mcpServers.libgen-mcp`)
+   - **Claude Code:** `claude mcp add libgen-mcp ...` or `~/.claude.json` (`mcpServers.libgen-mcp`)
+   - **GitHub Copilot CLI:** `~/.copilot/mcp-config.json` (`mcpServers.libgen-mcp`)
+   - **OpenAI Codex:** `~/.codex/config.toml` (`[mcp_servers.libgen-mcp]`)
+   - **OpenCode:** `~/.config/opencode/opencode.json` (`mcp.libgen-mcp`)
+3. **Reload & verify:** Report the exact config path updated, note that other configured servers were preserved, and ask the user to start a **new session** so the host loads the MCP tools, then run `/book-to-skill search "Accelerate"`.
 
 ---
 
