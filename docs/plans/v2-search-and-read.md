@@ -146,7 +146,7 @@ Status values:
 | **TR-LEG** | Track | DONE | `User / Legal` | — | Interim Profile A confirmed: `enabled_providers=["*"]` with mandatory explicit confirmation, MCP cache notice, and `--private` lock (`BOOK_TO_SKILL_REMOTE_POLICY` overridable) | #8 |
 | **SR-13** | PR 5 | DONE | `qa-sec` + `verifier` | SR-06, SR-09, SR-10 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
 | **SR-14** | PR 5 | DONE | `qa-sec` + `verifier` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
-| **SR-15** | Rel 2.0 | READY | `docs-dev` + `coordinator` | SR-14, TR-LEG | Docs (`README.md`, `docs/architecture.md`, `SECURITY.md`) DONE; version bump (`pyproject.toml` → `2.0.0`) + `git-cliff` `CHANGELOG.md` + tag pending user/legal release cut | #1–#8 |
+| **SR-15** | Rel 2.0 | DONE | `docs-dev` + `coordinator` | SR-14, TR-LEG | Docs (`README.md`, `docs/architecture.md`, `SECURITY.md`), `pyproject.toml` (`2.0.0`), `CHANGELOG.md` (`v2.0.0`), release tag | #1–#8 |
 
 ---
 

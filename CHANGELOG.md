@@ -10,6 +10,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > (`git-cliff --tag vX.Y.Z -o CHANGELOG.md`). Write a good PR title instead — it
 > becomes the changelog entry. See `cliff.toml` and CONTRIBUTING.md.
 
+## [2.0.0] - 2026-11-19
+
+### Added
+- Replace the ASCII banner with two quiet lines, and fund the project at the end (#153)
+- Optional GitHub publishing for generated skills (#102)
+- Improve Persian chapter detection (#139)
+- Detect Hindi (Devanagari) chapter headings (#186)
+- Detect Vietnamese (Chương) chapter headings (#194)
+- Detect Bengali (অধ্যায়) chapter headings (#195)
+- Add offline trajectory replay and evaluation tools (#189, #190, #191)
+- Add Hermes Agent skill discovery and validation (#202)
+- Add pdf-inspector smart routing and provenance (#203)
+- Detect Russian (Глава) chapter headings (#199)
+- Default generated skills to ~/.agents/skills with Claude Code symlink (#125)
+- Detect Greek (Κεφάλαιο) chapter headings (#206)
+- Detect Tamil (அத்தியாயம்) chapter headings (#212)
+- Allow choosing project-local skill path (#210)
+- Detect Telugu (అధ్యాయము) chapter headings (#223)
+- Add OpenClaw skill discovery and validation (#209)
+- Detect Kannada (ಅಧ್ಯಾಯ) chapter headings (#232)
+- Detect Malayalam (അധ്യായം) chapter headings (#243)
+- Add Opencode skill discovery and validation (#216)
+- Detect Gujarati (પ્રકરણ) chapter headings (#252)
+- Detect Odia (ଅଧ୍ୟାୟ) chapter headings (#256)
+- Detect Punjabi (ਕਾਂਡ) chapter headings (#280)
+- Detect Sinhala (පරිච්ඡේදය) chapter headings (#285)
+- Detect Hebrew (פרק) chapter headings (#293)
+- Detect Armenian (Գլուխ) chapter headings (#314)
+- Also detect Sinhala අධ්‍යාය chapter headings (#318)
+- Add opt-in physical-page evidence sidecar (#307)
+- Add Search & Read input mode and lazy protocol reference
+- Add MCP search and work-details discovery normalization
+- Add configurable provider policy and copyright confirmation gate
+- Implement outline/section/cursor reader state and checkpoints
+- Add coverage reporting and prose-free provenance metadata
+- Wire incremental remote generation and provenance specs
+
+### Changed
+- Deduplicate Unicode checks -- 50% less extraction time (#304)
+- Reduce detected test smells (#321)
+
+### Documentation
+- Use --prepend for the release changelog (#133)
+- Offer npx skills add install path (#100)
+- List the first sponsor
+- Open a use-case index and carve it out of the no-links rule
+- Show what people did with it, not just where to report it
+- Name Codex as a supported host (#154)
+- Warn about malicious book-to-skill re-upload
+- Add Russian README translation (#147)
+- Install the CLI from the repo — book-to-skill is not on PyPI (#163)
+- Add AGENTS.md execution contract and progressive-disclosure evals ledger (#185)
+- Add Simplified Chinese README (#204)
+- Sync translated skill destinations (#262)
+- Add Codex to host lists (#278)
+- Localize Russian headings and guard translation policy (#281)
+- Make the documented lens list match the real one (#298)
+- Add shared state ledger and contracts for v2.0 Search & Read (SR-00)
+- Record PR 1 and PR 2 completion in v2 ledger
+- Record PR 3 and PR 4a completion in v2 ledger
+- Document Search & Read mode, architecture, and MCP security boundaries
+- Record PR 4b and PR 5 completion in v2 ledger
+- Record Profile A selection for TR-LEG in v2 ledger
+
+### Fixed
+- Strip running headers only at page edges (#113)
+- Count supplementary-plane CJK in the token estimate (#136)
+- Reuse the extractor's multilingual ToC detection (#138)
+- Self-defend the DOCX parsers against XXE regardless of caller (#99)
+- Stop an unbalanced code fence swallowing later headings (#135)
+- Harden the extraction work directory against symlink and ownership attacks (#141)
+- Count numbered headings as chapters when they carry a chapter's weight (#149)
+- Report which method produced the chapter count (#150)
+- Diagnose a module installed in an isolated environment (#151)
+- Match tool-call control tokens, not the words "tool call" (#152)
+- Treat bracketed paths as literals (#162)
+- Report unextracted source images (#134)
+- Use trafilatura for real boilerplate detection in HTML (#142)
+- Parse a SKILL.md saved with a UTF-8 BOM (#181)
+- Reject punctuation-only setext titles, matching the ATX branch (#180)
+- Give each run its own workdir so concurrent extractions cannot clobber each other (#184)
+- Strip deprecated and interlinear-annotation format controls (#182)
+- Strip the invisible carriers a Cf filter does not reach (#178)
+- Detect chapters numbered with Kangxi-radical numerals (#175)
+- Add pdfminer fallback for PDF page counts (#197)
+- Detect plain numbered chapter headings (#196)
+- Detect Markdown ToC headings, Unit-style chapters, stray-Roman suppression (#161, #126)
+- Force UTF-8 output encoding for pdftotext on Windows (#117, #192)
+- Honor alternative parser availability (#208)
+- Fall back on invalid inspector metadata (#218)
+- Discard stale inspection metadata (#220)
+- Stop scoring crashing on, and inventing counts from, recorded data (#225)
+- Translate post-extraction stat errors (#228)
+- Resolve encoded manifest hrefs (#231)
+- Preserve inline tabs and breaks (#239)
+- Decode hex-escaped text (#242)
+- Stop the Calibre path reusing a previous source's output (#229)
+- Stop and ask before re-converting an existing skill (re-run guard) (#224)
+- Retain per-source chapter heading samples (#245)
+- Stop counting wrapped prose and code lines as chapters (#246)
+- Preserve spine order with prefixed OPF elements (#249)
+- Strip Default_Ignorable invisible carriers (#250)
+- Exclude framing headings from structural chapters (#253)
+- Preserve corpus newlines on Windows (#264)
+- Preserve paragraph and table order (#265)
+- Report Docling fallback in technical mode (#255)
+- Honor spine order in ebooklib parser (#266)
+- Preserve duplicate source multiplicity (#267)
+- Count structural chapters per source (#273)
+- Count chapters within part headings (#279)
+- Ignore negative replay usage counts (#284)
+- Keep text before the first chapter heading reachable (#286)
+- Resolve Persian ZWNJ ordinals after sanitization (#287)
+- Preserve escaped control literals in fallback (#290)
+- Validate Markdown code fence closers (#291)
+- Reject malformed BOM-encoded input (#292)
+- Fold Kangxi radicals to their ideographs in extracted text (#277)
+- Preserve fallback metadata for inspector results (#301)
+- Preserve surrogate pairs in fallback (#296)
+- Preserve SDT wrapped paragraphs (#270)
+- Read block-scalar descriptions so the 1024-char cap applies (#302)
+- Decode UTF-16 XML in stdlib fallback (#311)
+- Report text fallback in technical mode (#319)
+- Preserve required line breaks in fallback (#313)
+- Decode container path XML references (#317)
+- Detect chapters from the PDF outline and record chapter line ranges (#315)
+- Run the py3.9 leg on an image that still provides 3.9 (#337)
+
+### Miscellaneous
+- Keep __pycache__ out of deployed skill directories (#222)
+
 ## [1.4.0] - 2026-08-10
 
 ### Added
