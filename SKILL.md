@@ -17,7 +17,7 @@ Cross-agent notes (informational; ignored by host agents):
     `shell`/MCP-server names, Claude uses `Bash`/`Read`/`Write`/`Glob`/`Grep`, Amp
     adds `shell_command`. The skill needs shell (to run extract.py) and file
     read/write — each host will prompt for those on first use.
-  - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug]
+  - Argument hint: <path-to-document-folder-or-glob>... [skill-name-slug] | search <query>
 -->
 
 # Book-to-Skill Converter
@@ -42,7 +42,7 @@ Books contain crystallized expertise: frameworks, principles, and techniques tha
 
 ## Modes of Operation
 
-Four paths available. Route based on what the user asks:
+Local paths (Input Mode 1, default — no MCP required) and remote search (Input Mode 2, MCP-assisted). Route based on what the user asks:
 
 ### 1. Full Conversion (Default)
 **Trigger:** User provides one or more document/directory/glob paths without special instructions
@@ -63,6 +63,11 @@ Four paths available. Route based on what the user asks:
 **Trigger:** User provides one or more new source paths and indicates they want to update an existing skill (either by pointing to the existing skill folder, providing a skill slug that already exists in `SKILLS_HOME`, or explicitly requesting an update).
 **Action:** Run Step 0 (out-of-scope check), Step 1 (validate inputs), Step 1.5 (identify book type), and Step 2 (extract new files). Then skip to Step 5 (identify/detect existing skill path) and run the **Update / Fold-in Workflow** to merge the new content into the existing skill files.
 **Output:** Updated existing skill with new/revised chapter summaries and merged indexes/glossaries.
+
+### 5. Search & Read (Input Mode 2 — MCP)
+**Trigger:** `/book-to-skill search <query>` (or user asks to search/find a book remotely when an MCP provider is available)
+**Action:** Check MCP availability in Step 0, then read `references/search-and-read.md` only when Mode 2 Search & Read is triggered and follow its incremental MCP workflow (MCP discovery, confirmation, incremental chapter synthesis, Steps 8–11).
+**Output:** Same skill layout (`SKILL.md`, `chapters/`, `glossary.md`, `patterns.md`, `cheatsheet.md`) without saving a full raw book file.
 
 ---
 
@@ -92,9 +97,10 @@ For **generated** book skills, prefer the user-level cross-agent root `~/.agents
 ## Step 0 — Out-of-scope check
 
 If no arguments are provided, stop and respond:
-> "book-to-skill requires a supported document path, folder, or glob pattern. Usage: `book-to-skill <path-to-document-folder-or-glob>... [skill-name-slug]`"
+> "book-to-skill requires a supported document path, folder, or glob pattern (or `search <query>` for MCP Search & Read). Usage: `book-to-skill <path-to-document-folder-or-glob>... [skill-name-slug]` or `/book-to-skill search <query>`"
 
 Throughout the workflow:
+- **Mode 2 (Search & Read) routing:** If `/book-to-skill search <query>` (or remote book search with no local path) is requested, detect whether an MCP book provider (`libgen-mcp` or a configured provider exposing book search and read tools) is exposed in the host agent's toolset. If unavailable, STOP, clearly inform the user that MCP search/read is not available in this session, and offer **Mode 1 (local files)** (`book-to-skill <path-to-document-folder-or-glob>`). If available, read `references/search-and-read.md` only when Mode 2 Search & Read is triggered and follow it instead of local Steps 1–3.
 - **Resolve the destination root first.** Before any existing-skill lookup, determine where this run would write: the personal or project-local root for the user's host, per the Step 5 table and selection rules — a project-local request uses its project-local root, never the personal root. Below, "the resolved root" means that destination.
 - Identify the input paths and the optional skill slug.
 - If the last argument is not a file, folder, or glob that exists or matches any files, and it looks like a skill slug (e.g. lowercase hyphens, alphanumeric), treat it as `SKILL_NAME`.
