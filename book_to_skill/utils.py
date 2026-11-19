@@ -424,13 +424,39 @@ _FA_TEENS = (
     "یازدهم", "دوازدهم", "سیزدهم", "چهاردهم", "پانزدهم",
     "شانزدهم", "هفدهم", "هجدهم", "نوزدهم",
 )
-_FA_ONES_SET = frozenset(_FA_ONES)
+# Arabic chapter headings: "الفصل 1", "الفصل ١", "الفصل الأول", "الباب الثالث", "باب ٢".
+# Arabic reuses the Persian matcher above rather than getting its own: the two
+# languages share the script *and* the chapter word فصل, so no block test can
+# separate them the way the Brahmic patterns separate Odia from Bengali. What
+# Arabic adds is the definite article — "الفصل" is the standard heading form
+# and ال is exactly what the Persian label did not accept — plus باب ("gate"),
+# the chapter word in classical and religious works.
+#
+# Spelling variants (أ/إ/آ written as ا, ى as ي) are folded by _AR_FOLD rather
+# than enumerated, so the table stays one entry per number. The fold is
+# codepoint-for-codepoint, so match offsets stay valid, and it cannot disturb
+# Persian: no Persian ordinal key contains any of those four letters, and
+# Persian's ی (U+06CC) is a different codepoint from Arabic's ي (U+064A).
+#
+# Ceiling: 1-20. The compound forms above that ("الحادي والعشرون") follow
+# the same loop shape as the Persian compounds if a corpus ever needs them.
+_AR_ONES = (
+    "الاول", "الثاني", "الثالث", "الرابع", "الخامس",
+    "السادس", "السابع", "الثامن", "التاسع", "العاشر",
+)
+# 11-19 reuse the ones + عشر, except that 11 is الحادي, not الاول.
+_AR_TEEN_ONES = ("الحادي",) + _AR_ONES[1:9]
+_AR_FOLD = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي"})
+
+# 1-10 in either language: short enough to prefix an ordinary word
+# ("فصل اولیه", "الفصل الاولى"), so these require a separator after them.
+_FA_ONES_SET = frozenset(_FA_ONES + _AR_ONES)
 # After a short (1–10) word ordinal: end, whitespace, punctuation, or ZWNJ.
 _FA_SHORT_ORDINAL_TAIL = re.compile(r"^(?:$|\s|[.:\-—–：]|\u200c)")
 
 
 def _fa_ordinal_map() -> dict[str, int]:
-    """Persian chapter ordinals 1–34, including common spelling variants."""
+    """Persian ordinals 1–34 and Arabic ordinals 1–20, with spelling variants."""
     m: dict[str, int] = {}
     for i, w in enumerate(_FA_ONES, 1):
         m[w] = i
@@ -445,6 +471,13 @@ def _fa_ordinal_map() -> dict[str, int]:
     for i, w in enumerate(_FA_COMPOUND_ONES, 1):
         m[f"بیست و {w}"] = 20 + i
         m[f"سی و {w}"] = 30 + i
+    # Arabic ordinals 1-20, in the folded spelling _AR_FOLD produces.
+    for i, w in enumerate(_AR_ONES, 1):
+        m[w] = i
+    for i, w in enumerate(_AR_TEEN_ONES, 11):
+        m[f"{w} عشر"] = i
+    m["العشرون"] = 20
+    m["العشرين"] = 20  # oblique form, equally common in headings
     # sanitize_extracted_text() strips U+200C (it is a prompt-injection spacer)
     # before detect_structure() runs, so a key spelled with a ZWNJ can never be
     # reached through the pipeline. Register the stripped spelling of every such
@@ -458,14 +491,14 @@ def _fa_ordinal_map() -> dict[str, int]:
 _FA_ORDINALS = _fa_ordinal_map()
 # Longest first so "چهاردهم" wins over "چهارم", "بیست و یکم" over nothing shorter.
 _FA_ORDINAL_KEYS = sorted(_FA_ORDINALS, key=len, reverse=True)
-_FA_LABEL_REST = re.compile(r"^\s*(?:فصل|بخش)\s+(.*)$")
+_FA_LABEL_REST = re.compile(r"^\s*(?:ال)?(?:فصل|بخش|باب)\s+(.*)$")
 _FA_DIGIT_HEAD = re.compile(rf"^([0-9{_FA_DIGITS}]+)(.*)$")
 # Digit form: same idea as the Korean trailing guard (no Latin case to lean on).
 _FA_DIGIT_TAIL = re.compile(r"^(?:\s*$|[.:\-—–：]|\s+\S)")
 
 
 def _fa_chapter_number(s: str) -> int | None:
-    """Return a Persian chapter number (1–99 digits / 1–34 words) or None."""
+    """Return a Persian/Arabic chapter number (1–99 digits / word ordinal) or None."""
     m = _FA_LABEL_REST.match(s)
     if not m:
         return None
@@ -476,6 +509,7 @@ def _fa_chapter_number(s: str) -> int | None:
         if 1 <= n <= 99 and _FA_DIGIT_TAIL.match(dm.group(2)) is not None:
             return n
         return None
+    rest = rest.translate(_AR_FOLD)
     for key in _FA_ORDINAL_KEYS:
         if not rest.startswith(key):
             continue
@@ -931,7 +965,8 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Armenian ("Գլուխ 1", "ԳԼՈՒԽ 12", "## Գլուխ 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
-    "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each
+    "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…"),
+    Arabic ("الفصل ١", "الفصل الأول", "الباب الثالث", "باب ٢") heading styles — each
     optionally preceded by a Markdown/AsciiDoc heading marker
     ("## Chapter 1" is a chapter heading just like "Chapter 1").
     """
