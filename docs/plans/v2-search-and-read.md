@@ -141,12 +141,12 @@ Status values:
 | **SR-08** | PR 3 | DONE | `reader-dev` + `verifier` | SR-07 | `book_to_skill/remote/checkpoint.py` | #4, #5, #6 |
 | **SR-09** | PR 3 | DONE | `reader-dev` + `verifier` | SR-07, SR-08 | `tests/remote/test_reader.py`, `tests/remote/test_checkpoint.py` | #5, #7 |
 | **SR-10** | PR 4 | DONE | `gen-dev` + `verifier` | SR-05 + Contract C | `book_to_skill/remote/provenance.py`, `book_to_skill/remote/coverage.py`, `tests/remote/test_provenance_coverage.py` | #3, #4, #5, #6 |
-| **SR-11** | PR 4 | IN_PROGRESS | `spec-dev` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook) | #3, #4, #8 |
-| **SR-12** | PR 4 | IN_PROGRESS | `spec-dev` + `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
+| **SR-11** | PR 4 | DONE | `spec-dev` + `verifier` | SR-02, SR-10, SR-08 | `references/search-and-read.md`, `SKILL.md` (minimal hook), `book_to_skill/remote/__init__.py` | #3, #4, #8 |
+| **SR-12** | PR 4 | DONE | `spec-dev` + `verifier` | SR-10, SR-11 | `tests/remote/test_incremental_generation.py` | #3, #4, #7 |
 | **TR-LEG** | Track | READY | `User / Legal` | — | Legal review & `RemotePolicyConfig` defaults | #8 |
-| **SR-13** | PR 5 | IN_PROGRESS | `qa-sec` | SR-06, SR-09, SR-10 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
-| **SR-14** | PR 5 | IN_PROGRESS | `qa-sec` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
-| **SR-15** | Rel 2.0 | BLOCKED | `coordinator` | SR-14 | `README.md`, `docs/architecture.md`, `SECURITY.md`, `pyproject.toml`, `CHANGELOG.md` | #1–#8 |
+| **SR-13** | PR 5 | DONE | `qa-sec` + `verifier` | SR-06, SR-09, SR-10 | `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py` | #1–#7 |
+| **SR-14** | PR 5 | DONE | `qa-sec` + `verifier` | SR-13 | `tests/remote/test_security_boundaries.py`, policy review | #4, #8 |
+| **SR-15** | Rel 2.0 | READY | `docs-dev` + `coordinator` | SR-14, TR-LEG | Docs (`README.md`, `docs/architecture.md`, `SECURITY.md`) DONE; version bump (`pyproject.toml` → `2.0.0`) + `git-cliff` `CHANGELOG.md` + tag pending user/legal release cut | #1–#8 |
 
 ---
 
@@ -195,3 +195,15 @@ Additional checks for remote/security PRs:
 - **Owner:** `gen-dev`, verified by `verifier`
 - **Artifacts:** `book_to_skill/remote/coverage.py`, `book_to_skill/remote/provenance.py`, `tests/remote/test_provenance_coverage.py`
 - **Integrated Gates:** `pytest -q` -> `1095 passed, 12 skipped, 12 subtests passed in 5.92s`; `ruff check .` -> `All checks passed!`; `bandit` HIGH gate -> 0 issues.
+
+### PR 4b (SR-11, SR-12) — Incremental Generation Wiring & Contract Parity
+- **Status:** `DONE` (integrated at `fa68e86` on `feat/v2-search-and-read`)
+- **Owner:** `spec-dev`, verified by `verifier`
+- **Artifacts:** `book_to_skill/remote/__init__.py` (re-exporting public API), `references/search-and-read.md`, `SKILL.md` (+2 lines, 888 total, Step 11 `--private` gate preserved), `tests/remote/test_incremental_generation.py`
+- **Gates:** All 6 `validate_skill.py` lenses exited 0; `pytest -q` -> `1098 passed`; `ruff check .` clean; `bandit` 0 issues.
+
+### PR 5 (SR-13, SR-14, SR-15 Docs) — Offline Mock MCP E2E, Security Boundaries & Docs
+- **Status:** `DONE` (integrated at `fd65546` and `4a77b1a` on `feat/v2-search-and-read`); release version bump/tag awaits `TR-LEG` + maintainer release cut.
+- **Owner:** `qa-sec` + `docs-dev`, verified by `verifier`
+- **Artifacts:** `tests/remote/mock_mcp.py`, `tests/remote/test_e2e_mock_mcp.py`, `tests/remote/test_security_boundaries.py`, `docs/architecture.md`, `SECURITY.md`, `README.md`
+- **Gates:** Static AST zero-network check across `book_to_skill/`; `MockMCPServer` coverage of timeout, cancel, corrupt cursor, cursor loop, truncated/missing chapters, inconsistent metadata, prompt injection; `pytest -q`, `ruff check .`, `validate_skill.py`, and `bandit` all green.
