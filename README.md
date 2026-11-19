@@ -16,7 +16,7 @@
 <p align="center">
   <a href="https://github.com/virgiliojr94/book-to-skill/releases"><img src="https://img.shields.io/github/v/release/virgiliojr94/book-to-skill?style=for-the-badge&color=blueviolet" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Agent_Skills-Open_Standard-blueviolet?style=for-the-badge" alt="Agent Skills standard">
-  <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI-supported-green?style=for-the-badge" alt="Formats supported">
+  <img src="https://img.shields.io/badge/PDF%20%E2%80%A2%20EPUB%20%E2%80%A2%20DOCX%20%E2%80%A2%20MD%20%E2%80%A2%20HTML%20%E2%80%A2%20RTF%20%E2%80%A2%20MOBI%20%E2%80%A2%20MCP-supported-green?style=for-the-badge" alt="Formats and MCP supported">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
   <a href="https://github.com/sponsors/virgiliojr94"><img src="https://img.shields.io/github/sponsors/virgiliojr94?style=for-the-badge&color=ea4aaa&logo=githubsponsors&logoColor=white" alt="Sponsor"></a>
 </p>
@@ -32,13 +32,13 @@
 <p align="center">
   <a href="#-why">Why</a> ·
   <a href="#-what-it-generates">What it generates</a> ·
-  <a href="#-beyond-books">Beyond books</a> ·
-  <a href="docs/how-it-works.md">How it works</a> ·
+  <a href="#-search--read-mcp">Search &amp; Read (MCP)</a> ·
   <a href="docs/usage.md">Usage</a> ·
   <a href="docs/install.md">Install</a> ·
   <a href="docs/faq.md">FAQ</a> ·
   <a href="docs/performance.md">Performance</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
+  <a href="#-sponsors">Sponsors</a> ·
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
@@ -46,9 +46,11 @@
   <strong>24×–51× fewer tokens than dumping the book into context</strong> to answer one question, measured on real books (<a href="docs/performance.md#the-discovery-loop-tax">how it's measured</a>).
 </p>
 
+> 💖 **Keep book-to-skill moving forward:** Maintained independently in personal time (1,100+ tests, community PR reviews, security hardening, and releases like v2.0). If this project saves you engineering hours or tokens, **[sponsor its maintenance on GitHub →](https://github.com/sponsors/virgiliojr94)**
+
 **How it works, in 3 steps:**
 
-1. **Point** it at a file, folder, or glob — `/book-to-skill ./my-book.pdf`
+1. **Point or Search** — give it a local file/folder (`/book-to-skill ./my-book.pdf`) **or** search remotely via MCP (`/book-to-skill search "Accelerate"`).
 2. **It distills** the book into a skill — frameworks, decision rules, anti-patterns, and per-chapter files. Structure, not a summary.
 3. **Your agent loads it on demand** — ask `/my-book replication` and it reads the right chapter and answers from the real content, no hallucination.
 
@@ -120,7 +122,14 @@ Two halves: a deterministic Python **extractor** (document → clean text + meta
 
 ## 🚀 Usage
 
-`/book-to-skill <path|folder|glob> [skill-name]` — plus analyze-only, generate-from-analysis, update/fold-in, and MCP Search & Read modes. After a conversion, the converter can publish the skill to GitHub (private by default) so any host installs it with `npx skills add`.
+Two entry points — pick whichever fits what you have right now:
+
+```text
+/book-to-skill <path|folder|glob> [skill-name]   # convert local files (PDF, EPUB, DOCX, MD…)
+/book-to-skill search "<title, author, ISBN, or DOI>"  # discover & read incrementally via MCP
+```
+
+Plus analyze-only, generate-from-analysis, and update/fold-in workflows. After a conversion, the converter can publish the generated skill to GitHub (`--private` by default) so any host installs it with `npx skills add`.
 
 ▶️ **All modes and examples → [docs/usage.md](docs/usage.md)**
 
@@ -128,18 +137,18 @@ Two halves: a deterministic Python **extractor** (document → clean text + meta
 
 ---
 
-## 🔍 Mode 2: Search & Read (MCP)
+## 🔍 Search & Read (MCP)
 
-When an MCP book provider (such as `libgen-mcp`) is configured in your host agent, you can discover and convert a work incrementally without downloading a local copy first:
+Don't have the book file handy? When an MCP book provider (such as `libgen-mcp`) is configured in your host agent, **Search & Read** lets you search by title, author, ISBN, or DOI, pick the exact edition, and convert it chapter by chapter into the same structured skill layout — **without downloading a permanent copy to your disk**:
 
 ```text
-/book-to-skill search "<title, author, ISBN, or DOI>"
+/book-to-skill search "Accelerate"
 ```
 
-- **Host-mediated & zero-network core:** Your host agent runs MCP `search`, `get_details`, and `read` chapter by chapter and discards raw fragments immediately after synthesis — `book_to_skill/` makes zero network calls and writes no permanent `full_text.txt` (see [docs/architecture.md](docs/architecture.md#mode-2-search--read-mcp) and [references/search-and-read.md](references/search-and-read.md)).
-- **Provider configurability (`BOOK_TO_SKILL_REMOTE_POLICY`):** Configure `enabled_providers`, `blocked_providers`, confirmation requirements, and publish defaults via the `BOOK_TO_SKILL_REMOTE_POLICY` environment variable (a JSON string or path to a JSON file). Defaults require explicit user confirmation before any `read` call and enforce `--private` GitHub publishing (`allow_public_publish: false`).
-- **Graceful fallback:** If no MCP book provider is available in the active session (or a provider is disallowed by policy), the converter stops clearly and offers **Mode 1 (local files)** (`/book-to-skill <path|folder|glob>`) instead.
-- **Copyright, access & cache rules:** Confirming before `read` does **not** grant copyright-holder authorization, and MCP `read` may temporarily cache files on the MCP server and transmit read text to your model. Review [Copyright & fair use](#-copyright--fair-use) and [SECURITY.md](SECURITY.md) before using Mode 2.
+- **Guided setup if needed:** Run `/book-to-skill` or `/book-to-skill search` without an active MCP provider and the skill walks you through installing and configuring `libgen-mcp` for your host (or converting a local file right away).
+- **Zero-network core & ephemeral synthesis:** Your host agent invokes MCP `search`, `get_details`, and `read`, discarding raw fragments after each chapter is synthesized; `book_to_skill/` never makes outbound network requests or writes `full_text.txt` ([docs/architecture.md](docs/architecture.md), [references/search-and-read.md](references/search-and-read.md)).
+- **Configurable policy (`BOOK_TO_SKILL_REMOTE_POLICY`):** Restrict or allow providers (`enabled_providers`, `blocked_providers`), require explicit confirmation before reading, and enforce private-by-default publishing.
+- **Access & temporary cache notice:** Confirming before reading does **not** equal copyright-holder authorization, and MCP `read` may temporarily cache the source on the MCP server and send read text to your model. See [Copyright & fair use](#-copyright--fair-use) and [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -222,26 +231,30 @@ The extractor tries tools in order per format and uses the first available. If n
 
 ```
 book-to-skill/
-├── SKILL.md              # Skill definition + step-by-step instructions (the generator spec)
+├── SKILL.md                  # Skill definition + step-by-step generator spec
+├── references/
+│   └── search-and-read.md    # Lazy-loaded Mode 2 MCP Search & Read protocol + setup
 ├── scripts/
-│   ├── extract.py        # Thin entrypoint wrapper
-│   └── extractor/        # Modular extraction package
-│       ├── config.py     # Extensions, paths, dependency constants
-│       ├── dependencies.py  # optional-dep probing + --check
-│       ├── exceptions.py # ExtractionError (per-source failures, batch-safe)
-│       ├── utils.py      # CLI parsing, multi-source resolution, chapter detection, runner
-│       └── parsers/      # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
+│   └── extract.py            # Thin CLI entrypoint shim
+├── book_to_skill/            # Zero-network Python package
+│   ├── config.py             # Extensions, paths, dependency constants
+│   ├── dependencies.py       # Optional-dep probing + --check
+│   ├── sanitize.py           # Zero-width/bidi prompt-injection sanitization + Kangxi folding
+│   ├── utils.py              # CLI parsing, multi-source resolution, chapter/outline detection
+│   ├── parsers/              # Format-specific parsers (pdf, epub, docx, html, rtf, calibre, text)
+│   └── remote/               # Offline MCP discovery, policy, reader state, checkpoints, coverage
 ├── tools/
-│   ├── discovery_tax.py  # measures token cost vs context-dump / discovery loop
-│   └── validate_skill.py # checks a generated SKILL.md against host rules (--lens claude|copilot|amp|hermes|openclaw|opencode)
-├── tests/                # pytest suite (extraction, detection, discovery tax)
+│   ├── discovery_tax.py      # Measures token cost vs context-dump / discovery loop
+│   ├── scan_generated_skill.py # Prompt-injection & safety scanner for generated skills
+│   └── validate_skill.py     # Checks generated SKILL.md across 6 host lenses
+├── tests/                    # 1,100+ pytest tests (parsers, security, offline mock MCP E2E)
 ├── docs/
-│   ├── performance.md    # measured benchmarks, discovery tax, cost
-│   └── architecture.md   # pipeline + component map
-├── CHANGELOG.md          # release history (semver)
-├── CONTRIBUTING.md       # dev setup, PR conventions, release process
-├── SECURITY.md           # vulnerability reporting
-└── README.md             # This file
+│   ├── performance.md        # Measured benchmarks, discovery tax, cost
+│   └── architecture.md       # Pipeline + component map
+├── CHANGELOG.md              # Release history (semver)
+├── CONTRIBUTING.md           # Dev setup, PR conventions, release process
+├── SECURITY.md               # Security boundaries & vulnerability reporting
+└── README.md                 # This file
 ```
 
 ---
@@ -254,10 +267,10 @@ book-to-skill/
 
 book-to-skill ships **no book content** — not a single page. It's a converter you point at files you already own (or query through an MCP provider you configure).
 
-- **Processing is local (Mode 1) and ephemeral (Mode 2).** Local extraction and analysis run on your machine and never upload files. In Mode 2 (Search & Read), `book_to_skill/` still makes zero network calls and writes no permanent `full_text.txt`; your host agent calls your configured MCP server (`read`), which may temporarily cache full files on the server and transmit read chunks to your model under those providers' data terms.
-- **You use your own copy and remain responsible for access rights.** Bring a book you bought, docs your company owns, or papers you have the right to read. In Mode 2, explicit confirmation before reading records your consent to proceed — it does **not** equal copyright-holder authorization.
+- **Processing is local (files) and ephemeral (Search & Read).** Local extraction and analysis run on your machine and never upload files. In Search & Read, `book_to_skill/` still makes zero network calls and writes no permanent `full_text.txt`; your host agent calls your configured MCP server (`read`), which may temporarily cache full files on the server and transmit read chunks to your model under those providers' data terms.
+- **You use your own copy and remain responsible for access rights.** Bring a book you bought, docs your company owns, or papers you have the right to read. In Search & Read, explicit confirmation before reading records your consent to proceed — it does **not** equal copyright-holder authorization.
 - **The output is your notes.** A generated skill is a structured, synthesized derivative — framework names, definitions, takeaways — not a reproduction of the text. The skill explicitly never copies raw passages (see Quality Rule #7). Treat it like handwritten study notes: yours, for personal use.
-- **Don't redistribute.** Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private (Mode 2 enforces `--private` by default). Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.
+- **Don't redistribute.** Publishing or sharing a generated skill of a copyrighted work can infringe the rights holder. Keep skills of third-party books private (Search & Read enforces `--private` by default). Internal docs, your own writing, and openly-licensed material are fine to share within the bounds of their license.
 
 When in doubt, follow the license or terms of the source document. This project is a tool; how you use it is on you.
 
@@ -267,11 +280,21 @@ When in doubt, follow the license or terms of the source document. This project 
 
 <img align="right" width="150" src="docs/assets/booklin-celebrating.png" alt="Booklin celebrating">
 
-book-to-skill is free and MIT-licensed, maintained on personal time. If it saves you tokens or study hours, consider sponsoring its upkeep: PR reviews, multilingual fixes, releases, and docs.
+`book-to-skill` is free, MIT-licensed, and maintained independently on personal time. Keeping it reliable across 7 agent hosts takes steady engineering:
 
-**[Become a sponsor → github.com/sponsors/virgiliojr94](https://github.com/sponsors/virgiliojr94)**
+- **Reviewing and verifying community PRs** one by one against real regressions
+- **Maintaining 1,100+ automated tests** across Python 3.9–3.13, Linux/Windows, and parser fallbacks
+- **Security hardening & new capabilities** (prompt-injection sanitization, DOCX/EPUB guards, and v2.0 MCP Search & Read)
+- **Multilingual chapter support & documentation**
 
-Every sponsor is listed in [BACKERS.md](BACKERS.md). Thank you for keeping open, privacy-first tooling alive. ✨
+If `book-to-skill` saves you engineering hours, study time, or model tokens — or if your team uses it internally — please consider sponsoring its ongoing maintenance and next releases:
+
+> **💖 [Sponsor on GitHub → github.com/sponsors/virgiliojr94](https://github.com/sponsors/virgiliojr94)**
+
+- **Tiers:** Gold ($100+/mo) · Silver ($50–99/mo) · Bronze ($15–49/mo) · Backers ($5–14/mo or one-time)
+- **Recognition:** Sponsors are featured in [BACKERS.md](BACKERS.md) (Gold/Silver/Bronze links & logos, or anonymous on request).
+
+Thank you to our current backers ([Gui Santos](https://github.com/guiofsaints) and supporters) for helping keep open, privacy-first tooling alive. ✨
 
 ## License
 
