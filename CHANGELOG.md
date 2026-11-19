@@ -10,6 +10,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > (`git-cliff --tag vX.Y.Z -o CHANGELOG.md`). Write a good PR title instead — it
 > becomes the changelog entry. See `cliff.toml` and CONTRIBUTING.md.
 
+## [2.0.1] - 2026-11-19
+
+### Added
+- Add opt-in guided MCP setup directly in Step 0
+- Detect Arabic (الفصل/الباب) chapter headings (#346)
+- Detect Georgian (თავი) chapter headings (#325)
+
+### Documentation
+- Showcase Search & Read natively and elevate sponsor visibility
+- Use openly licensed Pro Git instead of commercial book in examples
+- Add Japanese README (#328)
+
+### Fixed
+- Clarify Search & Read onboarding UX and bare-search handling
+- Prioritize open_access results, filter book topics, and compact display IDs
+- Stop ranking unverified Crossref DOIs as open-access and defer output dir creation
+- Align discovery and reader with libgen-mcp outline, cursor, and get_details schemas
+- Don't end a chapter on a prose line matching a front-matter title (#352)
+- Match outline titles wrapped onto three lines under a CHAPTER marker (#351)
+- Keep a chapter opening that doubles as the running header (#336)
+- Preserve table cell paragraph boundaries (#335)
+- Count sentence-case Markdown chapter titles (#333)
+- Drop Word paragraph revision ids in the fallback (#332)
+- Propagate page count mismatch to page evidence (#331)
+- Discard stale page evidence before output (#327)
+- Accept whitespace around XML attribute equals (#323)
+- Match letter-spaced outline chapter headings (#347)
+
+### Miscellaneous
+- Slim archives with export-ignore and compressed docs images (#324)
+- Resolve v2.0.0 CodeQL alerts and exclude README.ja.md/uv.lock from archives
+
+### Security
+- Resolve remaining high CodeQL test alerts and annotate empty excepts
+
 ## [2.0.0] - 2026-11-19
 
 ### Added
