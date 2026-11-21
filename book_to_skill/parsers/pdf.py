@@ -308,9 +308,10 @@ def count_pages(pdf_path: str) -> int:
         try:
             pdf_path = os.path.abspath(pdf_path)
             result = subprocess.run(
-                ["pdfinfo", pdf_path],
+                ["pdfinfo", "-enc", "UTF-8", pdf_path],
                 capture_output=True,
                 text=True,
+                encoding="utf-8", errors="replace",
                 timeout=15,
             )
             for line in result.stdout.splitlines():
