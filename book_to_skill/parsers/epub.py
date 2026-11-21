@@ -30,6 +30,23 @@ _IMAGE_EXTENSIONS = (
 _OPF_ELEMENT_PREFIX = r"(?:[A-Za-z_][\w.-]*:)?"
 
 
+def _without_xml_comments(text: str) -> str:
+    """Skip complete comments before the tolerant XML tag scans."""
+    parts = []
+    cursor = 0
+    while True:
+        start = text.find("<!--", cursor)
+        if start < 0:
+            break
+        end = text.find("-->", start + 4)
+        if end < 0:
+            break  # Preserve the existing best-effort behavior on malformed XML.
+        parts.append(text[cursor:start])
+        cursor = end + 3
+    parts.append(text[cursor:])
+    return "".join(parts)
+
+
 def _decode_container_reference(match: re.Match) -> str:
     """Decode one XML reference without HTML's numeric character remapping."""
     reference = match.group()
@@ -59,6 +76,8 @@ def _decode_epub_xml(data: bytes) -> str:
 
 def _opf_opening_tags(opf_text: str, local_name: str) -> list[str]:
     """Return opening tags for an OPF element, with or without a prefix."""
+    # Commented-out manifest/spine entries are not publication resources.
+    opf_text = _without_xml_comments(opf_text)
     return re.findall(
         rf"<{_OPF_ELEMENT_PREFIX}{re.escape(local_name)}\b[^>]*?/?>",
         opf_text,
@@ -112,7 +131,7 @@ def _find_opf_path(zf: zipfile.ZipFile) -> str | None:
     """
     # Spec-defined: read container.xml for the rootfile path
     try:
-        container = _decode_epub_xml(zf.read("META-INF/container.xml"))
+        container = _without_xml_comments(_decode_epub_xml(zf.read("META-INF/container.xml")))
         match = re.search(r'full-path[ \t\r\n]*=[ \t\r\n]*["\']([^"\']+\.opf)["\']', container)
         if match:
             # Decode XML's predefined and numeric references once. Restrict the
