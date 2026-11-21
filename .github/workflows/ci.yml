@@ -14,11 +14,18 @@ permissions:
 jobs:
   test:
     name: test (py${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    # Pinned per leg rather than plain ubuntu-latest: as ubuntu-latest rolls to
+    # Ubuntu 26.04, setup-python can no longer provide 3.9 there ("The version
+    # '3.9' with architecture 'x64' was not found for Ubuntu 26.04"), so that leg
+    # runs on the newest image that still ships it. The others stay on latest.
+    runs-on: ${{ matrix.runner || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        include:
+          - python-version: "3.9"
+            runner: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0

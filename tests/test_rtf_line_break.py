@@ -25,10 +25,34 @@ class RtfLineBreakTests(unittest.TestCase):
 
     def test_multiple_lines_keep_unicode_and_paragraph_controls(self):
         raw = r"{\rtf1 A\line caf\'e9\line \u945?\par Z}"
-        self.assertEqual(rtf.strip_rtf_fallback(raw), "A\ncafé\nα\n Z")
+        self.assertEqual(rtf.strip_rtf_fallback(raw), "A\ncafé\nα\nZ")
 
     def test_longer_control_word_is_not_a_line_break(self):
         self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\linebetcol Beta}"), "AlphaBeta")
+
+    def test_paragraph_revision_id_is_not_a_break(self):
+        # Word's \pararsidN starts with the letters of \par. It records a
+        # revision id, so the fallback must drop it instead of breaking the
+        # paragraph and keeping the leftover "arsidN".
+        self.assertEqual(
+            rtf.strip_rtf_fallback(r"{\rtf1 Hello world.\pararsid14732124}"),
+            "Hello world.",
+        )
+        self.assertEqual(
+            rtf.strip_rtf_fallback(r"{\rtf1\ansi{\pard\plain Hello world.\pararsid14732124}}"),
+            "\nHello world.",
+        )
+
+    def test_paragraph_break_requires_the_control_word_boundary(self):
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\par}"), "Alpha\n")
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\par Beta}"), "Alpha\nBeta")
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\par!Beta}"), "Alpha\n!Beta")
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\par123 Beta}"), "Alpha\nBeta")
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\par-123 Beta}"), "Alpha\nBeta")
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\parNext Beta}"), "AlphaBeta")
+
+    def test_pard_keeps_its_existing_handling(self):
+        self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Alpha\pard Beta}"), "Alpha\n Beta")
 
     def test_escaped_line_word_remains_literal(self):
         self.assertEqual(rtf.strip_rtf_fallback(r"{\rtf1 Show \\line literally}"), r"Show \line literally")
