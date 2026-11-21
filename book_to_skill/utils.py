@@ -123,6 +123,10 @@ _EXPLICIT_CHAPTER = re.compile(
 # “Chapter 8 are relevant...”) is prose / a cross-reference, not a heading.
 # The uppercase class is À-Þ so titles starting with Ü/Û (common in German, e.g. “Überblick”) are recognized.
 _HEADING_TAIL = re.compile(r"^\s*$|^\s*[.:\-—–]|^\s+(?![a-z])")
+# Same tail once a Markdown/AsciiDoc marker has been stripped. A lowercase word
+# there is the title ("## Chapter 1 title"), not the bare-line cross-reference
+# the guard above exists to reject ("Chapter 6 explores...").
+_MARKED_LOWER_TITLE = re.compile(r"^\s+\S")
 # A tail that opens with a sentence period — "Chapter 4. References are
 # indicated by the `&` symbol…", "Chapter 17.) We have seen…" — is prose wrapped
 # at the column limit, unless it reads like a title. Two shapes, measured on the
@@ -378,6 +382,18 @@ _HE_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?פרק\s+([0-9]+)\b")
 # "Գլուխներ 5" ("chapters 5") from reading as chapter 5.
 _HY_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?գլուխ\s+([0-9]+)\b", re.IGNORECASE)
 
+# Georgian chapter headings: "თავი 1", "ᲗᲐᲕᲘ 12", "## თავი 2".
+# "თავი" ("chapter") + a number, with ordinary Arabic digits so no remap is
+# needed. Georgian reads as unicameral but has a second case: the Mtavruli
+# capitals (U+1C90-U+1CBF) used for all-caps styling, which Unicode pairs with
+# Mkhedruli, so re.IGNORECASE bridges them ("თავი".upper() == "ᲗᲐᲕᲘ") and no
+# explicit alternation is needed. Like Armenian "Գլուխ" above the word also means
+# "head", so requiring whitespace then a number does the guarding: an inflected
+# form changes the ending ("თავში", "in the chapter") and the plural keeps the
+# word intact, which is why \s+ matters — it stops "თავები 5" ("chapters 5")
+# from reading as chapter 5.
+_KA_CHAPTER = re.compile(r"^\s*(?:#{1,6}\s+)?თავი\s+([0-9]+)\b", re.IGNORECASE)
+
 # Korean chapter headings: "제1장 총칙", "## 제4장 근로시간과 휴식", "제6장의2 …".
 # 제 + Arabic numeral + a classifier (장 chapter / 편 part / 절 section / 관
 # subsection), with an optional "의N" branch suffix that Korean statutes use for
@@ -420,13 +436,39 @@ _FA_TEENS = (
     "یازدهم", "دوازدهم", "سیزدهم", "چهاردهم", "پانزدهم",
     "شانزدهم", "هفدهم", "هجدهم", "نوزدهم",
 )
-_FA_ONES_SET = frozenset(_FA_ONES)
+# Arabic chapter headings: "الفصل 1", "الفصل ١", "الفصل الأول", "الباب الثالث", "باب ٢".
+# Arabic reuses the Persian matcher above rather than getting its own: the two
+# languages share the script *and* the chapter word فصل, so no block test can
+# separate them the way the Brahmic patterns separate Odia from Bengali. What
+# Arabic adds is the definite article — "الفصل" is the standard heading form
+# and ال is exactly what the Persian label did not accept — plus باب ("gate"),
+# the chapter word in classical and religious works.
+#
+# Spelling variants (أ/إ/آ written as ا, ى as ي) are folded by _AR_FOLD rather
+# than enumerated, so the table stays one entry per number. The fold is
+# codepoint-for-codepoint, so match offsets stay valid, and it cannot disturb
+# Persian: no Persian ordinal key contains any of those four letters, and
+# Persian's ی (U+06CC) is a different codepoint from Arabic's ي (U+064A).
+#
+# Ceiling: 1-20. The compound forms above that ("الحادي والعشرون") follow
+# the same loop shape as the Persian compounds if a corpus ever needs them.
+_AR_ONES = (
+    "الاول", "الثاني", "الثالث", "الرابع", "الخامس",
+    "السادس", "السابع", "الثامن", "التاسع", "العاشر",
+)
+# 11-19 reuse the ones + عشر, except that 11 is الحادي, not الاول.
+_AR_TEEN_ONES = ("الحادي",) + _AR_ONES[1:9]
+_AR_FOLD = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ى": "ي"})
+
+# 1-10 in either language: short enough to prefix an ordinary word
+# ("فصل اولیه", "الفصل الاولى"), so these require a separator after them.
+_FA_ONES_SET = frozenset(_FA_ONES + _AR_ONES)
 # After a short (1–10) word ordinal: end, whitespace, punctuation, or ZWNJ.
 _FA_SHORT_ORDINAL_TAIL = re.compile(r"^(?:$|\s|[.:\-—–：]|\u200c)")
 
 
 def _fa_ordinal_map() -> dict[str, int]:
-    """Persian chapter ordinals 1–34, including common spelling variants."""
+    """Persian ordinals 1–34 and Arabic ordinals 1–20, with spelling variants."""
     m: dict[str, int] = {}
     for i, w in enumerate(_FA_ONES, 1):
         m[w] = i
@@ -441,6 +483,13 @@ def _fa_ordinal_map() -> dict[str, int]:
     for i, w in enumerate(_FA_COMPOUND_ONES, 1):
         m[f"بیست و {w}"] = 20 + i
         m[f"سی و {w}"] = 30 + i
+    # Arabic ordinals 1-20, in the folded spelling _AR_FOLD produces.
+    for i, w in enumerate(_AR_ONES, 1):
+        m[w] = i
+    for i, w in enumerate(_AR_TEEN_ONES, 11):
+        m[f"{w} عشر"] = i
+    m["العشرون"] = 20
+    m["العشرين"] = 20  # oblique form, equally common in headings
     # sanitize_extracted_text() strips U+200C (it is a prompt-injection spacer)
     # before detect_structure() runs, so a key spelled with a ZWNJ can never be
     # reached through the pipeline. Register the stripped spelling of every such
@@ -454,14 +503,14 @@ def _fa_ordinal_map() -> dict[str, int]:
 _FA_ORDINALS = _fa_ordinal_map()
 # Longest first so "چهاردهم" wins over "چهارم", "بیست و یکم" over nothing shorter.
 _FA_ORDINAL_KEYS = sorted(_FA_ORDINALS, key=len, reverse=True)
-_FA_LABEL_REST = re.compile(r"^\s*(?:فصل|بخش)\s+(.*)$")
+_FA_LABEL_REST = re.compile(r"^\s*(?:ال)?(?:فصل|بخش|باب)\s+(.*)$")
 _FA_DIGIT_HEAD = re.compile(rf"^([0-9{_FA_DIGITS}]+)(.*)$")
 # Digit form: same idea as the Korean trailing guard (no Latin case to lean on).
 _FA_DIGIT_TAIL = re.compile(r"^(?:\s*$|[.:\-—–：]|\s+\S)")
 
 
 def _fa_chapter_number(s: str) -> int | None:
-    """Return a Persian chapter number (1–99 digits / 1–34 words) or None."""
+    """Return a Persian/Arabic chapter number (1–99 digits / word ordinal) or None."""
     m = _FA_LABEL_REST.match(s)
     if not m:
         return None
@@ -472,6 +521,7 @@ def _fa_chapter_number(s: str) -> int | None:
         if 1 <= n <= 99 and _FA_DIGIT_TAIL.match(dm.group(2)) is not None:
             return n
         return None
+    rest = rest.translate(_AR_FOLD)
     for key in _FA_ORDINAL_KEYS:
         if not rest.startswith(key):
             continue
@@ -798,7 +848,9 @@ def _match_chapter_number(
     fenced block); it is consulted only for a bare period tail. `heading_marked`
     says the line carried an explicit "#"/"==" prefix before it was stripped —
     an explicit heading is trusted as it stands, so "## Chapter 4. References
-    are indicated by the `&` symbol…" keeps counting. (Issue #237)
+    are indicated by the `&` symbol…" keeps counting, including a sentence-case
+    title such as "## Chapter 1 title". The same lowercase tail on a bare line
+    stays prose. (Issue #237)
     """
     # Normalize Kangxi-radical numerals (⼀⼆⼋⼗) to ideographs so Chinese
     # ebooks that encode chapter numbers in the U+2F00 block are detected.
@@ -823,7 +875,10 @@ def _match_chapter_number(
         return int(plain.group(1))
 
     m = _EXPLICIT_CHAPTER.match(s)
-    if m and _HEADING_TAIL.match(m.group("rest")):
+    if m and (
+        _HEADING_TAIL.match(m.group("rest"))
+        or (heading_marked and _MARKED_LOWER_TITLE.match(m.group("rest")))
+    ):
         if not heading_marked and _is_prose_period_tail(m.group("rest"), prev_line):
             return None
         if m.group(1):
@@ -885,6 +940,9 @@ def _match_chapter_number(
     hym = _HY_CHAPTER.match(s)
     if hym:
         return int(hym.group(1))
+    kam = _KA_CHAPTER.match(s)
+    if kam:
+        return int(kam.group(1))
 
     km = _KO_CHAPTER.match(s)
     if km:
@@ -920,9 +978,11 @@ def _chapter_number(line: str, prev_line: str | None = None) -> int | None:
     Greek ("Κεφάλαιο 1", "ΚΕΦΑΛΑΙΟ 12", "## Κεφάλαιο 2"),
     Hebrew ("פרק 1", "פרק 12", "## פרק 2"),
     Armenian ("Գլուխ 1", "ԳԼՈՒԽ 12", "## Գլուխ 2"),
+    Georgian ("თავი 1", "ᲗᲐᲕᲘ 12", "## თავი 2"),
     Korean ("제1장 총칙", "## 제4장 근로시간과 휴식"), and
     Persian ("فصل ۱", "فصل اول", "فصل بیست و یکم", "بخش ۲: مفاهیم",
-    "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…") heading styles — each
+    "## فصل ۱: مقدمه", PDF-glued "فصل سی و چهارمخداحافظ…"),
+    Arabic ("الفصل ١", "الفصل الأول", "الباب الثالث", "باب ٢") heading styles — each
     optionally preceded by a Markdown/AsciiDoc heading marker
     ("## Chapter 1" is a chapter heading just like "Chapter 1").
     """
@@ -1013,7 +1073,37 @@ def _line_matches_outline_title(lines: list[str], index: int, outline_title: str
                 pair = f"{lines[look].strip()} {lines[look + 1].strip()}".casefold()
                 if pair == bare_cf:
                     return index
+                # Long display titles can wrap onto a third line.
+                if look + 2 < len(lines) and not _is_disqualified_chapter_line(lines[look + 2]):
+                    triple = f"{pair} {lines[look + 2].strip().casefold()}"
+                    if triple == bare_cf:
+                        return index
+
+    # Letter-spaced headings: expanded character spacing in the source document
+    # makes pdftotext emit "C h ư ơn g 2 1  T i ê u ..." with irregular gaps,
+    # often wrapped onto a second line. Compare with all whitespace removed;
+    # exact equality still rejects ToC lines (leader + page number) and a
+    # shorter chapter number ("Chương 2" vs "C h ư ơn g 2 1 ...").
+    if not _looks_letter_spaced(line):
+        return None
+    full_sq = "".join(full_cf.split())
+    line_sq = "".join(line.casefold().split())
+    if line_sq == full_sq:
+        return _chapter_start_at(lines, index)
+    if (
+        index + 1 < len(lines)
+        and not _is_disqualified_chapter_line(lines[index + 1])
+        and line_sq + "".join(lines[index + 1].casefold().split()) == full_sq
+    ):
+        return _chapter_start_at(lines, index)
     return None
+
+
+def _looks_letter_spaced(line: str) -> bool:
+    """True when many tokens are single characters ("C h ư ơn g 2 1 ...")."""
+    tokens = line.split()
+    singles = sum(1 for token in tokens if len(token) == 1)
+    return singles >= 3 and singles * 10 >= len(tokens) * 3
 
 
 def _find_outline_chapter_start(lines: list[str], title: str, start: int) -> int | None:
@@ -1041,7 +1131,9 @@ def _is_chapter_content_boundary(
     if not stripped or _PAGE_CHAPTER_HEADER.match(stripped):
         return False
     heading_cf = _normalized_heading(lines[index])
-    if heading_cf in range_end_titles:
+    # A line starting lowercase is a wrapped prose continuation ("contents."),
+    # not a front/end-matter heading such as "Contents" or "Index".
+    if heading_cf in range_end_titles and not stripped[0].islower():
         return True
     title = _line_title_text(lines[index])
     if _PART_HEADER.match(title) or _NON_CHAPTER_PREFIX.match(title):
@@ -1717,10 +1809,13 @@ def write_pdf_page_sidecar(sources: list[dict], output_dir: Path) -> Path | None
                     entry["reason"] = "pypdf_unavailable_or_failed"
                 else:
                     entry["status"] = "ok"
-                    if source["pages"] and len(records) != source["pages"]:
+                    page_count_mismatch = bool(source["pages"] and len(records) != source["pages"])
+                    if page_count_mismatch:
                         entry["low_confidence_reasons"] = ["page_count_mismatch"]
                     for record in records:
                         record["source_sha256"] = source["sha256"]
+                        if page_count_mismatch:
+                            record["low_confidence_reasons"].append("page_count_mismatch")
                         if source["extraction_method"] != "pypdf":
                             record["low_confidence_reasons"].append(
                                 "different_extractor_from_full_text"
@@ -1850,6 +1945,15 @@ def main():
         print(f"\nERROR: All {len(errors)} source(s) failed extraction:", file=sys.stderr)
         for path, err in errors:
             print(f"  - {path.name}: {err}", file=sys.stderr)
+        sys.exit(1)
+
+    # A caller can explicitly reuse a workdir. Remove old page evidence before
+    # replacing the corpus so a later run cannot expose pages from another PDF.
+    # If removal fails, leave the previous corpus and metadata untouched.
+    try:
+        (OUTPUT_DIR / "pdf_pages.json").unlink(missing_ok=True)
+    except OSError as exc:
+        print(f"ERROR: Could not remove previous PDF page sidecar: {exc}", file=sys.stderr)
         sys.exit(1)
         
     # Combine texts

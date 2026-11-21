@@ -11,6 +11,7 @@ ROOT = Path(__file__).parents[1]
 POLICY_TERMS = {
     "README.ru.md": ("символьную ссылку", "проверяет её чтением"),
     "README.zh-CN.md": ("符号链接", "回读验证"),
+    "README.ja.md": ("シンボリックリンク", "読み戻して確認"),
 }
 
 
