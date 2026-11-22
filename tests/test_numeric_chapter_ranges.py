@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import book_to_skill.utils as utils  # noqa: E402
-from book_to_skill.utils import numeric_chapter_line_ranges  # noqa: E402
 
 _BODY = "Body text that runs on for a while before the next heading arrives."
 
@@ -41,7 +40,7 @@ _WITH_TOC = [
 
 
 def test_ranges_start_at_body_headings_not_toc_entries():
-    ranges = numeric_chapter_line_ranges("\n".join(_WITH_TOC))
+    ranges = utils.numeric_chapter_line_ranges("\n".join(_WITH_TOC))
     assert [(r["title"], r["start_line"], r["end_line"]) for r in ranges] == [
         ("Chapter 1. Searching Google", 10, 12),
         ("Chapter 2. Advanced Operators", 13, 15),
@@ -60,7 +59,7 @@ def test_running_headers_without_a_toc_keep_the_first_heading():
         "Chapter 2. Beta",
         _BODY,
     ]
-    ranges = numeric_chapter_line_ranges("\n".join(lines))
+    ranges = utils.numeric_chapter_line_ranges("\n".join(lines))
     assert [(r["start_line"], r["end_line"]) for r in ranges] == [(1, 4), (5, 8)]
 
 
@@ -93,7 +92,7 @@ def test_numeric_chapter_ranges_in_extracted_metadata(tmp_path, monkeypatch):
 def test_a_chapter_missing_from_the_toc_keeps_its_range():
     lines = [line for line in _WITH_TOC if line != "Chapter 1. Searching Google"]
     lines.insert(lines.index("Chapter 2. Advanced Operators", 5), "Chapter 1. Searching Google")
-    ranges = numeric_chapter_line_ranges("\n".join(lines))
+    ranges = utils.numeric_chapter_line_ranges("\n".join(lines))
     assert [r["title"] for r in ranges] == [
         "Chapter 1. Searching Google",
         "Chapter 2. Advanced Operators",
