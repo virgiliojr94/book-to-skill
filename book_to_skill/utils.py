@@ -1176,9 +1176,13 @@ def chapter_line_ranges(
             continue
         starts.append((title, line_index))
         cursor = line_index + 1
-    if not starts:
-        return []
+    return _ranges_from_starts(lines, starts, end_keys)
 
+
+def _ranges_from_starts(
+    lines: list[str], starts: list[tuple[str, int]], end_keys: frozenset[str]
+) -> list[dict[str, int | str]]:
+    """1-based inclusive ranges from 0-based chapter start lines in document order."""
     ranges: list[dict[str, int | str]] = []
     for index, (title, start_line) in enumerate(starts):
         next_start = starts[index + 1][1] if index + 1 < len(starts) else len(lines)
@@ -1193,6 +1197,67 @@ def chapter_line_ranges(
             }
         )
     return ranges
+
+
+def _numbered_heading_lines(lines: list[str]):
+    """Yield (index, number, stripped line, is_part) for each "Chapter N"/"Part N" heading.
+
+    Lines inside closed code fences are skipped, and each line is judged
+    against the non-blank line above it (see `_chapter_number`).
+    """
+    fenced = _closed_fence_line_numbers(lines)
+    prev = ""  # previous non-blank line; cleared by blanks and fences
+    for index, line in enumerate(lines):
+        if index in fenced:
+            prev = ""
+            continue
+        s = line.strip()
+        if not s:
+            prev = ""
+            continue
+        num = _chapter_number(line, prev)
+        if num is not None:
+            yield index, num, s, bool(_PART_HEADER.match(_MD_HEADING_PREFIX.sub("", s)))
+        prev = s
+
+
+def numeric_chapter_line_ranges(text: str) -> list[dict[str, int | str]]:
+    """1-based inclusive line ranges for "Chapter N" headings found by the numeric scan.
+
+    A table of contents repeats the body headings, so the first occurrence of a
+    chapter is often its ToC entry. When the first chapter heading occurs
+    again only after other chapters have appeared, those first occurrences are
+    a ToC and the body headings are looked for after it. A running header
+    inside the first chapter does not look like one: no other chapter has
+    appeared yet when it repeats.
+    """
+    lines = text.splitlines()
+    occurrences: dict[int, list[tuple[int, str]]] = {}
+    for index, num, heading, is_part in _numbered_heading_lines(lines):
+        if not is_part and not _is_disqualified_chapter_line(heading):
+            occurrences.setdefault(num, []).append((index, heading))
+    if len(occurrences) < 2:
+        return []
+    toc_end = -1
+    first = next(iter(occurrences.values()))
+    if len(first) >= 2:
+        body_start = first[1][0]
+        # A ToC entry repeats later; a chapter seen once is a body heading.
+        listed = [
+            occ[0][0]
+            for occ in occurrences.values()
+            if len(occ) >= 2 and occ[0][0] < body_start
+        ]
+        if len(listed) >= 2:
+            toc_end = max(listed)
+    starts: list[tuple[str, int]] = []
+    for occ in occurrences.values():
+        after = [(index, heading) for index, heading in occ if index > toc_end]
+        if after:
+            index, heading = after[0]
+            starts.append((_MD_HEADING_PREFIX.sub("", heading), index))
+    starts.sort(key=lambda start: start[1])
+    return _ranges_from_starts(lines, starts, frozenset())
 
 
 def detect_structure(text: str) -> dict:
@@ -1212,31 +1277,18 @@ def detect_structure(text: str) -> dict:
     while a heading on its own line still is. (Issue #237)
     """
     lines = text.splitlines()
-    fenced = _closed_fence_line_numbers(lines)
 
     headings = []
     numbers = set()
     part_headings = []
     part_numbers = set()
-    prev = ""  # previous non-blank line; cleared by blanks and fences
-    for index, line in enumerate(lines):
-        if index in fenced:
-            prev = ""
-            continue
-        s = line.strip()
-        if not s:
-            prev = ""
-            continue
-        num = _chapter_number(line, prev)
-        if num is not None:
-            title = _MD_HEADING_PREFIX.sub("", s)
-            if _PART_HEADER.match(title):
-                part_numbers.add(num)
-                part_headings.append(s)
-            else:
-                numbers.add(num)
-                headings.append(s)
-        prev = s
+    for _, num, s, is_part in _numbered_heading_lines(lines):
+        if is_part:
+            part_numbers.add(num)
+            part_headings.append(s)
+        else:
+            numbers.add(num)
+            headings.append(s)
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
     # "Chapter N" headings were found, so books with real chapters are unaffected.
@@ -1999,6 +2051,10 @@ def main():
                 chapter_titles,
                 range_end_titles=end_titles,
             )
+    elif len(extracted_sources) == 1 and consolidated_structure["chapters_method"] == "numeric":
+        consolidated_structure["chapter_ranges"] = numeric_chapter_line_ranges(
+            consolidated_text
+        )
     structural_sources = [
         src for src in extracted_sources
         if src["chapters_method"] == "structural" and src["chapters_detected"] >= 2
@@ -2082,6 +2138,8 @@ def main():
                         )
                     }
                     if "chapter_titles" in src
+                    else {"chapter_ranges": numeric_chapter_line_ranges(src["text"])}
+                    if src["chapters_method"] == "numeric"
                     else {}
                 ),
                 "has_toc": src["has_toc"]
