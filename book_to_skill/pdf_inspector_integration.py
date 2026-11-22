@@ -147,6 +147,13 @@ def _result_from_inspector(
 
     pages = inspection.get("page_count") or utils_module.count_pages(str(input_path))
     tokens = utils_module.estimate_tokens(text)
+    images_dropped = None
+    if hasattr(utils_module, "count_pdf_images") and hasattr(
+        utils_module, "report_dropped_images"
+    ):
+        images_dropped = utils_module.report_dropped_images(
+            input_path.name, utils_module.count_pdf_images(str(input_path))
+        )
     try:
         file_size_mb = os.path.getsize(input_path) / (1024 * 1024)
         # Import lazily rather than reaching into the (possibly fake) utils
@@ -173,7 +180,7 @@ def _result_from_inspector(
         "chars": len(text),
         "words": len(text.split()),
         "estimated_tokens": tokens,
-        "images_dropped": None,
+        "images_dropped": images_dropped,
         "text": text,
         **structure,
     }
