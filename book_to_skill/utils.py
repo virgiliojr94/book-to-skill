@@ -1170,7 +1170,7 @@ def chapter_line_ranges(
         line_index = _find_outline_chapter_start(lines, title, cursor)
         if line_index is None:
             print(
-                f"WARNING: outline chapter not found in extracted text: {title!r}",
+                f"WARNING: chapter not found in extracted text: {title!r}",
                 file=sys.stderr,
             )
             continue
@@ -1218,6 +1218,13 @@ def detect_structure(text: str) -> dict:
     numbers = set()
     part_headings = []
     part_numbers = set()
+    # Last heading seen per chapter number, keyed in first-seen order. A book
+    # whose ToC and body both carry "Chapter 1. Title" produces two entries in
+    # `headings`; the later one is the body heading, and it is the clean title
+    # (a ToC row keeps its leader and page number, which `chapter_line_ranges`
+    # cannot match because `_is_disqualified_chapter_line` rejects leader rows).
+    numeric_titles: dict[int, str] = {}
+    part_titles: dict[int, str] = {}
     prev = ""  # previous non-blank line; cleared by blanks and fences
     for index, line in enumerate(lines):
         if index in fenced:
@@ -1233,9 +1240,11 @@ def detect_structure(text: str) -> dict:
             if _PART_HEADER.match(title):
                 part_numbers.add(num)
                 part_headings.append(s)
+                part_titles[num] = s
             else:
                 numbers.add(num)
                 headings.append(s)
+                numeric_titles[num] = s
         prev = s
     numeric_count = len(numbers)
     # Fall back to structural (Markdown/AsciiDoc) headings only when no numeric
@@ -1247,6 +1256,7 @@ def detect_structure(text: str) -> dict:
     # Every parser in this project already announces which method it used
     # ("Trying python-docx... OK"); this decision had the same shape and was
     # the only silent one.
+    structural_headings_for_titles: list[str] = []
     if numeric_count >= 2:
         chapters_detected = numeric_count
         chapters_method = "numeric"
@@ -1257,6 +1267,7 @@ def detect_structure(text: str) -> dict:
         # the structural (Markdown/AsciiDoc) heading count, so course-style
         # books with "### Unit N" headings still get counted via max().
         structural_headings = _structural_chapter_headings(text)
+        structural_headings_for_titles = structural_headings
         structural_count = len(structural_headings)
         # Parts group chapters and must not win the numeric branch ahead of
         # the structural chapters inside them. Retain the old Part-only
@@ -1264,6 +1275,7 @@ def detect_structure(text: str) -> dict:
         if not numeric_count and not structural_count:
             numeric_count = len(part_numbers)
             headings = part_headings
+            numeric_titles = part_titles
         chapters_detected = max(numeric_count, structural_count)
         chapters_method = (
             "structural" if structural_count > numeric_count
@@ -1279,11 +1291,23 @@ def detect_structure(text: str) -> dict:
     # Look for ToC indicators in the first ~30k chars (multilingual; see _TOC_PATTERN)
     has_toc = bool(_TOC_PATTERN.search(text[:30000]))
 
+    # The full title list (not the 10-item sample) is what `chapter_line_ranges`
+    # needs. Only the outline path used to publish it, so numeric/structural
+    # detection produced no `chapter_ranges` at all and Step 7 of SKILL.md fell
+    # back to grepping, which lands on ToC rows. (Issue #348)
+    chapter_titles = (
+        structural_headings_for_titles
+        if chapters_method == "structural"
+        else list(numeric_titles.values()) if chapters_method == "numeric"
+        else []
+    )
+
     return {
         "chapters_detected": chapters_detected,
         "chapters_method": chapters_method,
         "chapter_headings_sample": chapter_headings_sample,
         "has_toc": has_toc,
+        **({"chapter_titles": chapter_titles} if chapter_titles else {}),
     }
 
 
@@ -1999,6 +2023,16 @@ def main():
                 chapter_titles,
                 range_end_titles=end_titles,
             )
+    elif consolidated_structure.get("chapter_titles"):
+        # Numeric/structural detection ran on `structure_text`, whose line
+        # numbers do not line up with `consolidated_text` (the SOURCE banners
+        # are absent from the former), so the ranges have to be resolved by
+        # title search over the text that is actually written to
+        # full_text.txt. (Issue #348)
+        consolidated_structure["chapter_ranges"] = chapter_line_ranges(
+            consolidated_text,
+            consolidated_structure["chapter_titles"],
+        )
     structural_sources = [
         src for src in extracted_sources
         if src["chapters_method"] == "structural" and src["chapters_detected"] >= 2
