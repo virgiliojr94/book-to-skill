@@ -1,0 +1,34 @@
+{
+  "policy_version": 1,
+  "mode": "observe",
+  "status_context": "issue-first / approved-issue",
+  "governance_issue": 360,
+  "maintainers": [
+    "virgiliojr94"
+  ],
+  "approval_label": "approved-for-implementation",
+  "trusted_receipt_authors": [
+    "virgiliojr94",
+    "github-actions[bot]"
+  ],
+  "legacy_prs": [
+    129,
+    166,
+    170,
+    211,
+    214,
+    269,
+    275,
+    338,
+    339,
+    340,
+    345
+  ],
+  "dependabot_allowed_prefixes": [
+    ".github/workflows/",
+    "pyproject.toml",
+    "uv.lock",
+    "requirements"
+  ],
+  "private_security_exceptions": {}
+}

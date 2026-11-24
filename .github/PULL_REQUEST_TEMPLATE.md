@@ -27,8 +27,10 @@ A PR that leaves Required sections empty or unchecked will be asked to complete 
 - **Adds:** <!-- the new capability and who it is for -->
 
 ## Motivation & context (Required)
-<!-- Why is this needed? What problem or use case drives it? -->
-Closes #<!-- issue number, or "n/a" with a one-line reason if there is no issue -->
+<!-- Why is this needed? New PRs require an issue previously marked `approved-for-implementation`
+     before opening the PR (except verified Dependabot updates and maintainer-authorized private security fixes). -->
+Implementation issue: #<!-- number of the approved issue -->
+Closes #<!-- optional: issue number if this PR completes it -->
 
 ## How it works (Required for anything non-trivial)
 <!-- The approach: key decision(s), why this way, any alternative you rejected.

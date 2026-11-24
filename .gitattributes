@@ -12,6 +12,7 @@ tests/fixtures/*.pdf binary
 /tools/discovery_tax.py export-ignore
 /tools/validate_skill.py export-ignore
 /tools/evals/ export-ignore
+/tools/ci/ export-ignore
 /CHANGELOG.md export-ignore
 /CONTRIBUTING.md export-ignore
 /BACKERS.md export-ignore

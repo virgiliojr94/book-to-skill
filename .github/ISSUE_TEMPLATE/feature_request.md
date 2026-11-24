@@ -12,6 +12,7 @@ labels: enhancement
 
 ## How would we know it's better?
 <!-- A measurable acceptance criterion: a token delta, a test, a before/after.
-     Changes that add weight without a demonstrated gain are unlikely to land. -->
+     Changes that add weight without a demonstrated gain are unlikely to land.
+     Wait for a maintainer to add `approved-for-implementation` before opening a PR. -->
 
 ## Alternatives considered

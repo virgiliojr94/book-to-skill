@@ -35,6 +35,7 @@ That document is the shared execution state, interface contracts (A–D), file o
 
 ## Non-negotiable rules
 
+- **Issue-first & real-impact gate.** Do not open implementation PRs without an open issue carrying maintainer approval (`approved-for-implementation`) before PR creation. Reject or defer purely synthetic edge-case PRs with no demonstrated real-world prevalence or roadmap fit.
 - **Measure, do not assert.** No claimed quality, token, routing, accuracy, or cost improvement without reproducible evidence.
 - **Do not turn a paper hypothesis into production behavior before its gate passes.** In particular, do not add KEY_ELEMENTS-style metadata, library mode, deeper routing, or new `SKILL.md` content merely because it sounds plausible.
 - **Keep `SKILL.md` lean.** It is always-loaded converter context. Any net growth needs evidence that the added context earns its cost.

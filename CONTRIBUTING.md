@@ -35,6 +35,12 @@ python3 tools/validate_skill.py SKILL.md
 
 ## Pull requests
 
+- **Approved issue first.** Every new PR (including docs and maintainer PRs) must
+  link an open issue (`Implementation issue: #<N>`) that a maintainer has already
+  labeled `approved-for-implementation` **before** the PR is opened. Exceptions
+  are frozen pre-policy PRs, verified Dependabot updates, and maintainer-authorized
+  private security fixes. Bug reports and features without demonstrated real-world
+  prevalence or roadmap fit may be closed as out of scope.
 - One focused change per PR; small and reviewable.
 - **Conventional Commits** for titles and commits: `feat:`, `fix:`, `docs:`,
   `chore:`, `test:`, `ci:` … (e.g. `fix(extractor): scan full text`).

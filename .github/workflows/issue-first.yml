@@ -1,0 +1,72 @@
+name: Issue-First Policy
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+  issues:
+    types: [labeled, unlabeled, edited, closed, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional PR number to reconcile (leave empty for all open PRs)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-pr:
+    name: issue-first / approved-issue
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Evaluate PR eligibility against approved issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 tools/ci/issue_first.py --pr "$PR_NUMBER" --publish-status
+
+  issue-receipt:
+    name: issue-first / issue receipt & reconcile
+    if: github.event_name == 'issues' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Sync approval receipt and reconcile open PRs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          INPUT_PR: ${{ github.event.inputs.pr_number }}
+        run: |
+          if [ -n "$ISSUE_NUMBER" ]; then
+            python3 tools/ci/issue_first.py --issue "$ISSUE_NUMBER" --reconcile-prs --publish-status
+          elif [ -n "$INPUT_PR" ]; then
+            python3 tools/ci/issue_first.py --pr "$INPUT_PR" --publish-status
+          else
+            python3 tools/ci/issue_first.py --publish-status
+          fi
