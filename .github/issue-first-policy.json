@@ -1,6 +1,6 @@
 {
   "policy_version": 1,
-  "mode": "observe",
+  "mode": "enforce",
   "status_context": "issue-first / approved-issue",
   "governance_issue": 360,
   "maintainers": [

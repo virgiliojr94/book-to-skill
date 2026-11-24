@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 from unittest import mock
@@ -254,8 +255,33 @@ def test_stale_sha_check_prevents_status_overwrite():
 def test_checked_in_policy_json_is_valid():
     policy = json.loads((ROOT / ".github" / "issue-first-policy.json").read_text(encoding="utf-8"))
     assert policy["maintainers"] == ["virgiliojr94"]
-    assert policy["mode"] == "observe"
+    assert policy["mode"] == "enforce"
     assert policy["governance_issue"] == 360
+
+
+def test_main_returns_nonzero_when_pr_denied_in_enforce_mode(tmp_path):
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(json.dumps(_policy(mode="enforce")), encoding="utf-8")
+    denied = issue_first.EvaluationResult(
+        allowed=False,
+        reason="PR does not declare 'Implementation issue: #<number>'.",
+        category="missing_issue",
+        head_sha="deadbeef",
+    )
+    with mock.patch.dict(os.environ, {"GITHUB_TOKEN": "tok"}), \
+         mock.patch.object(issue_first, "evaluate_remote_pr", return_value=denied) as eval_pr:
+        rc = issue_first.main(
+            [
+                "--policy",
+                str(policy_path),
+                "--repo",
+                "virgiliojr94/book-to-skill",
+                "--pr",
+                "400",
+            ]
+        )
+    assert rc == 1
+    eval_pr.assert_called_once()
 
 
 def test_reconcile_issue_receipt_refuses_remint_after_edit_for_same_label_event():
