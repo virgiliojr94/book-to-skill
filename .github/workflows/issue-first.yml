@@ -11,13 +11,19 @@ on:
         description: Optional PR number to reconcile (leave empty for all open PRs)
         required: false
         type: string
+      issue_number:
+        description: Optional issue number to sync receipt and reconcile linked PRs
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   evaluate-pr:
-    name: issue-first / approved-issue
+    # Distinct from the commit status context `issue-first / approved-issue`
+    # so observation-mode green job runs never collide with failure statuses.
+    name: issue-first / runner
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
     permissions:
@@ -41,7 +47,7 @@ jobs:
           python3 tools/ci/issue_first.py --pr "$PR_NUMBER" --publish-status
 
   issue-receipt:
-    name: issue-first / issue receipt & reconcile
+    name: issue-first / receipt
     if: github.event_name == 'issues' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
@@ -60,7 +66,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
           INPUT_PR: ${{ github.event.inputs.pr_number }}
         run: |
           if [ -n "$ISSUE_NUMBER" ]; then
