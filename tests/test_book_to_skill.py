@@ -2766,8 +2766,9 @@ class TestLooksImageOnly:
 
     def test_no_text_in_first_pages_is_image_only(self, monkeypatch):
         captured = self._probe(monkeypatch, "\n\f\n  \f")
+        monkeypatch.setattr(pdf_parser, "count_pages", lambda _: 2)
         assert pdf_parser.looks_image_only("scan.pdf") is True
-        # Only the first pages are probed, not the whole book.
+        # The whole two-page document is covered by the initial five-page probe.
         assert "-l" in captured["cmd"] and captured["cmd"][captured["cmd"].index("-l") + 1] == "5"
 
     def test_text_in_first_pages_is_not_image_only(self, monkeypatch):
