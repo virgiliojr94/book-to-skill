@@ -17,8 +17,8 @@ from unittest import mock
 import pytest
 
 import book_to_skill.pdf_inspector_integration as integration
+import book_to_skill.utils as utils
 from book_to_skill.parsers.pdf import count_pdf_images
-from book_to_skill.utils import extract_single_file, main
 
 needs_poppler = pytest.mark.skipif(
     not (shutil.which("pdftotext") and shutil.which("pdfimages")),
@@ -151,7 +151,7 @@ def test_pdf_extraction_reports_dropped_image_pages(tmp_path, capsys):
     pdf = _book_with_image_pages(tmp_path / "book.pdf", image_pages=7)
 
     with mock.patch("book_to_skill.utils.prepare_dependencies"):
-        result = extract_single_file(pdf, "text", "no")
+        result = utils.extract_single_file(pdf, "text", "no")
 
     assert result["extraction_method"] == "pdftotext"
     assert result["images_dropped"] == 7
@@ -165,7 +165,7 @@ def test_pdf_extraction_keeps_a_few_figures_quiet(tmp_path, capsys):
     pdf = _book_with_image_pages(tmp_path / "book.pdf", image_pages=2)
 
     with mock.patch("book_to_skill.utils.prepare_dependencies"):
-        result = extract_single_file(pdf, "text", "no")
+        result = utils.extract_single_file(pdf, "text", "no")
 
     assert result["images_dropped"] == 2
     assert "content is not extracted" not in capsys.readouterr().err
@@ -183,7 +183,7 @@ def test_main_persists_pdf_image_loss_in_source_and_total_metadata(tmp_path, mon
     monkeypatch.setattr("book_to_skill.utils.OUTPUT_META", output_meta)
     monkeypatch.setattr("book_to_skill.utils.prepare_dependencies", lambda *args: None)
 
-    main()
+    utils.main()
 
     metadata = json.loads(output_meta.read_text(encoding="utf-8"))
     assert metadata["images_dropped"] == 7
@@ -194,8 +194,6 @@ def test_pdf_inspector_path_reports_dropped_images(tmp_path, monkeypatch, capsys
     integration._reset_state_for_tests()
     pdf = tmp_path / "book.pdf"
     pdf.write_bytes(b"%PDF-1.7\nfixture")
-
-    from book_to_skill import utils
 
     fake_utils = SimpleNamespace(
         extract_single_file=lambda *args: {"extraction_method": "legacy"},
