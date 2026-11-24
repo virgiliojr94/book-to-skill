@@ -47,6 +47,7 @@ from book_to_skill.parsers.pdf import (
     extract_pypdf_page_records,
     looks_image_only,
     count_pages,
+    count_pdf_images,
     pdf_outline_titles,
     pdf_outline_all_titles,
 )
@@ -59,9 +60,20 @@ from book_to_skill.parsers.epub import (
 from book_to_skill.sanitize import sanitize_extracted_text
 
 
-# Covers and decorative assets are common in prose EPUBs, so only surface the
-# omission when the archive contains more than five images.
-_EPUB_IMAGE_NOTICE_THRESHOLD = 5
+# Covers and decorative assets are common in prose books, so only surface the
+# omission when the source contains more than five images.
+_IMAGE_NOTICE_THRESHOLD = 5
+
+
+def report_dropped_images(filename: str, images_dropped: int | None) -> int | None:
+    """Warn when a source holds enough images that their loss matters."""
+    if images_dropped is not None and images_dropped > _IMAGE_NOTICE_THRESHOLD:
+        print(
+            f"  [warn] {filename} contains {images_dropped} image(s); "
+            "their content is not extracted",
+            file=sys.stderr,
+        )
+    return images_dropped
 
 
 # CJK codepoints: ideographs + extensions, kana, hangul, CJK punctuation, and
@@ -1611,13 +1623,9 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                 )
         pages = count_epub_chapters(input_str)
         pages_label = "spine_items"
-        images_dropped = count_epub_images(input_str)
-        if images_dropped > _EPUB_IMAGE_NOTICE_THRESHOLD:
-            print(
-                f"  [warn] {input_path.name} contains {images_dropped} image(s); "
-                "their content is not extracted",
-                file=sys.stderr,
-            )
+        images_dropped = report_dropped_images(
+            input_path.name, count_epub_images(input_str)
+        )
     elif ext == ".pdf":
         print(f"Extracting PDF: {input_str}")
         if looks_image_only(input_str):
@@ -1691,6 +1699,9 @@ def extract_single_file(input_path: Path, extraction_mode: str, install_mode: st
                         
         pages = count_pages(input_str)
         pages_label = "pages"
+        images_dropped = report_dropped_images(
+            input_path.name, count_pdf_images(input_str)
+        )
     elif ext in TEXT_EXTENSIONS:
         print(f"Extracting text document: {input_str}")
         text = read_text_file(input_str)

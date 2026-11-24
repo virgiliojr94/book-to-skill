@@ -261,7 +261,7 @@ Before extraction, the script checks optional Python packages needed for the det
 
 This creates a **per-run** work directory — `<tempdir>/book_skill_work-<pid>/` by default, or exactly the path you set in `BOOK_SKILL_WORKDIR` — containing:
 - `full_text.txt` — combined extracted text of all sources with clear visually demarcated boundaries.
-- `metadata.json` — overall combined size, words, pages, token counts, dropped EPUB image counts, the resolved `workdir`, and a detailed list of individual processed `sources`.
+- `metadata.json` — overall combined size, words, pages, token counts, dropped EPUB and PDF image counts, the resolved `workdir`, and a detailed list of individual processed `sources`.
 
 The run prints all three paths on completion (`Workdir ->`, `Text ->`, `Meta ->`). **Take the paths from that output (or from `metadata.json`'s own `workdir` field) rather than assuming a fixed location** — the directory name differs per run so that concurrent extractions on one machine cannot overwrite each other's results.
 
