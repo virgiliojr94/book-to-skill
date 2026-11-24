@@ -2564,6 +2564,10 @@ def test_ebooklib_spine_order_without_optional_dependencies(monkeypatch):
     monkeypatch.setitem(sys.modules, "ebooklib", ebooklib)
     monkeypatch.setitem(sys.modules, "ebooklib.epub", epub)
     monkeypatch.setitem(sys.modules, "bs4", bs4)
+    monkeypatch.setattr(
+        "book_to_skill.parsers.epub._beautiful_soup_to_text",
+        lambda soup: soup.content,
+    )
 
     text = extract_with_ebooklib("unused.epub")
     assert text.index("FIRST") < text.index("SECOND") < text.index("NAVIGATION")
