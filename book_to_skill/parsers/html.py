@@ -85,6 +85,61 @@ class _HTMLTextExtractor(html.parser.HTMLParser):
         return "".join(self._parts)
 
 
+def _beautiful_soup_to_text(soup) -> str:
+    """Convert a parsed BeautifulSoup tree without splitting inline text."""
+    from bs4.element import CData, NavigableString, Tag
+
+    parts: list[str] = []
+    pending = ""
+    pre_depth = 0
+
+    def mark(separator: str) -> None:
+        nonlocal pending
+        if separator == "\n" or not pending:
+            pending = separator
+
+    def append_text(value: str) -> None:
+        nonlocal pending
+        if pending:
+            if not pre_depth and not value.strip():
+                return
+            if parts:
+                parts.append(pending)
+            pending = ""
+        parts.append(value)
+
+    stack = [(soup, False)]
+    while stack:
+        node, exiting = stack.pop()
+        if type(node) in (NavigableString, CData):
+            append_text(str(node))
+            continue
+        if not isinstance(node, Tag):
+            continue
+
+        tag = node.name
+        if exiting:
+            if tag == "pre":
+                pre_depth -= 1
+            if tag in _HTMLTextExtractor.BLOCK_TAGS:
+                mark("\n")
+            elif tag in _HTMLTextExtractor.CELL_TAGS:
+                mark("\t")
+            continue
+
+        if tag in _HTMLTextExtractor.BLOCK_TAGS:
+            mark("\n")
+        elif tag in _HTMLTextExtractor.CELL_TAGS:
+            mark("\t")
+        if tag == "pre":
+            pre_depth += 1
+
+        stack.append((node, True))
+        stack.extend((child, False) for child in reversed(node.contents))
+
+    return "".join(parts)
+
+
 def extract_html_content(raw_html: str) -> str:
     # Prints mirror extract_docx()'s "Trying X..." style so a run
     # says which of the three extractors actually answered, instead of
@@ -125,7 +180,7 @@ def extract_html_content(raw_html: str) -> str:
         for element in soup(["script", "style", "head"]):
             element.decompose()
         print("OK")
-        return soup.get_text(separator="\n")
+        return _beautiful_soup_to_text(soup)
     except ImportError:
         print("not available")
         print("Trying stdlib HTML parser...", end=" ", flush=True)
