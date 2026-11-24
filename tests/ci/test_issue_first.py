@@ -256,3 +256,19 @@ def test_checked_in_policy_json_is_valid():
     assert policy["maintainers"] == ["virgiliojr94"]
     assert policy["mode"] == "observe"
     assert policy["governance_issue"] == 360
+
+
+def test_reconcile_issue_receipt_refuses_remint_after_edit_for_same_label_event():
+    edited = _issue(body="Initial scope. MODIFIED WITHOUT REAPPROVAL.")
+    old_receipt = _receipt(body="Initial scope.")
+    with mock.patch.object(issue_first, "fetch_single", return_value=edited), \
+         mock.patch.object(issue_first, "fetch_paginated", side_effect=[_events(), [old_receipt]]), \
+         mock.patch.object(issue_first, "_github_api_request") as api_post:
+        minted = issue_first.reconcile_issue_receipt(
+            repo="virgiliojr94/book-to-skill",
+            issue_number=360,
+            policy=_policy(),
+            token="tok",
+        )
+    assert minted is False
+    api_post.assert_not_called()

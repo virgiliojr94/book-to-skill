@@ -68,9 +68,15 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
           INPUT_PR: ${{ github.event.inputs.pr_number }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           if [ -n "$ISSUE_NUMBER" ]; then
-            python3 tools/ci/issue_first.py --issue "$ISSUE_NUMBER" --reconcile-prs --publish-status
+            SKIP_FLAG=""
+            if [ "$EVENT_NAME" = "issues" ] && [ "$EVENT_ACTION" != "labeled" ]; then
+              SKIP_FLAG="--skip-receipt-mint"
+            fi
+            python3 tools/ci/issue_first.py --issue "$ISSUE_NUMBER" --reconcile-prs --publish-status $SKIP_FLAG
           elif [ -n "$INPUT_PR" ]; then
             python3 tools/ci/issue_first.py --pr "$INPUT_PR" --publish-status
           else

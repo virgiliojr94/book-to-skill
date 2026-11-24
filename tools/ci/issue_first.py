@@ -600,10 +600,18 @@ def reconcile_issue_receipt(
         if str(((c.get("user") or {}).get("login")) or "") not in trusted:
             continue
         parsed = parse_receipt_comment(c.get("body"))
+        if not parsed or parsed.get("issue") != issue_number:
+            continue
+        # Never mint a second receipt for the same maintainer label event: if the
+        # issue body/title changed after approval, the maintainer must remove and
+        # re-apply the label to generate a new labeled timestamp.
         if (
-            parsed
-            and parsed.get("issue") == issue_number
-            and parsed.get("actor") == latest_actor
+            parsed.get("actor") == latest_actor
+            and parsed.get("approved_at") == latest_time
+        ):
+            return False
+        if (
+            parsed.get("actor") == latest_actor
             and parsed.get("scope_hash") == current_hash
         ):
             return False
@@ -634,6 +642,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--issue", type=int, default=None)
     parser.add_argument("--publish-status", action="store_true")
     parser.add_argument("--reconcile-prs", action="store_true")
+    parser.add_argument("--skip-receipt-mint", action="store_true")
     args = parser.parse_args(argv)
 
     policy = json.loads(Path(args.policy).read_text(encoding="utf-8"))
@@ -644,12 +653,13 @@ def main(argv: list[str] | None = None) -> int:
 
     mode = policy.get("mode", "observe")
     if args.issue is not None:
-        reconcile_issue_receipt(
-            repo=args.repo,
-            issue_number=args.issue,
-            policy=policy,
-            token=token,
-        )
+        if not args.skip_receipt_mint:
+            reconcile_issue_receipt(
+                repo=args.repo,
+                issue_number=args.issue,
+                policy=policy,
+                token=token,
+            )
         if args.reconcile_prs:
             open_prs = fetch_paginated(f"/repos/{args.repo}/pulls?state=open", token)
             for pr in open_prs:
